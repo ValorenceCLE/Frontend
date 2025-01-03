@@ -36,7 +36,7 @@
 
 <script>
 export default {
-  name: "FixedNestedSidebar",
+  name: "SideBar",
   data() {
     return {
       menus: [

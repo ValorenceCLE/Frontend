@@ -9,6 +9,10 @@ module.exports = {
         primaryLight: '#3b82f6',
         grayDark: '#212529',
         grayLight: '#d3d3d3',
+        background: '#f4f5f7',
+      },
+      backgroundImage: {
+        'gradient': 'linear-gradient(to bottom, #0a1f44, #212529)',
       },
     },
   },

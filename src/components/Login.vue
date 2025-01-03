@@ -1,9 +1,11 @@
 <template>
-  <div class="flex justify-center items-center bg-grayLight" :style="{ height: `calc(100vh - ${headerHeight} - ${footerHeight})` }">
+  <div class="flex justify-center items-center w-full h-full">
     <!-- Card Container -->
     <div class="bg-white rounded-xl shadow-lg overflow-hidden w-full max-w-md">
       <!-- Header Section -->
-      <div class="bg-grayDark py-2 text-white text-center">
+      <div
+        class="bg-gradient-to-b from-primaryDark to-grayDark text-white shadow-md py-3 text-center rounded-t-xl"
+      >
         <h1 class="text-3xl font-semibold">Sign In</h1>
       </div>
 
@@ -14,7 +16,7 @@
           <input
             type="text"
             placeholder="Username"
-            class="w-full px-4 py-1 border text-center text-xl border-gray-300 rounded-lg text-gray-600 focus:outline-none focus:ring-2 focus:ring-primaryMed"
+            class="w-full px-4 py-1.5 border text-center text-xl border-gray-300 rounded-lg text-gray-600 focus:outline-none focus:ring-2 focus:ring-primaryMed"
           />
         </div>
 
@@ -23,14 +25,14 @@
           <input
             type="password"
             placeholder="Password"
-            class="w-full px-4 py-1 border text-center text-xl border-gray-300 rounded-lg text-gray-600 focus:outline-none focus:ring-2 focus:ring-primaryMed"
+            class="w-full px-4 py-1.5 border text-center text-xl border-gray-300 rounded-lg text-gray-600 focus:outline-none focus:ring-2 focus:ring-primaryMed"
           />
         </div>
 
         <!-- Login Button -->
         <div>
           <button
-            class="bg-primaryMed text-white font-semibold text-2xl py-1.5 px-4 rounded-lg w-full hover:bg-primaryDark"
+            class="bg-primaryDark text-white font-semibold text-2xl py-2 rounded-lg w-full hover:bg-grayDark"
           >
             Login
           </button>
@@ -43,15 +45,5 @@
 <script>
 export default {
   name: "Login",
-  data() {
-    return {
-      headerHeight: "6rem", // Adjust this to match your header height
-      footerHeight: "2rem", // Adjust this to match your footer height
-    };
-  },
 };
 </script>
-
-<style scoped>
-/* Optional CSS tweaks if Tailwind utilities are insufficient */
-</style>
