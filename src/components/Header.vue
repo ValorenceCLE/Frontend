@@ -1,6 +1,6 @@
 <template>
   <header
-    class="flex items-center justify-between px-6 bg-gradient-to-b from-primaryDark to-grayDark text-white shadow-md"
+    class="flex items-center justify-between px-6 bg-backgroundGradient text-white shadow-md"
     style="height: 4rem"
   >
     <!-- Logo Section -->
