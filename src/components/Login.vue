@@ -1,7 +1,7 @@
 <template>
   <div class="flex justify-center items-center w-full h-full">
     <!-- Card Container -->
-    <div class="bg-white rounded-xl shadow-lg overflow-hidden w-full max-w-md">
+    <div class="bg-gray-100 rounded-xl shadow-lg overflow-hidden w-full max-w-md">
       <!-- Header Section -->
       <div class="bg-primaryDark text-white shadow-md py-3 text-center rounded-t-xl">
         <h1 class="text-3xl font-semibold">Sign In</h1>
