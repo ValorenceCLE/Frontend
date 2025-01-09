@@ -16,7 +16,7 @@
       <h3 class="text-lg font-bold">{{ relayName }}</h3>
 
       <!-- Status (right) -->
-      <span :class="statusClass" class="text-sm font-medium px-3 py-1 rounded-2xl">
+      <span :class="statusClass" class="text-sm font-medium px-7 py-1 rounded-md">
         {{ displayStatus }}
       </span>
     </div>
@@ -28,13 +28,13 @@
         - .flex h-full space-x-2 items-center justify-center 
           so buttons line up horizontally, share space, and are centered vertically
       -->
-    <div class="flex-[2] p-2 border-l border-gray-300 rounded-r-md">
+    <div class="flex-[2] p-2 border-l border-gray-300 rounded-r-md shadow-md">
       <div class="flex h-full space-x-2 items-center justify-center">
         <!-- ON button -->
         <button
           v-if="buttons.on"
           @click="turnOn"
-          class="flex-1 bg-gray-200 text-gray-800 font-semibold border border-gray-400 hover:bg-gray-300 px-3 py-2 rounded-md text-center"
+          class="flex-1 bg-gray-200 text-gray-800 font-semibold border border-gray-400 hover:bg-gray-300 px-3 py-2 rounded-md text-center shadow-md"
         >
           {{ buttons.on }}
         </button>
@@ -43,7 +43,7 @@
         <button
           v-if="buttons.off"
           @click="turnOff"
-          class="flex-1 bg-gray-200 text-gray-800 font-semibold border border-gray-400 hover:bg-gray-300 px-3 py-2 rounded-md text-center"
+          class="flex-1 bg-gray-200 text-gray-800 font-semibold border border-gray-400 hover:bg-gray-300 px-3 py-2 rounded-md text-center shadow-md"
         >
           {{ buttons.off }}
         </button>
@@ -52,7 +52,7 @@
         <button
           v-if="buttons.pulse"
           @click="pulse"
-          class="flex-1 bg-gray-200 text-gray-800 font-semibold border border-gray-400 hover:bg-gray-300 px-3 py-2 rounded-md text-center"
+          class="flex-1 bg-gray-200 text-gray-800 font-semibold border border-gray-400 hover:bg-gray-300 px-3 py-2 rounded-md text-center shadow-md"
         >
           {{ buttons.pulse }}
         </button>
@@ -99,12 +99,12 @@ export default {
     // Computed class for status badge background color
     const statusClass = computed(() => {
       if (relayState.relayStatus === "On") {
-        return "bg-green-500 text-white";
+        return "bg-relayGreen text-white";
       } else if (relayState.relayStatus === "Off") {
-        return "bg-red-500 text-white";
+        return "bg-relayRed text-white";
       } else {
         // For "pulse" or any other custom state
-        return "bg-blue-500 text-white";
+        return "bg-relayYellow text-white";
       }
     });
 

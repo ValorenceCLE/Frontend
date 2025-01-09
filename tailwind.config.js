@@ -11,14 +11,14 @@ module.exports = {
         grayMed: '#909294',
         grayLight: '#d3d3d3',
         background: '#fcfcfc',
-        relayOn: '#29a42d',  
-        relayOff: '#da3c37', /*190, 73, 69*/
-        relayPulse: '#e3dc19',
+        relayGreen: '#2a980c',  
+        relayYellow: '#ffff00', /*190, 73, 69*/
+        relayRed: '#eb191a',
       },
       backgroundImage: {
         'backgroundGradient': 'radial-gradient(circle, rgba(10,31,68,1) 35%, rgba(33,37,41,1) 100%)',
         'blueGradient': 'radial-gradient(circle, rgba(30,58,138,1) 35%, rgba(10,31,68,1) 100%)',
-        'sidebarGradient': 'radial-gradient(circle at 30% 50%, rgba(30,58,138,1) 25%, rgba(10,31,68,1) 100%)',
+        'sidebarGradient': 'radial-gradient(circle, rgba(10,31,68,1) 35%, rgba(33,37,41,1) 100%)',
         'crosshatch-pattern': `
           repeating-linear-gradient(
             45deg,

@@ -17,7 +17,7 @@
       <SideBar />
 
       <!-- Main content on the right -->
-      <div class="flex-grow flex flex-col">
+      <div class="flex-grow flex flex-col bg-crosshatch-pattern bg-background">
         <!-- Body content can go here -->
         <div class="flex-grow flex justify-center items-center text-grayDark">
           <h1>Admin Dashboard - Work in Progress</h1>

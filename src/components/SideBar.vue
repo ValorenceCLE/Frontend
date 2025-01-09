@@ -1,14 +1,15 @@
 <template>
   <!-- Sidebar container -->
   <div
-    class="h-full w-56 bg-gradient-to-b from-gray-800 to-gray-900 text-gray-200 font-semibold flex flex-col shadow-lg"
+    class="w-56 text-gray-200 font-semibold flex flex-col shadow-2xl"
+    style="height: calc(100vh - var(--header-height) - var(--footer-height))"
   >
     <!-- Collapsible menu -->
     <ul class="divide-y divide-gray-700">
       <li v-for="(menu, index) in menus" :key="index" class="relative">
         <!-- Parent menu row -->
         <div
-          class="p-3 cursor-pointer flex justify-between items-center hover:bg-gray-700 transition-colors"
+          class="p-3 cursor-pointer flex justify-between items-center"
           @click="toggleDropdown(index)"
         >
           <div class="flex items-center gap-2">
@@ -36,11 +37,11 @@
           @leave="onLeave"
           @after-leave="onAfterLeave"
         >
-          <ul v-if="dropdownStates[index]" class="bg-gray-700">
+          <ul v-if="dropdownStates[index]" class="bg-gray-600">
             <li
               v-for="(item, subIndex) in menu.items"
               :key="subIndex"
-              class="pl-8 py-2 hover:bg-gray-600 hover:text-white transition-colors cursor-pointer"
+              class="dropdown-item pl-8 py-1 hover:bg-gray-500 transition-colors cursor-pointer"
             >
               {{ item }}
             </li>
@@ -52,6 +53,12 @@
 </template>
 
 <script>
+import settingsIcon from "@/assets/icons/settings.svg";
+import relaysIcon from "@/assets/icons/relays.svg";
+import logsIcon from "@/assets/icons/logs.svg";
+import monitorIcon from "@/assets/icons/monitor.svg";
+import dashboardIcon from "@/assets/icons/dashboard.svg";
+
 export default {
   name: "SideBar",
   data() {
@@ -59,27 +66,27 @@ export default {
       menus: [
         {
           title: "Settings",
-          icon: require("@/assets/icons/settings.svg"),
-          items: ["Information", "Network", "Date/Time", "Configuration"],
+          icon: settingsIcon,
+          items: ["Information", "Network", "Date/Time", "Configuration", "Emails"],
         },
         {
           title: "Relays",
-          icon: require("@/assets/icons/relays.svg"),
+          icon: relaysIcon,
           items: ["Settings", "Logic", "Schedule"],
         },
         {
           title: "Logs",
-          icon: require("@/assets/icons/logs.svg"),
-          items: ["System Logs", "Router Logs", "Camera Logs"],
+          icon: logsIcon,
+          items: ["System", "Router", "Camera"],
         },
         {
           title: "Monitor",
-          icon: require("@/assets/icons/monitor.svg"),
+          icon: monitorIcon,
           items: ["Real Time", "Historical"],
         },
         {
           title: "Dashboard",
-          icon: require("@/assets/icons/dashboard.svg"),
+          icon: dashboardIcon,
           items: ["Setup", "View"],
         },
       ],

@@ -1,5 +1,5 @@
 <template>
-  <div id="app" class="bg-crosshatch-pattern bg-background min-h-screen">
+  <div id="app" class="bg-backgroundGradient min-h-screen">
     <router-view />
   </div>
 </template>

@@ -1,7 +1,9 @@
 <template>
   <div class="min-h-screen flex flex-col">
     <Header />
-    <div class="flex-grow flex justify-center items-center">
+    <div
+      class="flex-grow flex justify-center items-center bg-crosshatch-pattern bg-background"
+    >
       <Login />
     </div>
     <Footer />

@@ -1,5 +1,5 @@
 <template>
-  <footer class="relative bg-backgroundGradient text-white" style="height: 2.1rem">
+  <footer class="relative text-white" style="height: 2.1rem">
     <div
       class="container mx-auto text-center font-semibold"
       style="font-size: 1rem; line-height: 2rem"

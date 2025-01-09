@@ -79,6 +79,24 @@ export default {
             pulse: "Run 5 Min.",
           },
         },
+        {
+          name: "Aux1",
+          status: "On",
+          buttons: {
+            on: "On",
+            off: "Off",
+            pulse: "Pulse",
+          },
+        },
+        {
+          name: "Aux2",
+          status: "On",
+          buttons: {
+            on: "On",
+            off: "Off",
+            pulse: "Pulse",
+          },
+        },
       ],
     };
   },

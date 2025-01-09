@@ -1,9 +1,11 @@
 <template>
   <div class="flex justify-center items-center w-full h-full">
     <!-- Card Container -->
-    <div class="bg-gray-100 rounded-xl shadow-lg overflow-hidden w-full max-w-md">
+    <div
+      class="bg-grayLight rounded-xl shadow-lg shadow-gray-400 overflow-hidden w-full max-w-md"
+    >
       <!-- Header Section -->
-      <div class="bg-primaryDark text-white shadow-md py-3 text-center rounded-t-xl">
+      <div class="bg-primaryDark text-white shadow-lg py-3 text-center rounded-t-xl">
         <h1 class="text-3xl font-semibold">Sign In</h1>
       </div>
 
@@ -14,7 +16,7 @@
           <input
             type="text"
             placeholder="Username"
-            class="w-full px-4 py-1.5 border text-center text-xl border-gray-300 rounded-lg text-gray-600 focus:outline-none focus:ring-2 focus:ring-grayLight"
+            class="w-full px-4 py-1.5 border text-center text-xl border-gray-400 rounded-lg text-gray-600 focus:outline-none focus:ring-2 focus:ring-grayLight"
           />
         </div>
 
@@ -23,7 +25,7 @@
           <input
             type="password"
             placeholder="Password"
-            class="w-full px-4 py-1.5 border text-center text-xl border-gray-300 rounded-lg text-gray-600 focus:outline-none focus:ring-1 focus:ring-grayLight"
+            class="w-full px-4 py-1.5 border text-center text-xl border-gray-400 rounded-lg text-gray-600 focus:outline-none focus:ring-1 focus:ring-grayLight"
           />
         </div>
 
