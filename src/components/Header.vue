@@ -35,6 +35,12 @@
         style="font-size: 1.4rem"
         >Admin</a
       >
+      <a
+        href="/test"
+        class="font-semibold hover:text-primaryLight"
+        style="font-size: 1.4rem"
+        >Test</a
+      >
       <a href="/" class="font-semibold hover:text-primaryLight" style="font-size: 1.4rem"
         >Logout</a
       >

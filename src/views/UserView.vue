@@ -30,7 +30,7 @@
 <script>
 import Header from "../components/Header.vue";
 import Footer from "../components/Footer.vue";
-import RelayCard from "../components/RelayCard.vue";
+import RelayCard from "../components/relays/RelayCard.vue";
 
 export default {
   name: "UserView",
