@@ -6,9 +6,6 @@
     >
       © 2024 Covert Law Enforcement. All Rights Reserved | Support: (435)-565-6018
     </div>
-    <div
-      class="absolute inset-x-0 bottom-0 h-0.5 bg-gradient-to-b from-transparent to-primaryMed"
-    ></div>
   </footer>
 </template>
 

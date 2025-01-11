@@ -1,0 +1,54 @@
+{
+    "relays": [
+      {
+        "name": "Router",
+        "status": "On",
+        "buttons": {
+          "pulse": "Restart"
+        }
+      },
+      {
+        "name": "Camera",
+        "status": "Off",
+        "buttons": {
+          "on": "Turn On",
+          "off": "Turn Off"
+        }
+      },
+      {
+        "name": "Fan",
+        "status": "Off",
+        "buttons": {
+          "on": "On",
+          "off": "Off",
+          "pulse": "Run 5 Min."
+        }
+      },
+      {
+        "name": "IR Light",
+        "status": "Off",
+        "buttons": {
+          "on": "On",
+          "off": "Off"
+        }
+      },
+      {
+        "name": "Aux 1",
+        "status": "Off",
+        "buttons": {
+          "on": "On",
+          "off": "Off",
+          "pulse": "Run 5 Min."
+        }
+      },
+      {
+        "name": "Aux 2",
+        "status": "Off",
+        "buttons": {
+          "on": "On",
+          "off": "Off",
+          "pulse": "Run 5 Min."
+        }
+      }
+    ]
+}

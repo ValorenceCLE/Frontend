@@ -13,10 +13,10 @@
       class="flex-[1] flex items-center justify-between p-3 border-r border-gray-300 rounded-l-md"
     >
       <!-- Name (left) -->
-      <h3 class="text-lg font-bold">{{ relayName }}</h3>
+      <h3 class="text-xl font-semibold px-1">{{ relayName }}</h3>
 
       <!-- Status (right) -->
-      <span :class="statusClass" class="text-sm font-medium px-7 py-1 rounded-md">
+      <span :class="statusClass" class="text-sm font-medium px-8 py-1 rounded-md">
         {{ displayStatus }}
       </span>
     </div>
