@@ -9,25 +9,23 @@
 
     <div class="w-full mt-4 mb-5 flex text-center space-x-3">
       <!-- Left Column -->
-      <div class="flex-[2] bg-grayLight p-4 rounded-lg">
+      <div class="flex-[2] bg-grayLight p-3 rounded-lg">
         <h2 class="text-xl font-semibold">Control Panel</h2>
       </div>
       <!-- Middle Column (Gauge for Temperature) -->
       <div
-        class="flex-[1.5] bg-grayLight p-4 rounded-lg h-48 flex flex-col items-center justify-center"
+        class="flex-[1.5] bg-grayLight p-3 rounded-lg h-48 flex flex-col items-center justify-center"
       >
-        <h2 class="text-lg font-semibold text-gray-600">Temperature</h2>
         <div class="w-full h-full">
-          <Gauge :value="75" :min="-40" :max="120" canvasId="temperatureGauge" />
+          <Gauge :value="temperature" :min="-40" :max="120" title="Temperature" />
         </div>
       </div>
       <!-- Right Column (Gauge for Humidity) -->
       <div
-        class="flex-[1.5] bg-grayLight p-4 rounded-lg h-48 flex flex-col items-center justify-center"
+        class="flex-[1.5] bg-grayLight p-3 rounded-lg h-48 flex flex-col items-center justify-center"
       >
-        <h2 class="text-lg font-semibold text-gray-600">Humidity</h2>
         <div class="w-full h-full">
-          <Gauge :value="65" :min="0" :max="100" canvasId="humidityGauge" />
+          <Gauge :value="humidity" :min="0" :max="100" title="Humidity" />
         </div>
       </div>
     </div>
@@ -58,16 +56,26 @@ export default {
   },
   data() {
     return {
-      relays: [], // Array to store relay data
+      relays: [],
+      temperature: 75,
+      humidity: 65,
     };
   },
-  async mounted() {
-    const response = RelayApi.get("/api/relays"); // Fetch relay data from dummy API
+  mounted() {
+    const response = RelayApi.get("/api/relays");
     if (response.success) {
       this.relays = response.data;
-    } else {
-      console.error(response.error); // Handle errors gracefully
     }
+
+    // Simulate random updates for testing
+    setInterval(() => {
+      const newTemperature = Math.floor(Math.random() * (120 - -40 + 1) + -40);
+      const newHumidity = Math.floor(Math.random() * (100 - 0 + 1));
+
+      console.log("New Temperature:", newTemperature, "New Humidity:", newHumidity);
+      this.temperature = newTemperature;
+      this.humidity = newHumidity;
+    }, 5000);
   },
 };
 </script>
