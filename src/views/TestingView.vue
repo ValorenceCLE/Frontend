@@ -8,7 +8,7 @@
       <div
         class="flex-grow bg-crosshatch-pattern bg-background p-4 flex items-center justify-center"
       >
-        <Dashboard />
+        <Network />
       </div>
     </div>
 
@@ -20,7 +20,7 @@
 import Header from "@/components/Header.vue";
 import Footer from "@/components/Footer.vue";
 import SideBar from "@/components/SideBar.vue";
-import Dashboard from "@/components/etc/Dashboard.vue";
+import Network from "@/components/settings/Network.vue";
 
 export default {
   name: "TestingView",
@@ -28,7 +28,7 @@ export default {
     Header,
     Footer,
     SideBar,
-    Dashboard,
+    Network,
   },
 };
 </script>

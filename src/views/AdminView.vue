@@ -1,53 +1,34 @@
 <template>
-  <!-- 
-    Overall page is a vertical flex container
-    that fills the screen (min-h-screen):
-      - One “row” for Header
-      - One “row” for the main area (Sidebar + Content)
-      - One “row” for Footer
-  -->
   <div class="flex flex-col min-h-screen">
-    <!-- Header at the top -->
     <Header />
 
-    <!-- Middle row: Sidebar + Main content side by side -->
-    <!-- flex-grow so it expands to fill space between header & footer -->
-    <div class="flex flex-grow">
-      <!-- Sidebar on the left -->
+    <div class="flex-grow flex">
       <SideBar />
-
-      <!-- Main content on the right -->
-      <div class="flex-grow flex flex-col bg-crosshatch-pattern bg-background">
-        <!-- Body content can go here -->
-        <div class="flex-grow flex justify-center items-center text-grayDark">
-          <h1>Admin Dashboard - Work in Progress</h1>
-        </div>
+      <!-- Main content area -->
+      <div
+        class="flex-grow bg-crosshatch-pattern bg-background p-4 flex items-center justify-center"
+      >
+        <Dashboard />
       </div>
     </div>
 
-    <!-- Footer at the bottom -->
     <Footer />
   </div>
 </template>
 
 <script>
-import Header from "../components/Header.vue";
-import Footer from "../components/Footer.vue";
-import SideBar from "../components/SideBar.vue";
+import Header from "@/components/Header.vue";
+import Footer from "@/components/Footer.vue";
+import SideBar from "@/components/SideBar.vue";
+import Dashboard from "@/components/etc/Dashboard.vue";
 
 export default {
+  name: "TestingView",
   components: {
     Header,
     Footer,
     SideBar,
+    Dashboard,
   },
 };
 </script>
-
-<style scoped>
-/* 
-  No more .flex on the root container with SideBar + main
-  because we’re nesting that inside the middle “row” 
-  (the .flex-grow).
-*/
-</style>

@@ -2,7 +2,7 @@
   <div class="flex justify-center items-center w-full h-full">
     <!-- Card Container -->
     <div
-      class="bg-grayLight rounded-xl shadow-lg shadow-gray-400 overflow-hidden w-full max-w-md"
+      class="bg-gray-200 rounded-xl shadow-lg shadow-gray-400 overflow-hidden w-full max-w-md"
     >
       <!-- Header Section -->
       <div class="bg-primaryDark text-white shadow-lg py-3 text-center rounded-t-xl">
