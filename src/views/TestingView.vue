@@ -5,7 +5,9 @@
     <div class="flex-grow flex">
       <SideBar />
       <!-- Main content area -->
-      <div class="flex-grow bg-crosshatch-pattern bg-background p-4">
+      <div
+        class="flex-grow bg-crosshatch-pattern bg-background p-4 flex items-center justify-center"
+      >
         <Dashboard />
       </div>
     </div>

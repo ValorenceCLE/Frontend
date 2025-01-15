@@ -1,3 +1,5 @@
+const { text } = require('stream/consumers');
+
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: ['./index.html', './src/**/*.{vue,js,ts,jsx,tsx}'],
@@ -12,8 +14,9 @@ module.exports = {
         grayLight: '#d3d3d3',
         background: '#fcfcfc',
         relayGreen: '#2a980c',  
-        relayYellow: '#ffff00', /*190, 73, 69*/
+        relayYellow: '#FFDF00', /*190, 73, 69*/
         relayRed: '#eb191a',
+        textColor: '#333',
       },
       backgroundImage: {
         'backgroundGradient': 'radial-gradient(circle, rgba(10,31,68,1) 35%, rgba(33,37,41,1) 100%)',
@@ -35,6 +38,28 @@ module.exports = {
             transparent 12px
           )
         `,
+      },
+      fontSize: {
+        'Header': ['2rem', {
+          lineHeight: '2rem',
+          fontWeight: 'bolder',
+          color: '#333'
+        } ],
+        'Subheader': ['1.35rem', {
+          lineHeight: '1.75rem',
+          fontWeight: 'bold',
+          color: '#212529'
+        } ],
+        'Body': ['1.15rem', {
+          lineHeight: '1.5rem',
+          fontWeight: '600',
+          color: '#333'
+        } ],
+        'Status': ['1rem', {
+          lineHeight: '1.25rem',
+          fontWeight: 'semibold',
+          color: 'white'
+        } ],
       },
     },
   },

@@ -13,10 +13,10 @@
       class="flex-[1] flex items-center justify-between p-3 border-r border-gray-300 rounded-l-md"
     >
       <!-- Name (left) -->
-      <h3 class="text-xl font-semibold px-1">{{ relayName }}</h3>
+      <h3 class="text-Subheader text-textColor">{{ relayName }}</h3>
 
       <!-- Status (right) -->
-      <span :class="statusClass" class="text-sm font-medium px-8 py-1 rounded-md">
+      <span :class="statusClass" class="text-Status font-semibold px-6 py-1 rounded-md">
         {{ displayStatus }}
       </span>
     </div>
@@ -34,7 +34,7 @@
         <button
           v-if="buttons.on"
           @click="turnOn"
-          class="flex-1 bg-gray-200 text-gray-800 font-semibold border border-gray-400 hover:bg-gray-300 px-3 py-2 rounded-md text-center shadow-md"
+          class="flex-1 bg-gray-200 text-Body text-textColor border border-gray-400 hover:bg-gray-300 px-3 py-2 rounded-md text-center shadow-md"
         >
           {{ buttons.on }}
         </button>
@@ -43,7 +43,7 @@
         <button
           v-if="buttons.off"
           @click="turnOff"
-          class="flex-1 bg-gray-200 text-gray-800 font-semibold border border-gray-400 hover:bg-gray-300 px-3 py-2 rounded-md text-center shadow-md"
+          class="flex-1 bg-gray-200 text-Body text-textColor border border-gray-400 hover:bg-gray-300 px-3 py-2 rounded-md text-center shadow-md"
         >
           {{ buttons.off }}
         </button>
@@ -52,7 +52,7 @@
         <button
           v-if="buttons.pulse"
           @click="pulse"
-          class="flex-1 bg-gray-200 text-gray-800 font-semibold border border-gray-400 hover:bg-gray-300 px-3 py-2 rounded-md text-center shadow-md"
+          class="flex-1 bg-gray-200 text-Body text-textColor border border-gray-400 hover:bg-gray-300 px-3 py-2 rounded-md text-center shadow-md"
         >
           {{ buttons.pulse }}
         </button>
@@ -136,12 +136,3 @@ export default {
   },
 };
 </script>
-
-<style scoped>
-/*
-    - .flex items-center on the top-level <div> ensures all child elements 
-      (left & right sections) are vertically centered.
-    - .flex-[1] vs. .flex-[2] controls the relative widths of left vs. right sections.
-    - .flex-1 on each button ensures they share space evenly.
-  */
-</style>
