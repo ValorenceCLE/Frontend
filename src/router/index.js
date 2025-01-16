@@ -1,44 +1,78 @@
 import { createRouter, createWebHistory } from "vue-router";
 import AdminView from "@/views/AdminView.vue";
-
+import UserView from "@/views/UserView.vue";
 // Import dynamic components
 
-// Settings
+// Header Links
+import Help from "@/components/etc/Help.vue";
+import Contact from "@/components/etc/Contact.vue";
+
+// Admin Settings
 import Network from "@/components/settings/Network.vue";
 import DateTime from "@/components/settings/DateTime.vue";
 import Configuration from "@/components/settings/Configuration.vue";
 import Emails from "@/components/settings/Emails.vue";
 
-// Relays
+// Admin Relays
 import RelaySettings from "@/components/relays/RelaySettings.vue";
 import RelayLogic from "@/components/relays/RelayLogic.vue";
 import RelaySchedule from "@/components/relays/RelaySchedule.vue";
 
-// Logs
+// Admin Logs
 import Logs from "@/components/etc/Logs.vue";
 
-// Monitor
+// Admin Monitor
 import HistoricalGraph from "@/components/monitor/Historical.vue";
 import RealtimeGraph from "@/components/monitor/Realtime.vue";
 
-// Dashboard
+// Admin Dashboard
 import Dashboard from "@/components/etc/Dashboard.vue";
 
 const routes = [
   { path: "/", component: () => import("@/views/LoginView.vue") },
-  { path: "/user", component: () => import("@/views/UserView.vue") },
   { path: "/test", component: () => import("@/views/TestingView.vue") },
+  
+  // User Routes
   {
-    path: "/admin",
-    component: AdminView,
+    path: "/user",
+    component: UserView,
     children: [
-      // Default child route for `/admin` to render the Dashboard component
       {
         path: "",
         component: Dashboard,
       },
 
-      // Dashboard route (accessible via /admin/dashboard/view)
+      // Header Links in UserView
+      {
+        path: "help",
+        component: Help,
+      },
+      {
+        path: "contact",
+        component: Contact,
+      },
+    ],
+  },
+
+  // Admin Routes
+  {
+    path: "/admin",
+    component: AdminView,
+    children: [
+      {
+        path: "",
+        component: Dashboard,
+      },
+      {
+        path: "help",
+        component: Help,
+      },
+      {
+        path: "contact",
+        component: Contact,
+      },
+
+      // Dashboard route
       {
         path: "dashboard/view",
         component: Dashboard,

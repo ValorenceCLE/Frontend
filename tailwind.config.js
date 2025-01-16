@@ -60,6 +60,11 @@ module.exports = {
           fontWeight: 'semibold',
           color: 'white'
         } ],
+        'Navbar': ['1.5rem', {
+          lineHeight: '4rem',
+          fontWeight: '600',
+          color: 'white'
+        } ],
       },
     },
   },

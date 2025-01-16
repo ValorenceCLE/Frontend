@@ -12,38 +12,21 @@
       />
     </div>
 
-    <!-- Unit Name Section -->
-
-    <!-- <div
-      class="absolute left-1/2 transform -translate-x-1/2 text-center font-medium"
-      style="font-size: 1.75rem; line-height: 4rem; color: inherit"
-    >
-      Demo DPM #1
-    </div> -->
-
     <!-- Navigation Section -->
-    <nav class="flex items-center space-x-4">
-      <a
-        href="/user"
-        class="font-semibold hover:text-primaryLight"
-        style="font-size: 1.4rem"
-        >User</a
-      >
-      <a
-        href="/admin"
-        class="font-semibold hover:text-primaryLight"
-        style="font-size: 1.4rem"
-        >Admin</a
-      >
-      <a
-        href="/test"
-        class="font-semibold hover:text-primaryLight"
-        style="font-size: 1.4rem"
-        >Test</a
-      >
-      <a href="/" class="font-semibold hover:text-primaryLight" style="font-size: 1.4rem"
-        >Logout</a
-      >
+    <nav class="flex items-center space-x-4 text-Navbar">
+      <!-- Adjust navigation paths dynamically This is for development only -->
+      <div class="space-x-4 absolute transform left-1/2">
+        <router-link to="/user" class="hover:text-primaryLight">User</router-link>
+        <router-link to="/admin" class="hover:text-primaryLight">Admin</router-link>
+        <router-link to="/test" class="hover:text-primaryLight">Test</router-link>
+      </div>
+      <router-link :to="`${basePath}/help`" class="hover:text-primaryLight">
+        Help
+      </router-link>
+      <router-link :to="`${basePath}/contact`" class="hover:text-primaryLight">
+        Contact
+      </router-link>
+      <router-link to="/" class="hover:text-primaryLight">Logout</router-link>
     </nav>
   </header>
 </template>
@@ -51,6 +34,12 @@
 <script>
 export default {
   name: "Header",
+  computed: {
+    basePath() {
+      // Detect whether the current path is admin or user
+      return this.$route.path.startsWith("/admin") ? "/admin" : "/user";
+    },
+  },
 };
 </script>
 

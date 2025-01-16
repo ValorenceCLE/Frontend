@@ -62,7 +62,7 @@ export default {
         {
           title: "Settings",
           icon: settingsIcon,
-          items: ["Network", "Date/Time", "Configuration", "Emails"],
+          items: ["Network", "Date/Time", "Emails", "Configuration"],
         },
         {
           title: "Relays",
@@ -93,11 +93,13 @@ export default {
       this.dropdownStates[index] = !this.dropdownStates[index];
     },
     generateRoute(menu, item) {
-      return `/admin/${menu.toLowerCase()}/${item.toLowerCase().replace(" ", "-")}`;
+      const formattedItem = item
+        .toLowerCase()
+        .replace(/\s+/g, "-") // Replace spaces with dashes
+        .replace(/\//g, "-"); // Replace slashes with dashes
+
+      return `/admin/${menu.toLowerCase()}/${formattedItem}`;
     },
-  },
-  mounted() {
-    this.dropdownStates = this.menus.map(() => false);
   },
 };
 </script>

@@ -4,10 +4,8 @@
 
     <div class="flex-grow flex">
       <!-- Main content area without sidebar -->
-      <div
-        class="flex-grow bg-crosshatch-pattern bg-background p-4 flex items-center justify-center"
-      >
-        <Dashboard />
+      <div class="flex-grow bg-crosshatch-pattern bg-background p-4">
+        <router-view />
       </div>
     </div>
 
@@ -18,14 +16,12 @@
 <script>
 import Header from "@/components/Header.vue";
 import Footer from "@/components/Footer.vue";
-import Dashboard from "@/components/etc/Dashboard.vue";
 
 export default {
-  name: "TestingViewNoSidebar", // Updated component name
+  name: "UserView",
   components: {
     Header,
     Footer,
-    Dashboard,
   },
 };
 </script>
