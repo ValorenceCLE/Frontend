@@ -1,13 +1,10 @@
 <template>
-  <!-- Sidebar container -->
   <div
     class="w-56 text-gray-200 font-semibold flex flex-col shadow-2xl"
     style="height: calc(100vh - var(--header-height) - var(--footer-height))"
   >
-    <!-- Collapsible menu -->
     <ul class="divide-y divide-gray-700">
       <li v-for="(menu, index) in menus" :key="index" class="relative">
-        <!-- Parent menu row -->
         <div
           class="p-3 cursor-pointer flex justify-between items-center"
           @click="toggleDropdown(index)"
@@ -20,7 +17,6 @@
             />
             <span>{{ menu.title }}</span>
           </div>
-          <!-- Rotate arrow with transition -->
           <span
             class="transform transition-transform duration-200"
             :class="{ 'rotate-180': dropdownStates[index] }"
@@ -30,20 +26,19 @@
         </div>
 
         <!-- Dropdown Items -->
-        <transition
-          name="slide-dropdown"
-          @enter="onEnter"
-          @after-enter="onAfterEnter"
-          @leave="onLeave"
-          @after-leave="onAfterLeave"
-        >
+        <transition name="slide-dropdown">
           <ul v-if="dropdownStates[index]" class="bg-gray-600">
             <li
               v-for="(item, subIndex) in menu.items"
               :key="subIndex"
-              class="dropdown-item pl-8 py-1 hover:bg-gray-500 transition-colors cursor-pointer"
+              class="pl-8 py-1 hover:bg-gray-500 transition-colors"
             >
-              {{ item }}
+              <router-link
+                :to="generateRoute(menu.title, item)"
+                class="text-white no-underline"
+              >
+                {{ item }}
+              </router-link>
             </li>
           </ul>
         </transition>
@@ -97,19 +92,8 @@ export default {
     toggleDropdown(index) {
       this.dropdownStates[index] = !this.dropdownStates[index];
     },
-    onEnter(el) {
-      el.style.height = "0";
-    },
-    onAfterEnter(el) {
-      el.style.height = "";
-    },
-    onLeave(el) {
-      el.style.height = el.scrollHeight + "px";
-      void el.offsetHeight; // force reflow
-      el.style.height = "0";
-    },
-    onAfterLeave(el) {
-      el.style.height = "";
+    generateRoute(menu, item) {
+      return `/admin/${menu.toLowerCase()}/${item.toLowerCase().replace(" ", "-")}`;
     },
   },
   mounted() {
@@ -117,7 +101,6 @@ export default {
   },
 };
 </script>
-
 <style scoped>
 .slide-dropdown-enter-active,
 .slide-dropdown-leave-active {

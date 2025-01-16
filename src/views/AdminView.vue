@@ -8,7 +8,7 @@
       <div
         class="flex-grow bg-crosshatch-pattern bg-background p-4 flex items-center justify-center"
       >
-        <Dashboard />
+        <router-view />
       </div>
     </div>
 
@@ -20,15 +20,13 @@
 import Header from "@/components/Header.vue";
 import Footer from "@/components/Footer.vue";
 import SideBar from "@/components/SideBar.vue";
-import Dashboard from "@/components/etc/Dashboard.vue";
 
 export default {
-  name: "TestingView",
+  name: "AdminView",
   components: {
     Header,
     Footer,
     SideBar,
-    Dashboard,
   },
 };
 </script>
