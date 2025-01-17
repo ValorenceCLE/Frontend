@@ -23,7 +23,7 @@ import Logs from "@/components/etc/Logs.vue";
 
 // Admin Monitor
 import HistoricalGraph from "@/components/monitor/Historical.vue";
-import RealtimeGraph from "@/components/monitor/Realtime.vue";
+import RealtimeGraph from "@/components/monitor/RealTime.vue";
 
 // Admin Dashboard
 import Dashboard from "@/components/etc/Dashboard.vue";
