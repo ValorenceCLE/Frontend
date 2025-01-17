@@ -113,7 +113,7 @@
 </template>
 
 <script>
-import DummyAPI from "@/api/DummyAPI";
+import DummyAPI from "@/api/dummyApi";
 
 export default {
   name: "DateTime",
