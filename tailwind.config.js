@@ -17,6 +17,9 @@ module.exports = {
         relayYellow: '#FFDF00', /*190, 73, 69*/
         relayRed: '#eb191a',
         textColor: '#333',
+        buttonSelected: '#3b82f6',
+        buttonUnselected: '#d3d3d3',
+        buttonHover: '#1e3a8a',
       },
       backgroundImage: {
         'backgroundGradient': 'radial-gradient(circle, rgba(10,31,68,1) 35%, rgba(33,37,41,1) 100%)',
@@ -64,6 +67,22 @@ module.exports = {
           lineHeight: '4rem',
           fontWeight: '600',
           color: 'white'
+        } ],
+        'Form': ['1rem', {
+          lineHeight: '1.5rem',
+          fontWeight: '500',
+        } ],
+        'FormHeader': ['2.25rem', {
+          lineHeight: '2.25rem',
+          fontWeight: '700',
+        } ],
+        'FormButton': ['1.1rem', {
+          lineHeight: '1.25rem',
+          fontWeight: '600',
+        } ],
+        'FormSubmit': ['1.3rem', {
+          lineHeight: '1.5rem',
+          fontWeight: '600',
         } ],
       },
     },
