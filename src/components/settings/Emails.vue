@@ -22,6 +22,7 @@
                   v-model="emailSettings.smtp_server"
                   class="border-grayMed border rounded w-3/4 px-2 text-Form"
                   type="text"
+                  autocomplete="off"
                 />
               </td>
             </tr>
@@ -33,6 +34,7 @@
                   v-model="emailSettings.smtp_port"
                   class="border-grayMed border rounded w-3/4 px-2 text-Form"
                   type="number"
+                  autocomplete="off"
                 />
               </td>
             </tr>
@@ -44,6 +46,7 @@
                   v-model="emailSettings.smtp_user"
                   class="border-grayMed border rounded w-3/4 px-2 text-Form"
                   type="text"
+                  autocomplete="off"
                 />
               </td>
             </tr>
@@ -55,6 +58,7 @@
                   v-model="emailSettings.smtp_password"
                   class="border-grayMed border rounded w-3/4 px-2 text-Form"
                   type="password"
+                  autocomplete="off"
                 />
               </td>
             </tr>
@@ -79,6 +83,7 @@
                   v-model="emailSettings.return_email"
                   class="border-grayMed border rounded w-3/4 px-2 text-Form"
                   type="email"
+                  autocomplete="off"
                 />
               </td>
             </tr>
@@ -90,6 +95,7 @@
                   v-model="emailSettings.emails[index]"
                   class="border-grayMed border rounded w-3/4 px-2 text-Form"
                   type="email"
+                  autocomplete="off"
                 />
               </td>
             </tr>
