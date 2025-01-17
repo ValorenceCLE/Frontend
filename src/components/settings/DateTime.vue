@@ -67,11 +67,20 @@
             <tr>
               <td class="py-2 px-5 text-Body font-bold">Time Zone:</td>
               <td class="py-2 px-2">
-                <input
+                <select
                   v-model="timezoneSettings.time_zone"
+                  @change="updateUTCOffset"
                   class="border-grayMed border rounded w-3/4 px-2 text-Form"
-                  type="text"
-                />
+                >
+                  <option value="" disabled>Select Time Zone</option>
+                  <option value="America/New_York">New York</option>
+                  <option value="America/Chicago">Chicago</option>
+                  <option value="America/Denver">Denver</option>
+                  <option value="America/Phoenix">Phoenix</option>
+                  <option value="America/Los_Angeles">Los Angeles</option>
+                  <option value="America/Adak">Adak</option>
+                  <option value="Pacific/Honolulu">Honolulu</option>
+                </select>
               </td>
             </tr>
             <tr>
@@ -84,6 +93,7 @@
                 />
               </td>
             </tr>
+
             <!-- Submit & Clear Buttons -->
             <tr>
               <td class="py-3 text-center" colspan="2">
@@ -127,6 +137,15 @@ export default {
         utc_offset: "",
       },
       backupSettings: {},
+      VALID_TIME_ZONES: {
+        "America/New_York": -5,
+        "America/Chicago": -6,
+        "America/Denver": -7,
+        "America/Phoenix": -7, // No DST
+        "America/Los_Angeles": -8,
+        "America/Adak": -10,
+        "Pacific/Honolulu": -10, // No DST
+      },
     };
   },
   methods: {
@@ -146,9 +165,26 @@ export default {
     clearSettings() {
       this.timezoneSettings = { ...this.backupSettings };
     },
+    updateUTCOffset() {
+      // Update the UTC offset based on the selected timezone
+      const selectedZone = this.timezoneSettings.time_zone;
+      this.timezoneSettings.utc_offset =
+        this.VALID_TIME_ZONES[selectedZone]?.toString() || "";
+    },
   },
   mounted() {
     this.fetchTimezoneSettings();
   },
 };
 </script>
+<style scoped>
+/* Customize the focus ring color */
+input:focus {
+  outline: 1px solid #909294; /* Change to your desired color */
+  border-color: #909294; /* Match the border color if desired */
+}
+select:focus {
+  outline: 1px solid #909294; /* Change to your desired color */
+  border-color: #909294; /* Match the border color if desired */
+}
+</style>

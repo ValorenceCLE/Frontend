@@ -177,3 +177,14 @@ export default {
   },
 };
 </script>
+<style scoped>
+/* Customize the focus ring color */
+input:focus {
+  outline: 1px solid #909294; /* Change to your desired color */
+  border-color: #909294; /* Match the border color if desired */
+}
+select:focus {
+  outline: 1px solid #909294; /* Change to your desired color */
+  border-color: #909294; /* Match the border color if desired */
+}
+</style>

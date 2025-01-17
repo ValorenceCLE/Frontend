@@ -67,7 +67,7 @@ export default {
         {
           title: "Relays",
           icon: relaysIcon,
-          items: ["Settings", "Logic", "Schedule"],
+          items: ["Setup", "Logic", "Schedule"],
         },
         {
           title: "Logs",

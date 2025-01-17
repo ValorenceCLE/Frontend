@@ -2,7 +2,7 @@
   <div class="w-full max-w-4xl mx-auto">
     <!-- Dashboard Header -->
     <div
-      class="bg-gray-200 p-3 rounded-lg shadow-md border border-gray-400 max-w-xl flex justify-center items-center mx-auto"
+      class="bg-gray-200 p-2 rounded-lg shadow-md border border-gray-400 max-w-xl flex justify-center items-center mx-auto"
     >
       <h1 class="text-Header text-textColor">R&D Demo Unit</h1>
     </div>
@@ -10,7 +10,7 @@
     <!-- The container we measure for a unified scale -->
     <div
       ref="scalingContainer"
-      class="w-full mt-4 mb-4 flex text-center space-x-3 overflow-auto break-words"
+      class="w-full mt-3 mb-3 flex text-center space-x-3 overflow-auto break-words"
     >
       <!-- Left Column (Control Panel) -->
       <div class="flex-[2] bg-gray-200 p-1 rounded-lg border border-gray-400 shadow-lg">
@@ -69,7 +69,7 @@
     </div>
 
     <!-- Relay Cards Section -->
-    <div class="w-full mt-4 space-y-3">
+    <div class="w-full mt-3 space-y-2">
       <RelayCard
         v-for="(relay, index) in relays"
         :key="index"

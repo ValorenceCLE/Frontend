@@ -8,7 +8,7 @@
       <div
         class="flex-grow bg-crosshatch-pattern bg-background p-4 flex items-center justify-center"
       >
-        <Network />
+        <h1>Testing View</h1>
       </div>
     </div>
 
