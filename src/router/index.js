@@ -106,7 +106,7 @@ const routes = [
         component: RelaySchedule,
       },
       {
-        path: "relays/settings",
+        path: "relays/setup",
         component: RelaySettings,
       },
 
