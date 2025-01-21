@@ -65,14 +65,14 @@
           <input
             type="text"
             v-model="currentRelay.name"
-            class="ml-2 w-3/5 text-Form border-gray-300 rounded-md shadow-sm"
+            class="ml-2 w-7/12 text-Form border-gray-300 rounded-md shadow-sm"
           />
         </label>
         <label class="flex justify-between items-center mb-4">
           <span class="text-textColor text-Body">Enabled:</span>
           <select
             v-model="currentRelay.enabled"
-            class="ml-2 w-3/5 border-gray-400 text-textColor text-Form rounded-md shadow-sm"
+            class="ml-2 w-7/12 border-gray-400 text-textColor text-Form rounded-md shadow-sm"
           >
             <option value="true" class="text-textColor">True</option>
             <option value="false" class="text-textColor">False</option>
@@ -82,7 +82,7 @@
           <span class="text-textColor text-Body">Power Up State:</span>
           <select
             v-model="currentRelay.boot_state"
-            class="ml-2 w-3/5 border-gray-400 rounded-md shadow-sm text-textColor text-Form"
+            class="ml-2 w-7/12 border-gray-400 rounded-md shadow-sm text-textColor text-Form"
           >
             <option value="on" class="text-textColor">On</option>
             <option value="off" class="text-textColor">Off</option>
@@ -94,7 +94,7 @@
           <input
             type="number"
             v-model="currentRelay.pulse_time"
-            class="ml-2 w-3/5 border-gray-400 rounded-md shadow-sm text-textColor text-Form"
+            class="ml-2 w-7/12 border-gray-400 rounded-md shadow-sm text-textColor text-Form"
           />
         </label>
         <label class="flex justify-between items-center mb-4">
@@ -102,7 +102,7 @@
           <input
             type="text"
             v-model="currentRelay.on_status_text"
-            class="ml-2 w-3/5 border-gray-400 rounded-md shadow-sm text-textColor text-Form"
+            class="ml-2 w-7/12 border-gray-400 rounded-md shadow-sm text-textColor text-Form"
           />
         </label>
         <label class="flex justify-between items-center mb-4">
@@ -110,7 +110,7 @@
           <input
             type="text"
             v-model="currentRelay.off_status_text"
-            class="ml-2 w-3/5 border-gray-400 rounded-md shadow-sm text-textColor text-Form"
+            class="ml-2 w-7/12 border-gray-400 rounded-md shadow-sm text-textColor text-Form"
           />
         </label>
         <div class="flex justify-center mt-6">
@@ -131,7 +131,7 @@
     </RelayModal>
 
     <!-- Toast Notification -->
-    <ToastNotification v-if="showToast" :visible="showToast" />
+    <ToastNotification v-if="showToast" :visible="showToast" :message="toastMessage" />
   </div>
 </template>
 
@@ -150,6 +150,7 @@ export default {
       currentRelay: {},
       currentRelayKey: null,
       showToast: false, // For showing success messages
+      toastMessage: "", // Dynamic toast message
     };
   },
   methods: {
@@ -181,10 +182,11 @@ export default {
         DummyAPI.post("/api/relaySetup", this.relays);
 
         // Show success message
+        this.toastMessage = "Changes Applied.";
         this.showToast = true;
         setTimeout(() => {
           this.showToast = false;
-        }, 1000); // Hide after 1 seconds
+        }, 1500); // Hide after 1 seconds
       }
       this.closeModal();
     },
