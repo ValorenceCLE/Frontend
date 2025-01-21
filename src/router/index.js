@@ -14,7 +14,7 @@ import Configuration from "@/components/settings/Configuration.vue";
 import Emails from "@/components/settings/Emails.vue";
 
 // Admin Relays
-import RelaySettings from "@/components/relays/RelaySettings.vue";
+import RelaySetup from "@/components/relays/RelaySetup.vue";
 import RelayLogic from "@/components/relays/RelayLogic.vue";
 import RelaySchedule from "@/components/relays/RelaySchedule.vue";
 
@@ -30,7 +30,6 @@ import Dashboard from "@/components/etc/Dashboard.vue";
 
 const routes = [
   { path: "/", component: () => import("@/views/LoginView.vue") },
-  { path: "/test", component: () => import("@/views/TestingView.vue") },
   
   // User Routes
   {
@@ -107,7 +106,7 @@ const routes = [
       },
       {
         path: "relays/setup",
-        component: RelaySettings,
+        component: RelaySetup,
       },
 
       // Log Routes

@@ -18,7 +18,6 @@
       <div class="space-x-4 absolute transform left-1/2">
         <router-link to="/user" class="hover:text-primaryLight">User</router-link>
         <router-link to="/admin" class="hover:text-primaryLight">Admin</router-link>
-        <router-link to="/test" class="hover:text-primaryLight">Test</router-link>
       </div>
       <router-link :to="`${basePath}/help`" class="hover:text-primaryLight">
         Help

@@ -1,0 +1,76 @@
+{
+    "relays": {
+        "relay1": {
+            "name": "Router",
+            "relay_number": 1,
+            "show_on_button": false,
+            "on_button_label": "On",
+            "on_status_color": "green",
+            "show_off_button": false,
+            "off_button_label": "Off",
+            "off_status_color": "red",
+            "show_pulse_button": true,
+            "pulse_button_label": "Restart"
+        },
+        "relay2": {
+            "name": "Camera",
+            "relay_number": 2,
+            "show_on_button": true,
+            "on_button_label": "On",
+            "on_status_color": "green",
+            "show_off_button": true,
+            "off_button_label": "Off",
+            "off_status_color": "red",
+            "show_pulse_button": true,
+            "pulse_button_label": "Restart"
+        },
+        "relay3": {
+            "name": "Fan",
+            "relay_number": 3,
+            "show_on_button": true,
+            "on_button_label": "On",
+            "on_status_color": "green",
+            "show_off_button": true,
+            "off_button_label": "Off",
+            "off_status_color": "red",
+            "show_pulse_button": true,
+            "pulse_button_label": "Run 5 Min."
+        },
+        "relay4": {
+            "name": "IR Light",
+            "relay_number": 4,
+            "show_on_button": true,
+            "on_button_label": "On",
+            "on_status_color": "green",
+            "show_off_button": true,
+            "off_button_label": "Off",
+            "off_status_color": "red",
+            "show_pulse_button": false,
+            "pulse_button_label": "Restart"
+        },
+        "relay5": {
+            "name": "Strobe Light",
+            "relay_number": 5,
+            "show_on_button": true,
+            "on_button_label": "On",
+            "on_status_color": "green",
+            "show_off_button": true,
+            "off_button_label": "Off",
+            "off_status_color": "red",
+            "show_pulse_button": true,
+            "pulse_button_label": "Run 5 Min."
+        },
+        "relay6": {
+            "name": "Aux 1",
+            "relay_number": 6,
+            "show_on_button": true,
+            "on_button_label": "On",
+            "on_status_color": "green",
+            "show_off_button": true,
+            "off_button_label": "Off",
+            "off_status_color": "red",
+            "show_pulse_button": true,
+            "pulse_button_label": "Restart"
+        }
+    }
+}
