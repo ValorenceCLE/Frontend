@@ -15,7 +15,7 @@
 </template>
 
 <script setup>
-import { defineProps, computed } from "vue";
+import { computed } from "vue";
 import { use } from "echarts/core";
 import { GaugeChart } from "echarts/charts";
 import { TitleComponent } from "echarts/components";

@@ -28,7 +28,7 @@
 
 <script>
 export default {
-  name: "RelayModal",
+  name: "Modal",
   props: {
     show: {
       type: Boolean,
