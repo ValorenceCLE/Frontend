@@ -27,6 +27,7 @@ import RealtimeGraph from "@/components/monitor/RealTime.vue";
 
 // Admin Dashboard
 import Dashboard from "@/components/etc/Dashboard.vue";
+import DashboardSetup from "@/components/etc/DashboardSetup.vue";
 
 const routes = [
   { path: "/", component: () => import("@/views/LoginView.vue") },
@@ -75,6 +76,10 @@ const routes = [
       {
         path: "dashboard/view",
         component: Dashboard,
+      },
+      {
+        path: "dashboard/setup",
+        component: DashboardSetup,
       },
 
       // Settings Routes
