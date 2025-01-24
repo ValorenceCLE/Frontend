@@ -53,7 +53,7 @@
     </div>
 
     <!-- Modal -->
-    <RelayModal
+    <Modal
       :show="showModal"
       :title="`Relay ${currentRelay.relay_number || ''} Settings`"
       @close="closeModal"
@@ -128,7 +128,7 @@
           </button>
         </div>
       </div>
-    </RelayModal>
+    </Modal>
 
     <!-- Toast Notification -->
     <ToastNotification v-if="showToast" :visible="showToast" :message="toastMessage" />
@@ -136,13 +136,13 @@
 </template>
 
 <script>
-import RelayModal from "@/components/relays/RelayModal.vue";
+import Modal from "@/components/etc/Modal.vue";
 import ToastNotification from "@/components/etc/ToastNotification.vue";
 import DummyAPI from "@/api/dummyApi";
 
 export default {
   name: "RelaySetup",
-  components: { RelayModal, ToastNotification },
+  components: { Modal, ToastNotification },
   data() {
     return {
       relays: {}, // Data fetched from DummyAPI
@@ -154,7 +154,7 @@ export default {
     };
   },
   methods: {
-    async fetchRelays() {
+    fetchRelays() {
       try {
         const response = DummyAPI.get("/api/relaySetup");
         if (response.success) {

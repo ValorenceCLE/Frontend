@@ -1,8 +1,24 @@
+// dummyApi.js
 import relaysData from "./data/relays.json";
 import timezoneData from "./data/timezone.js";
 import networkData from "./data/network.js";
 import emailData from "./data/emails.js";
 import relaySetup from "./data/relay_setup.json";
+import conditionalTasksData from "./data/conditionalTasks.json";
+
+// Helper function to find the smallest unused positive integer
+function getNextTaskId(tasks) {
+  const ids = tasks.map(task => task.id).sort((a, b) => a - b);
+  let nextId = 1;
+  for (let id of ids) {
+    if (id === nextId) {
+      nextId++;
+    } else if (id > nextId) {
+      break;
+    }
+  }
+  return nextId;
+}
 
 // Load the initial data into localStorage (if not already present)
 if (!localStorage.getItem("networkSettings")) {
@@ -26,7 +42,12 @@ if (!localStorage.getItem("emailSettings")) {
 if (!localStorage.getItem("relaySetup")) {
   localStorage.setItem("relaySetup", JSON.stringify(relaySetup.relays));
 }
-
+if (!localStorage.getItem("conditionalTasks")) {
+  localStorage.setItem(
+    "conditionalTasks",
+    JSON.stringify(conditionalTasksData.conditionalTasks)
+  );
+}
 
 const DummyAPI = {
   // Handle GET requests
@@ -56,6 +77,10 @@ const DummyAPI = {
       );
       return { success: true, data: storedEmailSettings };
     }
+    if (endpoint === "/api/conditionalTasks") {
+      const storedTasks = JSON.parse(localStorage.getItem("conditionalTasks")) || [];
+      return { success: true, data: storedTasks };
+    }
     return { success: false, error: "Endpoint not found." };
   },
 
@@ -76,6 +101,48 @@ const DummyAPI = {
     if (endpoint === "/api/emails") {
       localStorage.setItem("emailSettings", JSON.stringify(payload));
       return { success: true, data: payload };
+    }
+    if (endpoint === "/api/conditionalTasks") {
+      const storedTasks = JSON.parse(localStorage.getItem("conditionalTasks")) || [];
+      const newId = getNextTaskId(storedTasks);
+      payload.id = newId; // Assign incremental ID
+      storedTasks.push(payload);
+      localStorage.setItem("conditionalTasks", JSON.stringify(storedTasks));
+      return { success: true, data: payload };
+    }
+    return { success: false, error: "Endpoint not found." };
+  },
+
+  // Handle PUT requests
+  put: (endpoint, payload) => {
+    const taskIdMatch = endpoint.match(/^\/api\/conditionalTasks\/(\d+)$/);
+    if (taskIdMatch) {
+      const taskId = Number(taskIdMatch[1]);
+      let storedTasks = JSON.parse(localStorage.getItem("conditionalTasks")) || [];
+      const taskIndex = storedTasks.findIndex((task) => task.id === taskId);
+      if (taskIndex !== -1) {
+        storedTasks[taskIndex] = payload;
+        localStorage.setItem("conditionalTasks", JSON.stringify(storedTasks));
+        return { success: true, data: payload };
+      }
+      return { success: false, error: "Task not found." };
+    }
+    return { success: false, error: "Endpoint not found." };
+  },
+
+  // Handle DELETE requests
+  delete: (endpoint) => {
+    const taskIdMatch = endpoint.match(/^\/api\/conditionalTasks\/(\d+)$/);
+    if (taskIdMatch) {
+      const taskId = Number(taskIdMatch[1]);
+      let storedTasks = JSON.parse(localStorage.getItem("conditionalTasks")) || [];
+      const taskIndex = storedTasks.findIndex((task) => task.id === taskId);
+      if (taskIndex !== -1) {
+        storedTasks.splice(taskIndex, 1);
+        localStorage.setItem("conditionalTasks", JSON.stringify(storedTasks));
+        return { success: true };
+      }
+      return { success: false, error: "Task not found." };
     }
     return { success: false, error: "Endpoint not found." };
   },
