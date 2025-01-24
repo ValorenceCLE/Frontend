@@ -1,0 +1,27 @@
+{
+    "tasks": [
+        {
+            "id": 1,
+            "name": "test",
+            "trigger": {
+                "source": "relay1",
+                "field": "volts",
+                "operator": "=",
+                "value": 1
+            },
+            "actions": [
+                {
+                    "target": "reboot"
+                },
+                {
+                    "target": "relay2",
+                    "state": "on"
+                },
+                {
+                    "target": "email",
+                    "message": "test message"
+                }
+            ]
+        }
+    ]
+}

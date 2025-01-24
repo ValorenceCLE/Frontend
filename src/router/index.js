@@ -15,7 +15,7 @@ import Emails from "@/components/settings/Emails.vue";
 
 // Admin Relays
 import RelaySetup from "@/components/relays/RelaySetup.vue";
-import RelayLogic from "@/components/relays/RelayLogic.vue";
+import RelayLogic from "@/components/logic/RelayLogic.vue";
 import RelaySchedule from "@/components/relays/RelaySchedule.vue";
 
 // Admin Logs
