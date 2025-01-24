@@ -67,13 +67,13 @@ export default {
         {
           title: "Relays",
           icon: relaysIcon,
-          items: ["Setup", "Logic", "Schedule"],
+          items: ["Settings", "Logic"],
         },
-        {
-          title: "Logs",
-          icon: logsIcon,
-          items: ["System", "Router", "Camera"],
-        },
+        // {
+        //   title: "Logs",
+        //   icon: logsIcon,
+        //   items: ["System", "Router", "Camera"],
+        // },
         {
           title: "Monitor",
           icon: monitorIcon,

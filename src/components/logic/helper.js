@@ -2,12 +2,19 @@
 
 /**
  * Formats the trigger object into a readable string.
- * @param {Object} trigger - The trigger object.
+ * @param {Object} task - The task object containing trigger details.
  * @param {Object} relays - The relays data object.
  * @param {Function} isRelayAction - Function to determine if source is a relay.
  * @returns {String} - Formatted trigger string.
  */
-export function formatTrigger(trigger, relays, isRelayAction) {
+export function formatTrigger(task, relays, isRelayAction) {
+  const trigger = {
+    source: task.trigger.source,
+    field: task.trigger.field,
+    operator: task.trigger.operator,
+    value: task.trigger.value,
+  };
+
   if (
     !trigger ||
     !trigger.source ||
@@ -23,9 +30,11 @@ export function formatTrigger(trigger, relays, isRelayAction) {
     const relay = relays[trigger.source];
     sourceDisplay = relay ? relay.name : trigger.source;
   } else {
-    // Capitalize first letter
+    // Capitalize first letter if source is a general category
     sourceDisplay =
-      trigger.source.charAt(0).toUpperCase() + trigger.source.slice(1);
+      typeof trigger.source === "string" && trigger.source.length > 0
+        ? trigger.source.charAt(0).toUpperCase() + trigger.source.slice(1)
+        : trigger.source;
   }
   return `${sourceDisplay} - ${trigger.field} ${trigger.operator} ${trigger.value}`;
 }
@@ -42,24 +51,20 @@ export function displayAction(action, relays, isRelayAction) {
     return "Unknown Action";
   }
 
-  if (isRelayAction(action.type)) {
-    const relay = relays[action.type];
-    if (relay && relay.name && action.state) {
-      return `${relay.name} Set To: ${action.state.toUpperCase()}`;
-    }
-    if (action.state) {
-      return `${action.type} Set To: ${action.state.toUpperCase()}`;
-    }
-    return `${action.type} Set To: Unknown`;
-  } else if (action.type === "sendEmail") {
-    return `Email`;
-  } else {
-    // Ensure action.type has at least one character
-    if (action.type.length === 0) {
-      return "Invalid Action Type";
-    }
-    return (
-      action.type.charAt(0).toUpperCase() + action.type.slice(1)
-    );
+  switch(action.type) {
+    case "email":
+      return `Email`;
+    case "io":
+      const relay = relays[action.target];
+      const relayName = relay ? relay.name : action.target;
+      return `${relayName} Set To: ${action.state.toUpperCase()}`;
+    case "reboot":
+      return "Reboot";
+    case "log":
+      return "Log";
+    case "awsLog":
+      return "AWS Log";
+    default:
+      return action.type.charAt(0).toUpperCase() + action.type.slice(1);
   }
 }

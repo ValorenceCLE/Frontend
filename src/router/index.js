@@ -16,10 +16,10 @@ import Emails from "@/components/settings/Emails.vue";
 // Admin Relays
 import RelaySetup from "@/components/relays/RelaySetup.vue";
 import RelayLogic from "@/components/logic/RelayLogic.vue";
-import RelaySchedule from "@/components/relays/RelaySchedule.vue";
+// import RelaySchedule from "@/components/relays/RelaySchedule.vue";
 
 // Admin Logs
-import Logs from "@/components/etc/Logs.vue";
+// import Logs from "@/components/etc/Logs.vue";
 
 // Admin Monitor
 import HistoricalGraph from "@/components/monitor/Historical.vue";
@@ -100,28 +100,28 @@ const routes = [
         path: "relays/logic",
         component: RelayLogic,
       },
+      // {
+      //   path: "relays/schedule",
+      //   component: RelaySchedule,
+      // },
       {
-        path: "relays/schedule",
-        component: RelaySchedule,
-      },
-      {
-        path: "relays/setup",
+        path: "relays/settings",
         component: RelaySetup,
       },
 
       // Log Routes
-      {
-        path: "logs/system",
-        component: Logs,
-      },
-      {
-        path: "logs/router",
-        component: Logs,
-      },
-      {
-        path: "logs/camera",
-        component: Logs,
-      },
+      // {
+      //   path: "logs/system",
+      //   component: Logs,
+      // },
+      // {
+      //   path: "logs/router",
+      //   component: Logs,
+      // },
+      // {
+      //   path: "logs/camera",
+      //   component: Logs,
+      // },
 
       // Monitor Routes
       {

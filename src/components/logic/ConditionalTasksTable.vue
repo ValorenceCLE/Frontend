@@ -37,7 +37,7 @@
           <td class="py-2 px-4 text-textColor">
             <ul class="list-disc list-inside">
               <li v-for="action in task.actions" :key="action.id">
-                {{ displayAction(action) }}
+                {{ displayAction(action, relays, isRelayAction(action.type)) }}
               </li>
             </ul>
           </td>
@@ -74,6 +74,14 @@ export default {
   props: {
     tasks: {
       type: Array,
+      required: true,
+    },
+    relays: {
+      type: Object,
+      required: true,
+    },
+    isRelayAction: {
+      type: Function,
       required: true,
     },
     formatTrigger: {

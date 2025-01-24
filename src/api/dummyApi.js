@@ -8,7 +8,7 @@ import conditionalTasksData from "./data/conditionalTasks.json";
 
 // Helper function to find the smallest unused positive integer
 function getNextTaskId(tasks) {
-  const ids = tasks.map(task => task.id).sort((a, b) => a - b);
+  const ids = Object.keys(tasks).map(id => Number(id)).sort((a, b) => a - b);
   let nextId = 1;
   for (let id of ids) {
     if (id === nextId) {
@@ -43,10 +43,31 @@ if (!localStorage.getItem("relaySetup")) {
   localStorage.setItem("relaySetup", JSON.stringify(relaySetup.relays));
 }
 if (!localStorage.getItem("conditionalTasks")) {
-  localStorage.setItem(
-    "conditionalTasks",
-    JSON.stringify(conditionalTasksData.conditionalTasks)
-  );
+  // Initialize as object
+  const initialTasksArray = conditionalTasksData.conditionalTasks || [];
+  const initialTasksObject = {};
+  initialTasksArray.forEach(task => {
+    initialTasksObject[task.id] = {
+      name: task.name,
+      source: task.trigger.source,
+      field: task.trigger.field,
+      operator: task.trigger.operator,
+      value: task.trigger.value,
+      actions: task.actions.map(action => {
+        const { type, target, state, message } = action;
+        const newAction = { type };
+        if (type === "io") {
+          newAction.target = target;
+          newAction.state = state;
+        }
+        if (type === "email") {
+          newAction.message = message;
+        }
+        return newAction;
+      }),
+    };
+  });
+  localStorage.setItem("conditionalTasks", JSON.stringify(initialTasksObject));
 }
 
 const DummyAPI = {
@@ -78,8 +99,8 @@ const DummyAPI = {
       return { success: true, data: storedEmailSettings };
     }
     if (endpoint === "/api/conditionalTasks") {
-      const storedTasks = JSON.parse(localStorage.getItem("conditionalTasks")) || [];
-      return { success: true, data: storedTasks };
+      const storedTasks = JSON.parse(localStorage.getItem("conditionalTasks")) || {};
+      return { success: true, data: { tasks: storedTasks } };
     }
     return { success: false, error: "Endpoint not found." };
   },
@@ -103,12 +124,31 @@ const DummyAPI = {
       return { success: true, data: payload };
     }
     if (endpoint === "/api/conditionalTasks") {
-      const storedTasks = JSON.parse(localStorage.getItem("conditionalTasks")) || [];
+      const storedTasks = JSON.parse(localStorage.getItem("conditionalTasks")) || {};
       const newId = getNextTaskId(storedTasks);
-      payload.id = newId; // Assign incremental ID
-      storedTasks.push(payload);
+      const task = payload.tasks.new; // payload is { tasks: { new: task } }
+      // Assign the new task ID and flatten the structure
+      storedTasks[newId] = {
+        name: task.name,
+        source: task.source,
+        field: task.field,
+        operator: task.operator,
+        value: task.value,
+        actions: task.actions.map(action => {
+          const { type, target, state, message } = action;
+          const newAction = { type };
+          if (type === "io") {
+            newAction.target = target;
+            newAction.state = state;
+          }
+          if (type === "email") {
+            newAction.message = message;
+          }
+          return newAction;
+        }),
+      };
       localStorage.setItem("conditionalTasks", JSON.stringify(storedTasks));
-      return { success: true, data: payload };
+      return { success: true, data: { tasks: { [newId]: storedTasks[newId] } } };
     }
     return { success: false, error: "Endpoint not found." };
   },
@@ -117,13 +157,31 @@ const DummyAPI = {
   put: (endpoint, payload) => {
     const taskIdMatch = endpoint.match(/^\/api\/conditionalTasks\/(\d+)$/);
     if (taskIdMatch) {
-      const taskId = Number(taskIdMatch[1]);
-      let storedTasks = JSON.parse(localStorage.getItem("conditionalTasks")) || [];
-      const taskIndex = storedTasks.findIndex((task) => task.id === taskId);
-      if (taskIndex !== -1) {
-        storedTasks[taskIndex] = payload;
+      const taskId = taskIdMatch[1]; // string
+      let storedTasks = JSON.parse(localStorage.getItem("conditionalTasks")) || {};
+      if (storedTasks[taskId]) {
+        const updatedTask = payload.tasks[taskId];
+        storedTasks[taskId] = {
+          name: updatedTask.name,
+          source: updatedTask.source,
+          field: updatedTask.field,
+          operator: updatedTask.operator,
+          value: updatedTask.value,
+          actions: updatedTask.actions.map(action => {
+            const { type, target, state, message } = action;
+            const newAction = { type };
+            if (type === "io") {
+              newAction.target = target;
+              newAction.state = state;
+            }
+            if (type === "email") {
+              newAction.message = message;
+            }
+            return newAction;
+          }),
+        };
         localStorage.setItem("conditionalTasks", JSON.stringify(storedTasks));
-        return { success: true, data: payload };
+        return { success: true, data: { tasks: { [taskId]: storedTasks[taskId] } } };
       }
       return { success: false, error: "Task not found." };
     }
@@ -134,11 +192,10 @@ const DummyAPI = {
   delete: (endpoint) => {
     const taskIdMatch = endpoint.match(/^\/api\/conditionalTasks\/(\d+)$/);
     if (taskIdMatch) {
-      const taskId = Number(taskIdMatch[1]);
-      let storedTasks = JSON.parse(localStorage.getItem("conditionalTasks")) || [];
-      const taskIndex = storedTasks.findIndex((task) => task.id === taskId);
-      if (taskIndex !== -1) {
-        storedTasks.splice(taskIndex, 1);
+      const taskId = taskIdMatch[1];
+      let storedTasks = JSON.parse(localStorage.getItem("conditionalTasks")) || {};
+      if (storedTasks[taskId]) {
+        delete storedTasks[taskId];
         localStorage.setItem("conditionalTasks", JSON.stringify(storedTasks));
         return { success: true };
       }

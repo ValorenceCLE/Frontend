@@ -1,0 +1,39 @@
+{
+    "tasks": {
+        "1": {
+            "name": "test 1",
+            "trigger": {
+                "source": "environment",
+                "field": "Temperature",
+                "operator": "=",
+                "value": 2
+            },
+            "actions": [
+                {"type": "reboot"},
+                {"type": "email", "message": "test"},
+                {"type": "io", "target": "relay1", "state": "on"}
+            ]
+        },
+        "2": {
+            "name": "test 2",
+            "source": "relay1",
+            "field": "volts",
+            "operator": "<",
+            "value": 3,
+            "actions": [
+                {"type": "log"},
+                {"type": "io", "target": "relay4", "state": "pulse"}
+            ]
+        },
+        "3": {
+            "name": "test 3",
+            "source": "cellular",
+            "field": "sinr",
+            "operator": ">",
+            "value": 3,
+            "actions": [
+                {"type": "log"}
+            ]
+        }
+    }
+}

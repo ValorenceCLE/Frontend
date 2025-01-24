@@ -1,5 +1,5 @@
 <template>
-  <form @submit.prevent="handleSubmit">
+  <form @submit.prevent.stop="handleSubmit">
     <!-- Task Name Section -->
     <div class="mb-4">
       <label class="block text-Body text-textColor mb-1">Task Name:</label>
@@ -81,7 +81,7 @@ export default {
   methods: {
     handleSubmit() {
       console.log("Emitting submit with task:", this.task);
-      this.$emit("submit", this.task);
+      this.$emit("task-submit", this.task);
     },
   },
   watch: {

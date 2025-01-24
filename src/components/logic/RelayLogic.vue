@@ -10,7 +10,7 @@
 
     <!-- Conditional Tasks Table -->
     <ConditionalTasksTable
-      :tasks="conditionalTasks"
+      :tasks="Object.values(conditionalTasks)"
       :formatTrigger="formattedTrigger"
       :displayAction="formattedAction"
       @editTask="editTask"
@@ -24,7 +24,7 @@
         :initial-task="currentTask"
         :enabled-relays="enabledRelays"
         :field-options="fieldOptionsMapping"
-        @submit="saveTask"
+        @task-submit="handleTaskSubmit"
         @cancel="closeModal"
       />
     </TaskModal>
@@ -48,7 +48,7 @@ export default {
   data() {
     return {
       relays: {}, // Relay data fetched from API
-      conditionalTasks: [], // List of user-defined conditional tasks
+      conditionalTasks: {}, // Changed from [] to {}
       currentTask: {
         id: null, // Unique identifier for tasks
         name: "",
@@ -59,6 +59,7 @@ export default {
             type: "",
             state: "",
             message: "",
+            target: "",
           },
         ],
       },
@@ -148,36 +149,12 @@ export default {
      */
     async fetchConditionalTasks() {
       try {
-        const response = DummyAPI.get("/api/conditionalTasks");
+        const response = await DummyAPI.get("/api/conditionalTasks");
         if (response.success) {
-          // Migrate tasks with 'triggers' to 'trigger'
-          const migratedTasks = response.data.map((task) => {
-            if (task.triggers && Array.isArray(task.triggers)) {
-              // Assign first trigger to 'trigger' and remove 'triggers'
-              task.trigger = task.triggers[0] || {
-                source: "",
-                field: "",
-                operator: "",
-                value: "",
-              };
-              delete task.triggers;
-            }
-            // Ensure 'actions' is an array
-            if (!Array.isArray(task.actions)) {
-              task.actions = [
-                {
-                  id: 1,
-                  type: "",
-                  state: "",
-                  message: "",
-                },
-              ];
-            }
-            return task;
-          });
-          this.conditionalTasks = migratedTasks;
-          // Save migrated tasks back to localStorage to prevent future migrations
-          localStorage.setItem("conditionalTasks", JSON.stringify(migratedTasks));
+          // Assuming response.data is { "tasks": { "1": {...}, "2": {...} } }
+          this.conditionalTasks = response.data.tasks || {};
+          // Save to localStorage if needed
+          localStorage.setItem("conditionalTasks", JSON.stringify(this.conditionalTasks));
         } else {
           console.error("Failed to fetch conditional tasks:", response.error);
         }
@@ -185,7 +162,6 @@ export default {
         console.error("Error fetching conditional tasks:", error);
       }
     },
-
     /**
      * Opens the modal to add a new task.
      */
@@ -200,6 +176,7 @@ export default {
             type: "",
             state: "",
             message: "",
+            target: "",
           },
         ],
       };
@@ -220,15 +197,22 @@ export default {
      */
     async saveTask(task) {
       console.log("Received Task:", task);
-      // Guard against invalid task objects
-      if (
-        !task ||
-        typeof task !== "object" ||
-        !task.name ||
-        !task.trigger ||
-        !task.actions ||
-        !Array.isArray(task.actions)
-      ) {
+
+      // Minimal validation (since dropdowns control inputs)
+      const isValidTask =
+        task &&
+        typeof task === "object" &&
+        task.name &&
+        task.trigger &&
+        task.trigger.source &&
+        task.trigger.field &&
+        task.trigger.operator &&
+        task.trigger.value !== undefined &&
+        task.trigger.value !== null &&
+        Array.isArray(task.actions) &&
+        task.actions.length > 0;
+
+      if (!isValidTask) {
         console.error("Invalid task data:", task);
         return;
       }
@@ -236,17 +220,25 @@ export default {
       try {
         if (task.id && this.isEditing) {
           // Editing an existing task
-          const response = DummyAPI.put(`/api/conditionalTasks/${task.id}`, task);
+          const payload = {
+            tasks: {
+              [task.id]: task,
+            },
+          };
+
+          const response = await DummyAPI.put(
+            `/api/conditionalTasks/${task.id}`,
+            payload
+          );
           if (response.success) {
-            // Update local list without using this.$set
-            const index = this.conditionalTasks.findIndex((t) => t.id === task.id);
-            if (index !== -1) {
-              this.conditionalTasks[index] = response.data;
-            }
-            // Log the updated task JSON excluding empty fields
+            // Update local tasks
+            this.conditionalTasks = {
+              ...this.conditionalTasks,
+              [task.id]: response.data.tasks[task.id],
+            };
             console.log(
               "Updated Task:",
-              JSON.stringify(this.cleanObject(response.data), null, 2)
+              JSON.stringify(this.cleanObject(response.data.tasks[task.id]), null, 2)
             );
             this.closeModal();
           } else {
@@ -254,34 +246,36 @@ export default {
           }
         } else {
           // Adding a new task
-          // Ensure task.actions is an array before mapping
-          if (!Array.isArray(task.actions)) {
-            task.actions = [
-              {
-                id: 1,
-                type: "",
-                state: "",
-                message: "",
-              },
-            ];
-          } else {
-            // Assign unique IDs to actions based on their position
-            task.actions = task.actions.map((action, index) => ({
-              ...action,
-              id: index + 1, // Assign ID=1,2,3
-            }));
-          }
+          // Assign unique IDs to actions based on their position
+          task.actions = task.actions.map((action, index) => ({
+            ...action,
+            id: index + 1, // Assign ID=1,2,3
+          }));
 
           // Clean task object before saving
           const cleanedTask = this.cleanTaskForSaving(task);
 
-          const response = DummyAPI.post("/api/conditionalTasks", cleanedTask);
+          // Prepare payload without an ID (assuming backend assigns it)
+          const payload = {
+            tasks: {
+              new: cleanedTask,
+            },
+          };
+
+          const response = await DummyAPI.post("/api/conditionalTasks", payload);
           if (response.success) {
-            this.conditionalTasks.push(response.data);
-            // Log the added task JSON excluding empty fields
+            // Assume backend returns the new task with its assigned ID
+            const newTask = Object.values(response.data.tasks)[0]; // get the task
+            const newTaskId = newTask.id;
+
+            // Add to conditionalTasks
+            this.conditionalTasks = {
+              ...this.conditionalTasks,
+              [newTaskId]: newTask,
+            };
             console.log(
               "Added Task:",
-              JSON.stringify(this.cleanObject(response.data), null, 2)
+              JSON.stringify(this.cleanObject(newTask), null, 2)
             );
             this.closeModal();
           } else {
@@ -292,18 +286,17 @@ export default {
         console.error("Error saving task:", error);
       }
     },
-
     /**
      * Deletes a task without any confirmation prompt.
      * @param {Number} taskId - The ID of the task to delete.
      */
     async deleteTask(taskId) {
       try {
-        const response = DummyAPI.delete(`/api/conditionalTasks/${taskId}`);
+        const response = await DummyAPI.delete(`/api/conditionalTasks/${taskId}`);
         if (response.success) {
-          this.conditionalTasks = this.conditionalTasks.filter(
-            (task) => task.id !== taskId
-          );
+          // Remove the task from the object using destructuring
+          const { [taskId]: _, ...remainingTasks } = this.conditionalTasks;
+          this.conditionalTasks = remainingTasks;
           // Optionally log deletion
           console.log(`Deleted Task ID: ${taskId}`);
         } else {

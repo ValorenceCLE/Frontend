@@ -20,12 +20,13 @@
       <!-- Action Type Selector -->
       <select
         v-model="action.type"
+        @change="onActionTypeChange(index)"
         class="w-full border-gray-300 rounded-md p-2 shadow-sm"
         required
       >
         <option disabled value="">Select an action</option>
         <option value="reboot">Reboot</option>
-        <option value="sendEmail">Send Email</option>
+        <option value="email">Email</option>
         <option value="log">Log</option>
         <option value="awsLog">AWS Log</option>
         <optgroup label="Relay Actions">
@@ -46,10 +47,11 @@
           >
             <option value="on">ON</option>
             <option value="off">OFF</option>
+            <option value="pulse">PULSE</option>
           </select>
         </div>
-        <!-- Send Email Action Details -->
-        <div v-else-if="action.type === 'sendEmail'">
+        <!-- Email Action Details -->
+        <div v-else-if="action.type === 'email'">
           <label class="text-Body text-textColor">Message:</label>
           <textarea
             v-model="action.message"
@@ -100,9 +102,42 @@ export default {
     },
   },
   methods: {
+    /**
+     * Determines if the given type is a relay action.
+     * @param {String} type - The action type.
+     * @returns {Boolean} - True if it's a relay action, else false.
+     */
     isRelayAction(type) {
       return this.enabledRelays.some((relay) => relay.id === type);
     },
+    /**
+     * Handles changes to the action type.
+     * @param {Number} index - The index of the action in the actions array.
+     */
+    onActionTypeChange(index) {
+      const action = this.actions[index];
+      if (this.isRelayAction(action.type)) {
+        // If the selected type is a relay action
+        action.target = action.type; // Assign relay ID to target
+        action.type = "io"; // Rename type to 'io'
+        delete action.message; // Remove message if it exists
+      } else if (action.type === "email") {
+        // Ensure 'message' field exists
+        if (!action.message) {
+          action.message = "";
+        }
+        delete action.target; // Remove target if it exists
+      } else {
+        // For other action types, remove 'target' and 'message' if present
+        delete action.target;
+        delete action.message;
+      }
+      // Update the action in the array to trigger reactivity
+      this.actions.splice(index, 1, { ...action });
+    },
+    /**
+     * Adds a new action to the actions array.
+     */
     addAction() {
       if (this.actions.length < 3) {
         this.actions.push({
@@ -110,9 +145,14 @@ export default {
           type: "",
           state: "",
           message: "",
+          target: "",
         });
       }
     },
+    /**
+     * Removes an action from the actions array.
+     * @param {Number} index - The index of the action to remove.
+     */
     removeAction(index) {
       if (this.actions.length > 1) {
         this.actions.splice(index, 1);
