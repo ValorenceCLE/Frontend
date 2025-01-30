@@ -50,7 +50,6 @@
 <script>
 import settingsIcon from "@/assets/icons/settings.svg";
 import relaysIcon from "@/assets/icons/relays.svg";
-import logsIcon from "@/assets/icons/logs.svg";
 import monitorIcon from "@/assets/icons/monitor.svg";
 import dashboardIcon from "@/assets/icons/dashboard.svg";
 
@@ -62,7 +61,7 @@ export default {
         {
           title: "Settings",
           icon: settingsIcon,
-          items: ["Network", "Date/Time", "Emails", "Configuration"],
+          items: ["General", "Network", "Date/Time", "Emails", "Configuration"],
         },
         {
           title: "Relays",

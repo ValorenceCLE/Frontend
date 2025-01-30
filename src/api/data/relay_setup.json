@@ -53,7 +53,7 @@
         "relay6": {
             "name": "Aux 1",
             "relay_number": 6,
-            "enabled": true,
+            "enabled": false,
             "state": "on",
             "boot_state": "on",
             "pulse_time": 5,

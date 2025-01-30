@@ -8,6 +8,7 @@ import Help from "@/components/etc/Help.vue";
 import Contact from "@/components/etc/Contact.vue";
 
 // Admin Settings
+import General from "@/components/settings/General.vue";
 import Network from "@/components/settings/Network.vue";
 import DateTime from "@/components/settings/DateTime.vue";
 import Configuration from "@/components/settings/Configuration.vue";
@@ -83,6 +84,10 @@ const routes = [
       },
 
       // Settings Routes
+      {
+        path: "settings/general",
+        component: General,
+      },
       {
         path: "settings/network",
         component: Network,

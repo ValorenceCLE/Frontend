@@ -2,16 +2,14 @@
     "tasks": {
         "1": {
             "name": "test 1",
-            "trigger": {
-                "source": "environment",
-                "field": "Temperature",
-                "operator": "=",
-                "value": 2
-            },
+            "source": "relay2",
+            "field": "volts",
+            "operator": "<",
+            "value": 3,
             "actions": [
-                {"type": "reboot"},
-                {"type": "email", "message": "test"},
-                {"type": "io", "target": "relay1", "state": "on"}
+                {"type": "log"},
+                {"type": "io", "target": "relay4", "state": "pulse"},
+                {"type": "email", "message": "Voltage is low"}
             ]
         },
         "2": {

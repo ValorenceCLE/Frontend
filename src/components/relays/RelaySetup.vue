@@ -3,22 +3,26 @@
     <!-- Table Container -->
     <div class="w-full mx-auto" style="max-width: 45rem">
       <div
-        class="bg-gray-200 p-2 rounded-lg shadow-md border border-gray-500 max-w-md flex justify-center items-center mx-auto"
+        class="w-full max-w-xl p-3 bg-gray-200 border border-gray-500 rounded-md text-center flex flex-col items-center mx-auto"
       >
-        <h1 class="text-Header text-textColor">Relay Setup</h1>
+        <h1 class="text-3xl font-bold text-textColor">Relay Configuration</h1>
+        <p class="text-gray-600">Manage your relay configurations here.</p>
       </div>
       <div
         v-if="Object.keys(relays).length > 0"
-        class="bg-gray-200 overflow-hidden rounded-md my-3 border-gray-500 border relative"
+        class="bg-gray-200 rounded-md my-3 border-gray-500 border relative"
       >
-        <table class="text-left w-full border-collapse rounded-md">
+        <table class="text-left w-full border-collapse rounded-md overflow-hidden">
           <thead>
             <tr class="bg-gray-200 border-b border-gray-500">
               <th class="text-left py-3 px-4 text-textColor text-Subheader">Name</th>
               <th class="text-center py-3 px-4 text-textColor text-Subheader">
                 Relay Number
               </th>
-              <th class="text-center py-3 px-4 text-textColor text-Subheader">Enabled</th>
+              <th class="text-center py-3 px-4 text-textColor text-Subheader">
+                Enabled
+                <InfoTooltip text="Enabled relays will be monitored and collect data" />
+              </th>
               <th class="text-center py-3 px-4 text-textColor text-Subheader">
                 Settings
               </th>
@@ -34,9 +38,21 @@
               <td class="text-center py-2 px-4 text-textColor text-Body">
                 {{ relay.relay_number }}
               </td>
-              <td class="text-center py-2 px-4 text-textColor text-FormButton capitalize">
-                {{ relay.enabled }}
+              <td class="text-center py-2 px-4 text-textColor">
+                <img
+                  v-if="relay.enabled"
+                  src="@/assets/icons/check-square.svg"
+                  alt="Active"
+                  class="w-6 h-6 mx-auto"
+                />
+                <img
+                  v-else
+                  src="@/assets/icons/x-square.svg"
+                  alt="Inactive"
+                  class="w-6 h-6 mx-auto"
+                />
               </td>
+
               <td class="text-center py-2 px-4 text-Body">
                 <button
                   class="bg-primaryMed hover:bg-primaryLight text-white py-1 px-3 rounded"
@@ -139,10 +155,11 @@
 import Modal from "@/components/etc/Modal.vue";
 import ToastNotification from "@/components/etc/ToastNotification.vue";
 import DummyAPI from "@/api/dummyApi";
+import InfoTooltip from "@/components/etc/InfoTooltip.vue";
 
 export default {
   name: "RelaySetup",
-  components: { Modal, ToastNotification },
+  components: { Modal, ToastNotification, InfoTooltip },
   data() {
     return {
       relays: {}, // Data fetched from DummyAPI

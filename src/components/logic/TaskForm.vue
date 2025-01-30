@@ -14,7 +14,7 @@
 
     <!-- Trigger Form -->
     <TriggerForm
-      v-model="task.trigger"
+      v-model="task"
       :field-options="availableFields"
       :enabled-relays="enabledRelays"
     />
@@ -64,29 +64,47 @@ export default {
   },
   data() {
     return {
-      task: JSON.parse(JSON.stringify(this.initialTask)), // Deep copy to avoid mutations
+      task: this.initializeTask(this.initialTask), // Initialize task structure
     };
   },
   computed: {
     availableFields() {
-      const source = this.task.trigger.source;
+      const source = this.task.source;
       if (!source) return [];
       const isRelay = this.enabledRelays.some((relay) => relay.id === source);
-      if (isRelay) {
-        return ["Volts", "Watts", "Amps"];
-      }
-      return this.fieldOptions[source] || [];
+      return isRelay ? ["Volts", "Watts", "Amps"] : this.fieldOptions[source] || [];
     },
   },
   methods: {
+    /**
+     * Initializes the task object to ensure it matches the expected structure.
+     * @param {Object} task - The initial task object.
+     * @returns {Object} - The initialized task object.
+     */
+    initializeTask(task) {
+      return {
+        id: task.id || null,
+        name: task.name || "",
+        source: task.source || "",
+        field: task.field || "",
+        operator: task.operator || "",
+        value: task.value !== undefined ? task.value : null,
+        actions: task.actions ? JSON.parse(JSON.stringify(task.actions)) : [],
+      };
+    },
+    /**
+     * Handles the task form submission and emits the updated task.
+     */
     handleSubmit() {
-      console.log("Emitting submit with task:", this.task);
-      this.$emit("task-submit", this.task);
+      this.$emit("task-submit", JSON.parse(JSON.stringify(this.task)));
     },
   },
   watch: {
+    /**
+     * Watches for changes in the initial task and updates the form.
+     */
     initialTask(newTask) {
-      this.task = JSON.parse(JSON.stringify(newTask));
+      this.task = this.initializeTask(newTask);
     },
   },
 };

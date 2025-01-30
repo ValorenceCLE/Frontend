@@ -7,6 +7,7 @@
         <label class="block text-Body text-textColor mb-1">Source:</label>
         <select
           v-model="trigger.source"
+          @change="updateFieldOptions"
           class="w-full border-gray-300 rounded-md p-2 shadow-sm"
           required
         >
@@ -35,7 +36,7 @@
           required
         >
           <option disabled value="">Select a field</option>
-          <option v-for="field in fieldOptions" :key="field" :value="field">
+          <option v-for="field in availableFields" :key="field" :value="field">
             {{ field }}
           </option>
         </select>
@@ -82,14 +83,22 @@ export default {
       type: Object,
       required: true,
     },
-    fieldOptions: {
-      type: Array,
-      required: true,
-    },
     enabledRelays: {
       type: Array,
       required: true,
     },
+  },
+  data() {
+    return {
+      availableFields: [],
+      // Move field mapping directly into this component
+      fieldOptionsMapping: {
+        environment: ["Temperature", "Humidity"],
+        network: ["Packet Loss (%)", "Latency"],
+        cellular: ["SINR", "RSRP", "RSRQ"],
+        mainPower: ["Volts", "Watts", "Amps"],
+      },
+    };
   },
   computed: {
     trigger: {
@@ -99,6 +108,42 @@ export default {
       set(val) {
         this.$emit("update:modelValue", val);
       },
+    },
+  },
+  watch: {
+    // Ensure fields are updated when a new task loads
+    modelValue: {
+      immediate: true,
+      handler() {
+        this.updateFieldOptions();
+      },
+    },
+    "trigger.source": {
+      immediate: true,
+      handler() {
+        this.updateFieldOptions();
+      },
+    },
+  },
+  methods: {
+    updateFieldOptions() {
+      if (!this.trigger.source) {
+        this.availableFields = [];
+        return;
+      }
+
+      const isRelay = this.enabledRelays.some(
+        (relay) => relay.id === this.trigger.source
+      );
+
+      this.availableFields = isRelay
+        ? ["Volts", "Watts", "Amps"]
+        : this.fieldOptionsMapping[this.trigger.source] || [];
+
+      // Reset field if it's not in the new available fields
+      if (!this.availableFields.includes(this.trigger.field)) {
+        this.trigger.field = "";
+      }
     },
   },
 };
