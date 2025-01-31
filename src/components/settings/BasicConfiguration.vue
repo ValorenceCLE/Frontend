@@ -7,11 +7,9 @@
     >
       <!-- Header -->
       <div class="flex flex-col items-center justify-center">
-        <!-- Main title: "Basic Settings" -->
         <h1 class="text-Header text-textColor font-bold -translate-y-1">
           Basic Configuration
         </h1>
-        <!-- Thin divider -->
         <div class="w-full h-[2px] bg-gray-700 mx-auto mb-2 m-1"></div>
       </div>
 
@@ -56,9 +54,16 @@
       </div>
 
       <!-- ========== CONFIGURATION SECTION ========== -->
+
       <!-- Upload Section -->
       <div class="flex items-center justify-between mt-4 mb-4">
-        <h3 class="text-Settings text-textColor">Upload Configuration:</h3>
+        <h3 class="text-Settings text-textColor">
+          Upload Configuration:
+          <!-- SHOW the uploaded file name ONLY if newConfigFileName is set -->
+          <span v-if="newConfigFileName" class="ml-2 text-sm text-gray-800">
+            ({{ newConfigFileName }})
+          </span>
+        </h3>
         <div>
           <input
             type="file"
@@ -80,7 +85,13 @@
 
       <!-- Download Section -->
       <div class="flex items-center justify-between">
-        <h3 class="text-Settings text-textColor">Download Configuration:</h3>
+        <h3 class="text-Settings text-textColor">
+          Download Configuration:
+          <!-- ALWAYS show the currentConfigFileName here (no new file until submit) -->
+          <span v-if="currentConfigFileName" class="ml-2 text-sm text-gray-800">
+            ({{ currentConfigFileName }})
+          </span>
+        </h3>
         <button
           type="button"
           class="flex items-center justify-center bg-textColor hover:bg-primaryMed text-white font-semibold px-4 py-2 rounded shadow w-[150px]"
@@ -155,25 +166,24 @@ export default {
       systemName: "",
       rebootTime: "",
       currentTime: new Date(),
-      selectedFile: null,
       pingTarget: "",
+
+      // 1) The official/saved config file name
+      currentConfigFileName: "MainConfig.json",
+
+      // 2) A temporary file name if user uploads a new one.
+      //    Only show if non-null
+      newConfigFileName: null,
     };
   },
   computed: {
+    // We keep this in case other parts of your code rely on it,
+    // but no longer show it in the template for Download/Upload labels
+    displayedConfigFileName() {
+      return this.newConfigFileName || this.currentConfigFileName;
+    },
     formattedDateTime() {
-      return this.formatDateTime(this.currentTime);
-    },
-  },
-  methods: {
-    // Helper to ask for confirmation, then run the actual callback if "OK"
-    confirmAction(actionName, callback) {
-      const confirmMessage = `You are about to ${actionName}.\n\nAre you sure you want to continue?`;
-      if (window.confirm(confirmMessage)) {
-        callback();
-      }
-    },
-
-    formatDateTime(date) {
+      const date = this.currentTime;
       const year = date.getFullYear();
       const month = String(date.getMonth() + 1).padStart(2, "0");
       const day = String(date.getDate()).padStart(2, "0");
@@ -182,25 +192,34 @@ export default {
       const seconds = String(date.getSeconds()).padStart(2, "0");
       return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
     },
+  },
+  methods: {
+    // Confirmation helper
+    confirmAction(actionName, callback) {
+      const confirmMessage = `You are about to ${actionName}.\n\nAre you sure you want to continue?`;
+      if (window.confirm(confirmMessage)) {
+        callback();
+      }
+    },
 
     runPingTest() {
       alert(`Pinging ${this.pingTarget}...`);
       // Real ping logic would go here
     },
 
-    // ========= File Handling =========
+    // Open file dialog
     openFilePicker() {
       this.$refs.configFile.click();
     },
     handleFileSelection(event) {
       const file = event.target.files[0];
       if (file) {
-        this.selectedFile = file;
+        this.newConfigFileName = file.name;
         console.log("File selected:", file.name);
       }
     },
 
-    // ========= Configuration Download =========
+    // Download the current official config file
     exportConfiguration() {
       const data = { message: "This is a sample configuration file." };
       const blob = new Blob([JSON.stringify(data, null, 2)], {
@@ -209,34 +228,40 @@ export default {
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = "configuration.json";
+      // Always use the official (current) name, not any newly uploaded file
+      link.download = this.currentConfigFileName;
       link.click();
       URL.revokeObjectURL(url);
     },
 
-    // ========= Form Submission / Cancel =========
+    // Submit -> finalize new file name
     handleSubmit() {
+      if (this.newConfigFileName) {
+        this.currentConfigFileName = this.newConfigFileName;
+        this.newConfigFileName = null;
+      }
       console.log("Form submitted with:", {
         systemName: this.systemName,
         rebootTime: this.rebootTime,
-        selectedFile: this.selectedFile,
+        configFileName: this.currentConfigFileName,
       });
     },
+
+    // Cancel -> discard new file name
     handleCancel() {
+      this.newConfigFileName = null;
       this.systemName = "";
       this.rebootTime = "";
-      this.selectedFile = null;
       console.log("Changes have been canceled.");
     },
 
-    // ========= Reboot Device / System =========
     rebootDevice() {
       console.log("Rebooting device...");
       alert("Device is restarting now...");
     },
     rebootSystem() {
       console.log("Rebooting system...");
-      alert("Begining power cycle...\nPlease do not navigate away from this page. ");
+      alert("Beginning power cycle...\nPlease do not navigate away from this page.");
     },
     factoryReset() {
       console.log("Performing factory reset...");
@@ -244,6 +269,7 @@ export default {
     },
   },
   mounted() {
+    // Keep the current time updated if used elsewhere
     this.timer = setInterval(() => {
       this.currentTime = new Date();
     }, 1000);

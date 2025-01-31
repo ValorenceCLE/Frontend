@@ -64,6 +64,10 @@
           </h1>
           <div class="mt-2 space-y-1 text-Form text-textColor text-left px-2 w-full">
             <div class="flex justify-between">
+              Serial Number:
+              <span>192F-52EB-C0F2</span>
+            </div>
+            <div class="flex justify-between">
               Status:
               <span>Online</span>
             </div>
@@ -71,10 +75,7 @@
               Uptime:
               <span>5 Hours</span>
             </div>
-            <div class="flex justify-between">
-              Serial Number:
-              <span>192F-52EB-C0F2</span>
-            </div>
+
             <div class="flex justify-between">
               Logs:
               <span>
@@ -101,6 +102,10 @@
           </h1>
           <div class="mt-2 space-y-1 text-Form text-textColor text-left px-2 w-full">
             <div class="flex justify-between">
+              Serial Number:
+              <span>192F-52EB-C0F2</span>
+            </div>
+            <div class="flex justify-between">
               Status:
               <span>Online</span>
             </div>
@@ -108,10 +113,7 @@
               Uptime:
               <span>5 Hours</span>
             </div>
-            <div class="flex justify-between">
-              Serial Number:
-              <span>192F-52EB-C0F2</span>
-            </div>
+
             <div class="flex justify-between">
               Logs:
               <span>
