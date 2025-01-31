@@ -84,6 +84,10 @@ module.exports = {
           lineHeight: '1.5rem',
           fontWeight: '600',
         } ],
+        'Settings': ['1.5rem', {
+          lineHeight: '1.75rem',
+          fontWeight: '600',
+        } ],
       },
     },
   },

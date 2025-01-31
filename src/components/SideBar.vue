@@ -61,7 +61,7 @@ export default {
         {
           title: "Settings",
           icon: settingsIcon,
-          items: ["General", "Network", "Date/Time", "Emails", "Configuration"],
+          items: ["General", "Network", "Date/Time", "Emails"],
         },
         {
           title: "Relays",

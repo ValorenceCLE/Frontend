@@ -11,7 +11,6 @@ import Contact from "@/components/etc/Contact.vue";
 import General from "@/components/settings/General.vue";
 import Network from "@/components/settings/Network.vue";
 import DateTime from "@/components/settings/DateTime.vue";
-import Configuration from "@/components/settings/Configuration.vue";
 import Emails from "@/components/settings/Emails.vue";
 
 // Admin Relays
@@ -95,10 +94,6 @@ const routes = [
       {
         path: "settings/date-time",
         component: DateTime,
-      },
-      {
-        path: "settings/configuration",
-        component: Configuration,
       },
       {
         path: "settings/emails",
