@@ -26,20 +26,38 @@
       </div>
     </div>
 
-    <!-- Modal -->
-    <Modal :show="showModal" :title="selectedTitle" @close="closeModal">
-      <!-- Modal content left-aligned -->
-      <div v-html="selectedContent"></div>
-    </Modal>
+    <!-- Inline Modal -->
+    <div
+      v-if="showModal"
+      class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50"
+      @click="closeModal"
+    >
+      <!-- Stop propagation so that clicks inside the modal do not close it -->
+      <div class="bg-white rounded-lg shadow-lg w-1/3 relative border-gray-600 border" @click.stop>
+        <!-- Modal Header -->
+        <div class="flex items-center justify-between p-4 border-b border-gray-600">
+          <h2 class="text-textColor text-center flex-1 text-FormHeader font-bold">
+            {{ selectedTitle }}
+          </h2>
+          <button
+            class="text-gray-800 font-extrabold text-xl hover:text-gray-900"
+            @click="closeModal"
+          >
+            ✕
+          </button>
+        </div>
+        <!-- Modal Content -->
+        <div class="p-6">
+          <div v-html="selectedContent"></div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
-import Modal from "@/components/etc/Modal.vue";
-
 export default {
   name: "Help",
-  components: { Modal },
   data() {
     return {
       showModal: false,
@@ -158,7 +176,6 @@ export default {
     };
   },
   methods: {
-    // Open modal with either modalTitle (if present) or fallback to title
     openFAQ(faq) {
       this.selectedTitle = faq.modalTitle || faq.title;
       this.selectedContent = faq.content;
@@ -166,7 +183,7 @@ export default {
     },
     closeModal() {
       this.showModal = false;
-      // Clear out state if desired
+      // Optionally reset the modal content
       this.selectedTitle = "";
       this.selectedContent = "";
     },

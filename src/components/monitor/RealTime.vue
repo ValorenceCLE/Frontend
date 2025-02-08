@@ -80,7 +80,7 @@
         </div>
 
         <!-- Run / Pause / Cancel Buttons -->
-        <div class="flex items-center space-x-2">
+        <div class="flex items-center space-x-1 ">
           <!-- If NOT running, show Run button (play icon) -->
           <button
             v-if="!isRunning"
@@ -102,9 +102,9 @@
                 v-if="isPaused"
                 src="@/assets/icons/play.svg"
                 alt="Resume"
-                class="w-5 h-5"
+                class="w-6 h-6"
               />
-              <img v-else src="@/assets/icons/pause.svg" alt="Pause" class="w-5 h-5" />
+              <img v-else src="@/assets/icons/pause.svg" alt="Pause" class="w-6 h-6" />
             </button>
 
             <!-- Stop/Cancel -->
@@ -112,7 +112,7 @@
               class="bg-textColor text-white px-2 py-1 rounded hover:bg-red-500 flex items-center"
               @click="handleStop"
             >
-              <img src="@/assets/icons/x.svg" alt="Stop" class="w-5 h-5" />
+              <img src="@/assets/icons/x.svg" alt="Stop" class="w-6 h-6" />
             </button>
           </template>
         </div>
@@ -123,7 +123,7 @@
     <div
       class="w-full h-3/5 mt-3 bg-gray-100 rounded-md shadow-md border border-gray-500"
     >
-      <DynamicTimeChart
+      <RealTimeChart
         :source="selectedSource"
         :fields="selectedFields"
         :isRunning="isRunning"
@@ -135,7 +135,7 @@
 
 <script setup>
 import { ref, computed, watch, onMounted, onBeforeUnmount } from "vue";
-import DynamicTimeChart from "./DynamicTimeChart.vue";
+import RealTimeChart from "./RealTimeChart.vue";
 
 /** ============= State and Data ============= */
 const sourceFieldMap = {

@@ -1,19 +1,17 @@
-// main.js
-import { createApp } from 'vue';
-import App from './App.vue';
-import './assets/tailwind.css'; // or your CSS file
-import router from './router';
 
-// 1) Import the <v-chart> component from "vue-echarts"
-import VChart from 'vue-echarts';
+import { createApp } from 'vue'; 
+import App from './App.vue'; // Basic Vue 3 app
+import './assets/tailwind.css'; // Tailwind CSS
+import router from './router'; // Vue Router
+import VChart from 'vue-echarts'; // Apache ECharts
+import { createPinia } from 'pinia'; // Pinia state management
 
-const app = createApp(App);
+const pinia = createPinia(); // Create a Pinia instance
+const app = createApp(App); // Create a Vue app instance
 
-// 2) Use your router, if you have one
-app.use(router);
 
-// 3) Globally register the "v-chart" component,
-//    so you can use <v-chart> in any file
-app.component('v-chart', VChart);
+app.use(router); // Use Vue Router
+app.use(pinia); // Use Pinia for state management
+app.component('v-chart', VChart); // Register ECharts component
 
 app.mount('#app');

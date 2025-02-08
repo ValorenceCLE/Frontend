@@ -16,7 +16,6 @@ import Emails from "@/components/settings/Emails.vue";
 // Admin Relays
 import RelaySetup from "@/components/relays/RelaySetup.vue";
 import RelayLogic from "@/components/logic/RelayLogic.vue";
-// import RelaySchedule from "@/components/relays/RelaySchedule.vue";
 
 // Admin Logs
 // import Logs from "@/components/etc/Logs.vue";
@@ -27,7 +26,7 @@ import RealtimeGraph from "@/components/monitor/RealTime.vue";
 
 // Admin Dashboard
 import Dashboard from "@/components/etc/Dashboard.vue";
-import DashboardSetup from "@/components/etc/DashboardSetup.vue";
+import Analytics from "@/components/monitor/Analytics.vue";
 
 const routes = [
   { path: "/", component: () => import("@/views/LoginView.vue") },
@@ -79,7 +78,7 @@ const routes = [
       },
       {
         path: "dashboard/setup",
-        component: DashboardSetup,
+        component: Analytics,
       },
 
       // Settings Routes
