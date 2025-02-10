@@ -2,18 +2,9 @@
   <div class="flex items-center justify-center w-full h-full">
     <!-- Table Container -->
     <div class="w-full mx-auto" style="max-width: 45rem">
-      <div
-        class="w-full max-w-xl p-3 bg-gray-200 border border-gray-500 rounded-md text-center flex flex-col items-center mx-auto"
-      >
+      <div class="w-full mx-auto p-3 bg-gray-200 border border-gray-500 rounded-md text-center flex flex-col items-center">
         <h1 class="text-3xl font-bold text-textColor">Relay Configuration</h1>
         <p class="text-gray-600">Manage your relay configurations here.</p>
-        <!-- New Dashboard Settings Button -->
-        <button
-          class="bg-secondary hover:bg-secondary-light text-white py-1 px-3 rounded mt-2"
-          @click="openDashboardModal"
-        >
-          Dashboard Settings
-        </button>
       </div>
       <div
         v-if="Object.keys(relays).length > 0"
@@ -22,19 +13,13 @@
         <table class="text-left w-full border-collapse rounded-md overflow-hidden">
           <thead>
             <tr class="bg-gray-200 border-b border-gray-500">
-              <th class="text-left py-3 px-4 text-textColor text-Subheader">
-                Name
-              </th>
-              <th class="text-center py-3 px-4 text-textColor text-Subheader">
-                Relay Number
-              </th>
+              <th class="text-left py-3 px-4 text-textColor text-Subheader">Name</th>
+              <th class="text-center py-3 px-4 text-textColor text-Subheader">Relay Number</th>
               <th class="text-center py-3 px-4 text-textColor text-Subheader">
                 Enabled
                 <InfoTooltip text="Enabled relays will be monitored and collect data" />
               </th>
-              <th class="text-center py-3 px-4 text-textColor text-Subheader">
-                Settings
-              </th>
+              <th class="text-center py-3 px-4 text-textColor text-Subheader">Settings</th>
             </tr>
           </thead>
           <tbody>
@@ -47,19 +32,12 @@
               <td class="text-center py-2 px-4 text-textColor text-Body">
                 {{ relay.relay_number }}
               </td>
-              <td class="text-center py-2 px-4 text-textColor">
-                <img
-                  v-if="relay.enabled"
-                  src="@/assets/icons/check-square.svg"
-                  alt="Active"
-                  class="w-6 h-6 mx-auto"
-                />
-                <img
-                  v-else
-                  src="@/assets/icons/x-square.svg"
-                  alt="Inactive"
-                  class="w-6 h-6 mx-auto"
-                />
+              <td class="text-center py-2 px-4">
+                <!-- Show a green circle if enabled, red if not -->
+                <div
+                  class="w-4 h-4 rounded-full mx-auto"
+                  :class="{'bg-green-500': relay.enabled, 'bg-red-500': !relay.enabled}"
+                ></div>
               </td>
               <td class="text-center py-2 px-4 text-Body">
                 <button
@@ -76,23 +54,14 @@
       <div v-else class="text-center py-4">Loading relays...</div>
     </div>
 
-    <!-- Settings Modal for Relay Configuration -->
-    <SettingsModal
-      :show="showModal"
+    <!-- Unified Edit Modal for both Relay and Dashboard Settings -->
+    <EditModal
+      :show="showEditModal"
       :relay="currentRelay"
       :relayKey="currentRelayKey"
       @close="closeModal"
       @update-relay="handleRelayUpdate"
       @updated="handleUpdated"
-    />
-
-    <!-- Dashboard Modal for Testing -->
-    <DashboardModal
-      :show="showDashboardModal"
-      :dashboard="dashboardConfig"
-      @close="closeDashboardModal"
-      @update-dashboard="handleDashboardUpdate"
-      @updated="handleDashboardUpdated"
     />
 
     <!-- Toast Notification -->
@@ -105,47 +74,24 @@
 </template>
 
 <script>
-import SettingsModal from "@/components/relays/SettingsModal.vue";
-import DashboardModal from "@/components/relays/DashboardModal.vue";
-import ToastNotification from "@/components/etc/ToastNotification.vue";
 import DummyAPI from "@/api/dummyApi";
 import InfoTooltip from "@/components/etc/InfoTooltip.vue";
+import ToastNotification from "@/components/etc/ToastNotification.vue";
+import EditModal from "@/components/relays/EditModal.vue";
 
 export default {
   name: "RelaySetup",
   components: {
-    SettingsModal,
-    DashboardModal,
-    ToastNotification,
     InfoTooltip,
+    ToastNotification,
+    EditModal,
   },
   data() {
     return {
       relays: {}, // Data fetched from DummyAPI
-      showModal: false,
+      showEditModal: false,
       currentRelay: {},
-      currentRelayKey: null,
-      // For testing DashboardModal independently.
-      showDashboardModal: false,
-      dashboardConfig: {
-        on_button: {
-          show: false,
-          status_text: "On",
-          status_color: "green",
-          button_label: "On",
-        },
-        off_button: {
-          show: false,
-          status_text: "Off",
-          status_color: "red",
-          button_label: "Off",
-        },
-        pulse_button: {
-          show: true,
-          status_text: "Restarting...",
-          button_label: "Restart",
-        },
-      },
+      currentRelayKey: "", // Initialized to an empty string (instead of null)
       showToast: false,
       toastMessage: "",
     };
@@ -167,11 +113,16 @@ export default {
       this.currentRelayKey = relayKey;
       // Clone the relay data for editing.
       this.currentRelay = { ...this.relays[relayKey] };
-      this.showModal = true;
+      // Ensure a dashboard object exists.
+      if (!this.currentRelay.dashboard) {
+        this.currentRelay.dashboard = {};
+      }
+      this.showEditModal = true;
     },
     closeModal() {
-      this.showModal = false;
+      this.showEditModal = false;
       this.currentRelay = {};
+      this.currentRelayKey = ""; // Reset to an empty string to avoid null prop
     },
     handleRelayUpdate({ relayKey, updatedRelay }) {
       this.$set(this.relays, relayKey, { ...updatedRelay });
@@ -183,19 +134,6 @@ export default {
         this.showToast = false;
       }, 1500);
     },
-    // Methods for DashboardModal
-    openDashboardModal() {
-      this.showDashboardModal = true;
-    },
-    closeDashboardModal() {
-      this.showDashboardModal = false;
-    },
-    handleDashboardUpdate(updatedDashboard) {
-      this.dashboardConfig = { ...updatedDashboard };
-    },
-    handleDashboardUpdated() {
-      console.log("Dashboard settings updated");
-    },
   },
   mounted() {
     this.fetchRelays();
@@ -204,5 +142,5 @@ export default {
 </script>
 
 <style scoped>
-/* Custom styling or Tailwind overrides if needed */
+/* Additional styles if needed */
 </style>

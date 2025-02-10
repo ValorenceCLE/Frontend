@@ -1,11 +1,11 @@
 <template>
   <div class="relative w-full h-full">
-    <!-- This heading is absolutely positioned, not affecting the gauge's size. -->
+    <!-- Heading positioned above the gauge -->
     <h1 v-if="title" class="absolute top-0 left-0 w-full text-center" :style="titleStyle">
       {{ title }}
     </h1>
 
-    <!-- The gauge arcs fill the entire container underneath the heading. -->
+    <!-- Gauge Chart -->
     <v-chart
       :option="chartOption"
       autoresize
@@ -16,13 +16,6 @@
 
 <script setup>
 import { computed } from "vue";
-import { use } from "echarts/core";
-import { GaugeChart } from "echarts/charts";
-import { TitleComponent } from "echarts/components";
-import { CanvasRenderer } from "echarts/renderers";
-
-// Register the required ECharts components
-use([TitleComponent, GaugeChart, CanvasRenderer]);
 
 /**
  * PROPS:
@@ -42,7 +35,7 @@ const props = defineProps({
 });
 
 /**
- * DOM heading style (unrelated to the arc color).
+ * Style for the heading
  */
 const titleStyle = computed(() => {
   const fontSize = Math.round(22 * props.scale);
@@ -55,76 +48,52 @@ const titleStyle = computed(() => {
 });
 
 /**
- * Function that returns a color in the green->yellow->red range
- * based on fraction (0=low,1=high).  Adjust as you like for more nuance.
+ * Function to determine the color of the gauge arc
  */
 function getArcColor(fraction) {
-  // If you want a 2-step approach, do:
-  //  fraction < 0.5 => blend green->yellow
-  //  fraction >= 0.5 => blend yellow->red
-  // or you can do a single linear approach from green->red with a midpoint.
-
-  // For example, let's do 2-step:
   if (fraction < 0) fraction = 0;
   if (fraction > 1) fraction = 1;
 
   if (fraction < 0.5) {
-    // 0..0.5 -> green..yellow
-    const subFrac = fraction / 0.5;
-    return blendColor("#2a980c", "#FFDF00", subFrac);
+    return blendColor("#2a980c", "#FFDF00", fraction / 0.5);
   } else {
-    // 0.5..1 -> yellow..red
-    const subFrac = (fraction - 0.5) / 0.5;
-    return blendColor("#FFDF00", "#eb191a", subFrac);
+    return blendColor("#FFDF00", "#eb191a", (fraction - 0.5) / 0.5);
   }
 }
 
 /**
- * Utility to blend two hex colors (start->end) by fraction t in [0..1].
- * Simple approach for demonstration.
+ * Blends two colors based on a fraction
  */
 function blendColor(startColor, endColor, t) {
-  // remove '#' if present
   const s = startColor.replace("#", "");
   const e = endColor.replace("#", "");
-  // parse as integers
+
   const sr = parseInt(s.substring(0, 2), 16);
   const sg = parseInt(s.substring(2, 4), 16);
   const sb = parseInt(s.substring(4, 6), 16);
+
   const er = parseInt(e.substring(0, 2), 16);
   const eg = parseInt(e.substring(2, 4), 16);
   const eb = parseInt(e.substring(4, 6), 16);
 
-  // interpolate each channel
-  const rr = Math.round(sr + (er - sr) * t)
-    .toString(16)
-    .padStart(2, "0");
-  const rg = Math.round(sg + (eg - sg) * t)
-    .toString(16)
-    .padStart(2, "0");
-  const rb = Math.round(sb + (eb - sb) * t)
-    .toString(16)
-    .padStart(2, "0");
+  const rr = Math.round(sr + (er - sr) * t).toString(16).padStart(2, "0");
+  const rg = Math.round(sg + (eg - sg) * t).toString(16).padStart(2, "0");
+  const rb = Math.round(sb + (eb - sb) * t).toString(16).padStart(2, "0");
+
   return `#${rr}${rg}${rb}`;
 }
 
 /**
- * ECharts gauge config.
- * We keep axisLine a neutral color for the background,
- * and compute a dynamic color for the "progress" arc using 'progress.itemStyle.color'.
+ * ECharts gauge configuration
  */
 const chartOption = computed(() => {
   const s = props.scale;
-
-  // fraction in [0..1] for (props.value - min)/(max - min)
   const range = props.max - props.min;
   const fraction = range ? (props.value - props.min) / range : 0;
-  // pick a color for the moving arc
   const progressColor = getArcColor(fraction);
 
   return {
     backgroundColor: "transparent",
-
     series: [
       {
         type: "gauge",
@@ -136,22 +105,18 @@ const chartOption = computed(() => {
         max: props.max,
         splitNumber: 6,
 
-        // The "background" (unfilled) portion is #fcfcfc
         axisLine: {
           lineStyle: {
             width: 28 * s,
-            color: [[1, "#fcfcfc"]], // Single neutral color for the track
+            color: [[1, "#fcfcfc"]],
           },
         },
 
-        // "progress" arc is the portion from min up to 'value'.
-        // We'll apply a dynamic color to that arc via itemStyle below.
         progress: {
           show: true,
           width: 28 * s,
-          // 'itemStyle.color' overrides the arc color for the progress portion only
           itemStyle: {
-            color: progressColor, // the dynamic shading
+            color: progressColor,
           },
         },
 
@@ -165,6 +130,7 @@ const chartOption = computed(() => {
             color: "#909294",
           },
         },
+
         splitLine: {
           show: true,
           distance: -28 * s,
@@ -174,12 +140,9 @@ const chartOption = computed(() => {
             color: "#909294",
           },
         },
+
         axisLabel: {
           show: false,
-          distance: 15 * s,
-          color: "#212529",
-          fontSize: Math.round(10 * s),
-          fontWeight: "500",
         },
 
         pointer: { show: false },
@@ -195,8 +158,6 @@ const chartOption = computed(() => {
           formatter: (val) => `${val} ${props.unit}`,
         },
 
-        // We no longer set 'itemStyle.color' on the overall gauge,
-        // because we're applying the color specifically to the progress portion above.
         data: [{ value: props.value }],
       },
     ],
