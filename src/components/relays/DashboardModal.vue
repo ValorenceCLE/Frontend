@@ -1,210 +1,217 @@
 <template>
-  <transition name="fade">
-    <div
-      v-if="show"
-      class="modal-overlay fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 backdrop-blur-sm z-50"
-      @click.self="closeModal"
-    >
-      <div
-        class="bg-white rounded-xl shadow-2xl w-full md:w-1/2 lg:w-1/3 relative border-gray-300"
-        @click.stop
-      >
-        <!-- Modal Header -->
-        <div class="flex items-center justify-between p-4 border-b border-gray-300">
-          <h2 class="text-2xl text-gray-800 text-center font-bold flex-1">
-            Dashboard Settings
-          </h2>
-          <XMarkIcon
-            class="h-6 w-6 text-gray-800 cursor-pointer hover:text-gray-900"
-            @click="closeModal"
-          />
-        </div>
+  <!-- Main container for the whole content (allows future additions) -->
+  <div class="px-4 py-2">
+    <!-- Card container for the dashboard settings -->
+    <div class="bg-gray-100 border border-gray-500 rounded-md">
+      
+      <!-- Header: Button Selector Row (separate from the main options container) -->
+      <div class="border-b border-gray-500 p-1 px-2 flex justify-between items-center">
+        <label class="text-ModalInfo text-textColor">Select Button:</label>
+        <select
+          v-model="selectedButton"
+          class="w-1/4 border border-gray-400 rounded-md text-sm"
+        >
+          <option value="" disabled>Select Button</option>
+          <option value="on_button">ON</option>
+          <option value="off_button">OFF</option>
+          <option value="pulse_button">Pulse</option>
+        </select>
+      </div>
 
-        <!-- Modal Content -->
-        <div class="p-2 text-gray-700">
-          <div
-            v-for="(section, key) in sections"
-            :key="key"
-            class="border border-gray-300 rounded-md p-2 mb-3"
-          >
-            <!-- Section Header -->
-            <div
-              class="flex items-center justify-between cursor-pointer hover:bg-gray-100 p-1 rounded-md"
-              @click="toggleExpansion(key)"
-            >
-              <span class="text-lg font-bold">{{ section.title }}</span>
-
-              <!-- Button Group -->
-              <div class="flex items-center">
-                <button
-                  @click.stop="setEnabled(key, true)"
-                  :class="getToggleButtonClass(key, true)"
-                  title="Show this section and make it editable"
-                >
-                  <EyeIcon class="h-4 w-4 mr-1" /> Show
-                </button>
-
-                <button
-                  @click.stop="setEnabled(key, false)"
-                  :class="getToggleButtonClass(key, false)"
-                  title="Hide this section and disable editing"
-                >
-                  <BanIcon class="h-4 w-4 mr-1" /> Hide
-                </button>
-
-                <component
-                  :is="activeSection === key ? ChevronDownIcon : ChevronRightIcon"
-                  class="h-5 w-5 text-gray-600 ml-4"
-                  title="Click to expand/collapse"
-                />
-              </div>
+      <!-- Main Options Container (encapsulates all option rows) -->
+      <div class="p-2">
+        <!-- Row 1: Visibility (Show/Hide) -->
+        <div class="mb-2">
+          <div class="grid grid-cols-2 gap-2 items-center">
+            <div class="flex items-center justify-start">
+              <label class="text-ModalLabel text-textColor">Visibility:</label>
             </div>
-
-            <!-- Form Fields -->
-            <div
-              :class="[
-                'mt-2 space-y-1 p-2 rounded-md transition',
-                editedDashboard[key].show ? 'bg-white' : 'bg-gray-100 opacity-50 cursor-not-allowed'
-              ]"
-            >
-              <div
-                v-for="field in section.fields"
-                :key="field.model"
-                class="flex items-center justify-between mb-1"
-              >
-                <label class="text-sm font-medium text-gray-700 mr-2 min-w-[30%]">
-                  {{ field.label }}
-                </label>
-
-                <input
-                  type="text"
-                  v-model="editedDashboard[key][field.model]"
-                  :disabled="!editedDashboard[key].show"
-                  class="flex-1 border-gray-300 rounded-md shadow-sm p-1 text-sm disabled:bg-gray-200 disabled:cursor-not-allowed"
-                />
+            <div class="flex items-center justify-end">
+              <div class="inline-flex rounded-md overflow-hidden border border-blue-500">
+                <button
+                  @click="setEnabled(true)"
+                  :class="getPillButtonClass(currentSettings?.show, true)"
+                  :disabled="!selectedButton"
+                >
+                  Show
+                </button>
+                <button
+                  @click="setEnabled(false)"
+                  :class="getPillButtonClass(currentSettings?.show, false)"
+                  :disabled="!selectedButton"
+                >
+                  Hide
+                </button>
               </div>
             </div>
           </div>
+        </div>
 
-          <!-- Action Buttons -->
-          <div class="flex justify-center mt-3 space-x-2">
-            <button
-              class="bg-primaryMed hover:bg-primaryLight text-white py-1.5 px-3 rounded-md"
-            >
-              Preview
-            </button>
-            <button
-              class="bg-green-500 hover:bg-green-600 text-white py-1.5 px-3 rounded-md"
-              @click="saveChanges"
-            >
-              Save
-            </button>
+        <!-- Row 2: Status Text -->
+        <div class="mb-2">
+          <div class="grid grid-cols-2 gap-2 items-center">
+            <div class="flex items-center justify-start">
+              <label class="text-ModalLabel text-textColor">Status Text:</label>
+            </div>
+            <div>
+              <input
+                type="text"
+                v-model="currentSettings.status_text"
+                :disabled="!selectedButton"
+                class="w-full border border-gray-400 rounded-md p-0.5 text-xs"
+                @input="emitChanges"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 3: Status Color -->
+        <div class="mb-2">
+          <div class="grid grid-cols-2 gap-2 items-center">
+            <div class="flex items-center justify-start">
+              <label class="text-ModalLabel text-textColor">Status Color:</label>
+            </div>
+            <div>
+              <select
+                v-model="currentSettings.status_color"
+                :disabled="!selectedButton"
+                class="w-full border border-gray-400 rounded-md p-0.5 text-xs"
+                @change="emitChanges"
+              >
+                <option value="Red">🔴 Red</option>
+                <option value="Yellow">🟡 Yellow</option>
+                <option value="Green">🟢 Green</option>
+                <option value="Blue">🔵 Blue</option>
+                <option value="Grey">⚪ Grey</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 4: Button Label -->
+        <div>
+          <div class="grid grid-cols-2 gap-2 items-center">
+            <div class="flex items-center justify-start">
+              <label class="text-ModalLabel text-textColor">Button Label:</label>
+            </div>
+            <div>
+              <input
+                type="text"
+                v-model="currentSettings.button_label"
+                :disabled="!selectedButton"
+                class="w-full border border-gray-400 rounded-md p-0.5 text-xs"
+                @input="emitChanges"
+              />
+            </div>
           </div>
         </div>
       </div>
+      <!-- End of Main Options Container -->
+
     </div>
-  </transition>
+  </div>
 </template>
 
 <script>
-import {
-  ChevronDownIcon,
-  ChevronRightIcon,
-  XMarkIcon,
-  EyeIcon,
-  BanIcon
-} from '@heroicons/vue/24/outline';
-
 export default {
   name: "DashboardModal",
-  components: { ChevronDownIcon, ChevronRightIcon, XMarkIcon, EyeIcon, BanIcon },
   props: {
-    show: { type: Boolean, required: true },
-    dashboard: { type: Object, required: true },
+    dashboard: {
+      type: Object,
+      required: true,
+    },
   },
   data() {
     return {
-      editedDashboard: {},
-      activeSection: null,
-      sections: {
-        on_button: {
-          title: "On Button",
-          fields: [
-            { label: "Status Text:", model: "status_text" },
-            { label: "Status Color:", model: "status_color" },
-            { label: "Button Label:", model: "button_label" },
-          ],
-        },
-        off_button: {
-          title: "Off Button",
-          fields: [
-            { label: "Status Text:", model: "status_text" },
-            { label: "Status Color:", model: "status_color" },
-            { label: "Button Label:", model: "button_label" },
-          ],
-        },
-        pulse_button: {
-          title: "Pulse Button",
-          fields: [
-            { label: "Status Text:", model: "status_text" },
-            { label: "Button Label:", model: "button_label" },
-          ],
-        },
+      // Complete dashboard configuration for all buttons.
+      localDashboard: {
+        on_button: { show: false, status_text: "", status_color: "Red", button_label: "" },
+        off_button: { show: false, status_text: "", status_color: "Red", button_label: "" },
+        pulse_button: { show: false, status_text: "", status_color: "Red", button_label: "" },
       },
+      // Currently selected button key ("on_button", "off_button", or "pulse_button")
+      selectedButton: "",
     };
   },
+  computed: {
+    // Returns the settings for the currently selected button.
+    currentSettings() {
+      return this.selectedButton ? this.localDashboard[this.selectedButton] : {};
+    },
+  },
   watch: {
+    // Merge incoming dashboard values into localDashboard.
     dashboard: {
       immediate: true,
       handler(newVal) {
-        this.editedDashboard = JSON.parse(JSON.stringify(newVal));
+        this.localDashboard = {
+          on_button: {
+            show: newVal.on_button?.show ?? false,
+            status_text: newVal.on_button?.status_text || "",
+            status_color: newVal.on_button?.status_color || "Red",
+            button_label: newVal.on_button?.button_label || "",
+          },
+          off_button: {
+            show: newVal.off_button?.show ?? false,
+            status_text: newVal.off_button?.status_text || "",
+            status_color: newVal.off_button?.status_color || "Red",
+            button_label: newVal.off_button?.button_label || "",
+          },
+          pulse_button: {
+            show: newVal.pulse_button?.show ?? false,
+            status_text: newVal.pulse_button?.status_text || "",
+            status_color: newVal.pulse_button?.status_color || "Red",
+            button_label: newVal.pulse_button?.button_label || "",
+          },
+        };
       },
     },
   },
   methods: {
-    closeModal() {
-      this.$emit("close");
+    // Update the "show" property for the selected button.
+    setEnabled(value) {
+      if (!this.selectedButton) return;
+      this.localDashboard[this.selectedButton].show = value;
+      this.emitChanges();
     },
-    setEnabled(sectionKey, value) {
-      this.editedDashboard[sectionKey].show = value;
-      if (!value && this.activeSection === sectionKey) {
-        this.activeSection = null;
-      }
+    // Return CSS classes for the pill buttons with a rectangular (less rounded) style.
+    getPillButtonClass(currentValue, buttonValue) {
+      const active = currentValue === buttonValue;
+      const base = "px-3 py-1 text-xs font-medium focus:outline-none";
+      const shape = buttonValue ? "rounded-l-md" : "rounded-r-md";
+      const activeClass = active
+        ? "bg-blue-500 text-white"
+        : "bg-white text-blue-500 hover:bg-blue-50";
+      return `${base} ${shape} ${activeClass}`;
     },
-    toggleExpansion(sectionKey) {
-      if (!this.editedDashboard[sectionKey].show) return;
-      this.activeSection = this.activeSection === sectionKey ? null : sectionKey;
-    },
-    getToggleButtonClass(sectionKey, buttonValue) {
-      const isActive = this.editedDashboard[sectionKey].show === buttonValue;
-      const baseClass = "py-1 px-3 text-sm font-medium border transition";
-
-      const roundedClass = buttonValue
-        ? "rounded-l-md border-r-0"
-        : "rounded-r-md";
-
-      return (
-        `${baseClass} ${roundedClass} ` +
-        (isActive
-          ? "bg-blue-500 text-white border-blue-500"
-          : "bg-white text-blue-500 border-blue-500 hover:bg-blue-50")
-      );
-    },
-    saveChanges() {
-      this.$emit("update-dashboard", this.editedDashboard);
-      this.$emit("updated");
-      this.closeModal();
+    // Emit the updated dashboard configuration to the parent.
+    emitChanges() {
+      this.$emit("dashboard-updated", JSON.parse(JSON.stringify(this.localDashboard)));
     },
   },
 };
 </script>
 
 <style scoped>
-/* Modal fade animation */
-.fade-enter-active, .fade-leave-active {
-  transition: opacity 0.3s ease;
+label {
+  transform: translateY(0px);
 }
-.fade-enter-from, .fade-leave-to {
-  opacity: 0;
+input, select {
+  font-size: 0.9rem;
+  line-height: 0.9rem;
+  font-weight: 500;
+  color: #333;
+}
+option {
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 500;
+  color: #333;
+}
+input:focus,
+select:focus {
+  outline: none;
+  border-color: rgba(51, 51, 51, 0.5);
+  box-shadow: 0 0 0 0.75px rgba(51, 51, 51, 0.5);
 }
 </style>

@@ -40,7 +40,7 @@ export function logMemoryConfig() {
  * @param {number} delay - Delay in milliseconds (default: 500ms).
  * @returns {Promise} - A promise resolving to a mock API response.
  */
-export function mockResponse(data, delay = 500) {
+export function mockResponse(data, delay = 200) {
   return new Promise((resolve) => {
     setTimeout(() => {
       resolve({ success: true, data });

@@ -6,141 +6,103 @@
             @click.self="closeModal"
         >
             <div
-                class="bg-white rounded-lg shadow-lg w-full max-w-2xl relative border border-gray-600"
+                class="bg-white rounded-md shadow-md w-full max-w-xl relative border border-gray-500"
                 @click.stop
             >
-                <div class="p-4 border-b border-gray-600">
-                    <h2 class="text-3xl font-bold text-textColor text-center">
-                        {{ editedRelay.name || 'Relay' }}
+                <!-- HEADER -->
+                <div class="border-b border-gray-500 relative">
+                    <!-- Close Icon -->
+                    <img
+                        :src="xIcon"
+                        alt="Close"
+                        class="w-6 h-6 cursor-pointer hover:scale-105 transition-transform absolute top-1 right-1"
+                        @click="closeModal"
+                    />
+
+                    <!-- Page Title -->
+                    <h2 class="text-center text-ModalHeader italic text-textColor">
+                        {{ currentPageTitle }}
                     </h2>
-                    <p class="text-center text-sm italic text-gray-500">
-                        {{ currentPage === 'settings' ? 'Relay Settings' : 'Dashboard Settings' }}
+                    <p class="text-ModalInfo text-textColor italic transition-transform absolute top-2 left-3">
+                        {{ editedRelay.name || 'Relay' }}
+                    </p>
+
+                    <!-- Subheader -->
+                    <p class="text-center text-ModalSubheader text-textColor italic p-0.5">
+                        {{ currentPageSubheader }}
                     </p>
                 </div>
 
-                <div class="p-4 text-textColor">
-                    <div v-if="currentPage === 'settings'">
-                        <div class="mb-3">
-                            <label class="block mb-1 font-medium">Relay Name:</label>
-                            <input
-                                type="text"
-                                v-model="editedRelay.name"
-                                class="w-full border border-gray-300 rounded-md p-2"
-                            />
-                        </div>
-                        <div class="mb-3">
-                            <label class="block mb-1 font-medium">Enabled:</label>
-                            <select
-                                v-model="editedRelay.enabled"
-                                class="w-full border border-gray-300 rounded-md p-2"
-                            >
-                                <option :value="true">True</option>
-                                <option :value="false">False</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label class="block mb-1 font-medium">Power Up State:</label>
-                            <select
-                                v-model="editedRelay.boot_state"
-                                class="w-full border border-gray-300 rounded-md p-2"
-                            >
-                                <option value="on">On</option>
-                                <option value="off">Off</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label class="block mb-1 font-medium">Pulse Time (Seconds):</label>
-                            <input
-                                type="number"
-                                v-model="editedRelay.pulse_time"
-                                class="w-full border border-gray-300 rounded-md p-2"
-                            />
-                        </div>
-                        <div class="mb-3">
-                            <label class="block mb-1 font-medium">On Status Text:</label>
-                            <input
-                                type="text"
-                                v-model="editedRelay.on_status_text"
-                                class="w-full border border-gray-300 rounded-md p-2"
-                            />
-                        </div>
-                        <div class="mb-3">
-                            <label class="block mb-1 font-medium">Off Status Text:</label>
-                            <input
-                                type="text"
-                                v-model="editedRelay.off_status_text"
-                                class="w-full border border-gray-300 rounded-md p-2"
-                            />
-                        </div>
-                    </div>
-
-                    <div v-else-if="currentPage === 'dashboard'">
-                        <div
-                            v-for="(section, key) in dashboardSections"
-                            :key="key"
-                            class="mb-3 border border-gray-300 rounded"
-                        >
-                            <div
-                                class="flex items-center justify-between p-2 bg-gray-100 cursor-pointer"
-                                @click="toggleSection(key)"
-                            >
-                                <span class="font-bold">{{ section.title }}</span>
-                                <span class="text-lg">{{ expandedSections[key] ? '▼' : '►' }}</span>
-                            </div>
-                            <div v-if="expandedSections[key]" class="p-2">
-                                <div
-                                    v-for="field in section.fields"
-                                    :key="field.model"
-                                    class="mb-2"
-                                >
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">
-                                        {{ field.label }}
-                                    </label>
-                                    <input
-                                        type="text"
-                                        v-model="editedDashboard[key][field.model]"
-                                        class="w-full border border-gray-300 rounded-md p-1 text-sm"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                        <div class="flex justify-center mt-2">
-                            <button class="bg-secondary hover:bg-secondary-light text-white py-1 px-3 rounded text-sm">
-                                Preview
-                            </button>
-                        </div>
-                    </div>
+                <!-- MAIN CONTENT -->
+                <div>
+                    <!-- Settings Page -->
+                    <SettingsModal
+                        v-if="currentPage === 'settings'"
+                        :relay="editedRelay"
+                        :relayKey="relayKey"
+                        @fields-updated="handleRelayFields"
+                    />
+                    <!-- Dashboard Page -->
+                    <DashboardModal
+                        v-else-if="currentPage === 'dashboard'"
+                        :dashboard="editedRelay.dashboard"
+                        @dashboard-updated="handleDashboardFields"
+                    />
                 </div>
 
-                <div class="p-4 border-t border-gray-600">
-                    <div class="flex justify-center mb-4">
-                        <button
-                            @click="switchPage('settings')"
-                            :class="currentPage === 'settings' ? 'text-primaryMed border-b-2 border-primaryMed' : 'text-gray-500'"
-                            class="mx-2 text-sm"
-                        >
-                            Relay Settings
-                        </button>
-                        <button
-                            @click="switchPage('dashboard')"
-                            :class="currentPage === 'dashboard' ? 'text-primaryMed border-b-2 border-primaryMed' : 'text-gray-500'"
-                            class="mx-2 text-sm"
-                        >
-                            Dashboard Settings
-                        </button>
+                <!-- FOOTER -->
+                <div class="border-t border-gray-500">
+                    
+                    <div class="flex items-center justify-center -space-x-1">
+                        <img
+                            :src="chevronLeft"
+                            alt="Previous Page"
+                            class="w-5 h-5 cursor-pointer hover:scale-110 transition-transform"
+                            @click="prevPage"
+                        />
+                        <div class="flex items-center space-x-0.5">
+                            <span
+                                class="text-xl cursor-pointer transition-colors"
+                                style="transform: translateY(-1px)"
+                                :class="currentPage === 'settings' ? 'text-textColor' : 'text-gray-400 hover:text-gray-600'"
+                                @click="switchPage('settings')"
+                            >
+                                •
+                            </span>
+                            <span
+                                class="text-xl cursor-pointer transition-colors"
+                                style="transform: translateY(-1px)"
+                                :class="currentPage === 'dashboard' ? 'text-textColor' : 'text-gray-400 hover:text-gray-600'"
+                                @click="switchPage('dashboard')"
+                            >
+                                •
+                            </span>
+                        </div>
+                        <img
+                            :src="chevronRight"
+                            alt="Next Page"
+                            class="w-5 h-5 cursor-pointer hover:scale-110 transition-transform"
+                            @click="nextPage"
+                        />
                     </div>
-                    <div class="flex justify-center space-x-4">
+                    <div class="flex justify-center space-x-1 text-ModalButton p-0.5" style="transform: translateY(-3px)">
                         <button
-                            class="bg-primaryMed hover:bg-primaryLight text-white py-1 px-4 rounded text-sm"
+                            class="bg-primaryMed hover:bg-primaryLight text-white rounded-md w-20 flex items-center justify-center"
                             @click="saveChanges"
                         >
-                            Save
+                            <span style="transform: translateY(-1px)">Save</span>
                         </button>
                         <button
-                            class="bg-grayDark hover:bg-gray-700 text-white py-1 px-4 rounded text-sm"
+                            class="bg-blue-500 hover:bg-blue-600 text-white rounded-md w-20 flex items-center justify-center"
+                            @click="preview"
+                        >
+                            <span style="transform: translateY(-1px)">View</span>
+                        </button>
+                        <button
+                            class="bg-grayDark hover:bg-gray-700 text-white rounded-md w-20 flex items-center justify-center"
                             @click="closeModal"
                         >
-                            Cancel
+                            <span style="transform: translateY(-1px)">Cancel</span>
                         </button>
                     </div>
                 </div>
@@ -150,10 +112,18 @@
 </template>
 
 <script>
-import DummyAPI from "@/api/dummyApi";
+import SettingsModal from "./SettingsModal.vue";
+import DashboardModal from "./DashboardModal.vue";
+import xIcon from "@/assets/icons/x.svg";
+import chevronLeft from "@/assets/icons/chevron-left.svg";
+import chevronRight from "@/assets/icons/chevron-right.svg";
 
 export default {
     name: "EditModal",
+    components: {
+        SettingsModal,
+        DashboardModal,
+    },
     props: {
         show: {
             type: Boolean,
@@ -170,53 +140,28 @@ export default {
     },
     data() {
         return {
+            xIcon,
+            chevronLeft,
+            chevronRight,
             editedRelay: {},
-            editedDashboard: {},
-            currentPage: "settings",
-            dashboardSections: {
-                on_button: {
-                    title: "On Button",
-                    fields: [
-                        { label: "Status Text:", model: "status_text" },
-                        { label: "Status Color:", model: "status_color" },
-                        { label: "Button Label:", model: "button_label" },
-                    ],
-                },
-                off_button: {
-                    title: "Off Button",
-                    fields: [
-                        { label: "Status Text:", model: "status_text" },
-                        { label: "Status Color:", model: "status_color" },
-                        { label: "Button Label:", model: "button_label" },
-                    ],
-                },
-                pulse_button: {
-                    title: "Pulse Button",
-                    fields: [
-                        { label: "Status Text:", model: "status_text" },
-                        { label: "Button Label:", model: "button_label" },
-                    ],
-                },
-            },
-            expandedSections: {},
+            currentPage: "settings", // "settings" or "dashboard"
         };
+    },
+    computed: {
+        currentPageTitle() {
+            return this.currentPage === "settings" ? "Relay Setup" : "Dashboard Setup";
+        },
+        currentPageSubheader() {
+            return this.currentPage === "settings"
+                ? "Modify the behavior of the relay in the system"
+                : "Modify the appearance of the relay on the dashboard";
+        },
     },
     watch: {
         relay: {
             immediate: true,
             handler(newRelay) {
                 this.editedRelay = { ...newRelay };
-                this.editedDashboard = newRelay.dashboard ? { ...newRelay.dashboard } : {};
-                for (const key in this.dashboardSections) {
-                    if (!this.editedDashboard[key]) {
-                        this.editedDashboard[key] = {
-                            status_text: "",
-                            status_color: "",
-                            button_label: "",
-                        };
-                    }
-                    this.expandedSections[key] = false;
-                }
             },
         },
     },
@@ -227,31 +172,30 @@ export default {
         switchPage(page) {
             this.currentPage = page;
         },
-        toggleSection(sectionKey) {
-            this.expandedSections[sectionKey] = !this.expandedSections[sectionKey];
+        prevPage() {
+            if (this.currentPage === "dashboard") {
+                this.currentPage = "settings";
+            }
+        },
+        nextPage() {
+            if (this.currentPage === "settings") {
+                this.currentPage = "dashboard";
+            }
+        },
+        handleRelayFields(updatedFields) {
+            this.editedRelay = { ...this.editedRelay, ...updatedFields };
+        },
+        handleDashboardFields(updatedDash) {
+            this.editedRelay.dashboard = { ...updatedDash };
+        },
+        preview() {
+            console.log("Preview Relay:", this.editedRelay);
         },
         saveChanges() {
-            const updatedRelay = {
-                ...this.editedRelay,
-                dashboard: { ...this.editedDashboard },
-            };
-            this.$emit("update-relay", {
-                relayKey: this.relayKey,
-                updatedRelay,
-            });
-            DummyAPI.post("/api/relaySetup", {
-                relayKey: this.relayKey,
-                relay: updatedRelay,
-            })
-                .then(() => {
-                    this.$emit("updated");
-                    this.closeModal();
-                })
-                .catch((error) => {
-                    console.error("Error saving changes:", error);
-                    this.$emit("updated");
-                    this.closeModal();
-                });
+            const updatedRelay = { ...this.editedRelay };
+            this.$emit("update-relay", { relayKey: this.relayKey, updatedRelay });
+            this.$emit("updated");
+            this.closeModal();
         },
     },
 };

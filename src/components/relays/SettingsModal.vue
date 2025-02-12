@@ -1,110 +1,58 @@
 <template>
-  <transition name="fade">
-    <div
-      v-if="show"
-      class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50"
-      @click.self="closeModal"
-    >
-      <div
-        class="bg-white rounded-lg shadow-lg w-1/3 relative border-gray-600 border"
-        @click.stop
-      >
-        <!-- Modal Header -->
-        <div class="flex items-center justify-between p-4 border-b border-gray-600">
-          <h2 class="text-textColor text-center flex-1 text-FormHeader font-bold">
-            {{ modalTitle }}
-          </h2>
-          <button
-            class="text-gray-800 font-extrabold text-xl hover:text-gray-900"
-            @click="closeModal"
-          >
-            ✕
-          </button>
-        </div>
-        <!-- Modal Content -->
-        <div class="p-6 text-textColor">
-          <label class="flex justify-between items-center mb-4">
-            <span class="text-textColor text-Body">Relay Name:</span>
-            <input
-              type="text"
-              v-model="editedRelay.name"
-              class="ml-2 w-7/12 text-Form border-gray-300 rounded-md shadow-sm"
-            />
-          </label>
-          <label class="flex justify-between items-center mb-4">
-            <span class="text-textColor text-Body">Enabled:</span>
-            <select
-              v-model="editedRelay.enabled"
-              class="ml-2 w-7/12 border-gray-400 text-textColor text-Form rounded-md shadow-sm"
-            >
-              <option :value="true" class="text-textColor">True</option>
-              <option :value="false" class="text-textColor">False</option>
-            </select>
-          </label>
-          <label class="flex justify-between items-center mb-4">
-            <span class="text-textColor text-Body">Power Up State:</span>
-            <select
-              v-model="editedRelay.boot_state"
-              class="ml-2 w-7/12 border-gray-400 rounded-md shadow-sm text-textColor text-Form"
-            >
-              <option value="on" class="text-textColor">On</option>
-              <option value="off" class="text-textColor">Off</option>
-            </select>
-          </label>
-          <label class="flex justify-between items-center mb-4">
-            <span class="text-textColor text-Body">Pulse Time (Seconds):</span>
-            <input
-              type="number"
-              v-model="editedRelay.pulse_time"
-              class="ml-2 w-7/12 border-gray-400 rounded-md shadow-sm text-textColor text-Form"
-            />
-          </label>
-          <label class="flex justify-between items-center mb-4">
-            <span class="text-textColor text-Body">On Status Text:</span>
-            <input
-              type="text"
-              v-model="editedRelay.on_status_text"
-              class="ml-2 w-7/12 border-gray-400 rounded-md shadow-sm text-textColor text-Form"
-            />
-          </label>
-          <label class="flex justify-between items-center mb-4">
-            <span class="text-textColor text-Body">Off Status Text:</span>
-            <input
-              type="text"
-              v-model="editedRelay.off_status_text"
-              class="ml-2 w-7/12 border-gray-400 rounded-md shadow-sm text-textColor text-Form"
-            />
-          </label>
-          <div class="flex justify-center mt-6">
-            <button
-              class="bg-primaryMed hover:bg-primaryLight text-white text-FormButton py-2 px-4 rounded"
-              @click="saveChanges"
-            >
-              Save Changes
-            </button>
-            <button
-              class="bg-grayDark hover:bg-gray-700 text-white text-FormButton py-2 px-4 rounded ml-2"
-              @click="closeModal"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
+  <div class="flex justify-center w-full mb-1">
+    <div class="grid grid-cols-2 gap text-textColor w-full mr-10 ml-10 space-y-2 px-6 py-2">
+      <!-- Row 1: Relay Name -->
+      <div class="flex items-center justify-start">
+        <label class="text-ModalLabel text-textColor">Relay Name:</label>
       </div>
+      <input
+        type="text"
+        v-model="localRelay.name"
+        class="border border-gray-400 rounded-md p-0.5"
+        @input="emitChanges"
+      />
+      <!-- Row 2: Enabled -->
+      <div class="flex items-center justify-start">
+        <label class="text-ModalLabel text-textColor">Enabled:</label>
+      </div>
+      <select
+        v-model="localRelay.enabled"
+        class="border border-gray-400 rounded-md p-0.5"
+        @change="emitChanges"
+      >
+        <option :value="true">True</option>
+        <option :value="false">False</option>
+      </select>
+      <!-- Row 3: Power Up State -->
+      <div class="flex items-center justify-start">
+        <label class="text-ModalLabel text-textColor">Power Up State:</label>
+      </div>
+      <select
+        v-model="localRelay.boot_state"
+        class="border border-gray-400 rounded-md p-0.5"
+        @change="emitChanges"
+      >
+        <option value="on">On</option>
+        <option value="off">Off</option>
+      </select>
+      <!-- Row 4: Pulse Time -->
+      <div class="flex items-center justify-start">
+        <label class="text-ModalLabel text-textColor">Pulse Time:</label>
+      </div>
+      <input
+        type="number"
+        v-model="localRelay.pulse_time"
+        class="border border-gray-400 rounded-md p-0.5"
+        @input="emitChanges"
+      />
     </div>
-  </transition>
+  </div>
 </template>
 
 <script>
-import DummyAPI from "@/api/dummyApi";
-
 export default {
   name: "SettingsModal",
   props: {
-    show: {
-      type: Boolean,
-      required: true,
-    },
     relay: {
       type: Object,
       required: true,
@@ -116,57 +64,45 @@ export default {
   },
   data() {
     return {
-      // Create a local copy for editing so we don't modify the prop directly.
-      editedRelay: {},
+      localRelay: {},
     };
   },
-  computed: {
-    modalTitle() {
-      return `Relay ${this.editedRelay.relay_number || ""} Settings`;
-    },
-  },
   watch: {
-    // Whenever the passed-in relay changes, update the local copy.
     relay: {
       immediate: true,
-      handler(newRelay) {
-        this.editedRelay = { ...newRelay };
+      handler(newVal) {
+        this.localRelay = { ...newVal };
       },
     },
   },
   methods: {
-    closeModal() {
-      this.$emit("close");
-    },
-    async saveChanges() {
-      // Emit the updated relay to the parent so it can update its state.
-      this.$emit("update-relay", {
-        relayKey: this.relayKey,
-        updatedRelay: { ...this.editedRelay },
-      });
-      // Call the API to persist changes.
-      try {
-        await DummyAPI.post("/api/relaySetup", {
-          relayKey: this.relayKey,
-          relay: this.editedRelay,
-        });
-      } catch (error) {
-        console.error("Error saving changes:", error);
-      }
-      // Notify the parent that saving is complete (e.g. for showing a toast).
-      this.$emit("updated");
-      this.closeModal();
+    emitChanges() {
+      this.$emit("fields-updated", { ...this.localRelay });
     },
   },
 };
 </script>
 
 <style scoped>
-/* Modal fade animation */
-.fade-enter-active, .fade-leave-active {
-  transition: opacity 0.3s ease;
+label {
+  transform: translateY(0px);
 }
-.fade-enter-from, .fade-leave-to {
-  opacity: 0;
+input, select {
+  font-size: 0.9rem;
+  line-height: 0.9rem;
+  font-weight: 500;
+  color: #333;
+}
+option {
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 500;
+  color: #333;
+}
+input:focus,
+select:focus {
+  outline: none;
+  border-color: rgba(51, 51, 51, 0.5);
+  box-shadow: 0 0 0 0.75px rgba(51, 51, 51, 0.5);
 }
 </style>
