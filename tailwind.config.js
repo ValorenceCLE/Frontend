@@ -105,7 +105,7 @@ module.exports = {
           fontWeight: '500',
         } ],
         'ModalLabel': ['1rem', {
-          lineHeight: '1.1rem',
+          lineHeight: '1rem',
           fontWeight: '500',
         } ],
         'ModalInput': ['1.15rem', {

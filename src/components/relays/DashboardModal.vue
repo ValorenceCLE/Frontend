@@ -1,15 +1,15 @@
 <template>
   <!-- Main container for the whole content (allows future additions) -->
-  <div class="px-4 py-2">
+  <div class="px-3 py-1">
     <!-- Card container for the dashboard settings -->
-    <div class="bg-gray-100 border border-gray-500 rounded-md">
+    <div class="bg-gray-100 border border-gray-500 rounded">
       
       <!-- Header: Button Selector Row (separate from the main options container) -->
       <div class="border-b border-gray-500 p-1 px-2 flex justify-between items-center">
         <label class="text-ModalInfo text-textColor">Select Button:</label>
         <select
           v-model="selectedButton"
-          class="w-1/4 border border-gray-400 rounded-md text-sm"
+          class="w-1/4 border border-gray-500 rounded text-sm"
         >
           <option value="" disabled>Select Button</option>
           <option value="on_button">ON</option>
@@ -19,15 +19,15 @@
       </div>
 
       <!-- Main Options Container (encapsulates all option rows) -->
-      <div class="p-2">
+      <div class="p-1">
         <!-- Row 1: Visibility (Show/Hide) -->
-        <div class="mb-2">
+        <div class="mb-1">
           <div class="grid grid-cols-2 gap-2 items-center">
             <div class="flex items-center justify-start">
               <label class="text-ModalLabel text-textColor">Visibility:</label>
             </div>
             <div class="flex items-center justify-end">
-              <div class="inline-flex rounded-md overflow-hidden border border-blue-500">
+              <div class="inline-flex rounded overflow-hidden border border-blue-500">
                 <button
                   @click="setEnabled(true)"
                   :class="getPillButtonClass(currentSettings?.show, true)"
@@ -48,7 +48,7 @@
         </div>
 
         <!-- Row 2: Status Text -->
-        <div class="mb-2">
+        <div class="mb-1 ">
           <div class="grid grid-cols-2 gap-2 items-center">
             <div class="flex items-center justify-start">
               <label class="text-ModalLabel text-textColor">Status Text:</label>
@@ -58,7 +58,7 @@
                 type="text"
                 v-model="currentSettings.status_text"
                 :disabled="!selectedButton"
-                class="w-full border border-gray-400 rounded-md p-0.5 text-xs"
+                class="w-full border border-gray-500 rounded p-0.5 text-xs bg-white"
                 @input="emitChanges"
               />
             </div>
@@ -66,7 +66,7 @@
         </div>
 
         <!-- Row 3: Status Color -->
-        <div class="mb-2">
+        <div class="mb-1">
           <div class="grid grid-cols-2 gap-2 items-center">
             <div class="flex items-center justify-start">
               <label class="text-ModalLabel text-textColor">Status Color:</label>
@@ -75,7 +75,7 @@
               <select
                 v-model="currentSettings.status_color"
                 :disabled="!selectedButton"
-                class="w-full border border-gray-400 rounded-md p-0.5 text-xs"
+                class="w-full border border-gray-500 rounded p-0.5 text-xs bg-white"
                 @change="emitChanges"
               >
                 <option value="Red">🔴 Red</option>
@@ -99,7 +99,7 @@
                 type="text"
                 v-model="currentSettings.button_label"
                 :disabled="!selectedButton"
-                class="w-full border border-gray-400 rounded-md p-0.5 text-xs"
+                class="w-full border border-gray-500 rounded p-0.5 text-xs bg-white"
                 @input="emitChanges"
               />
             </div>
@@ -177,8 +177,8 @@ export default {
     // Return CSS classes for the pill buttons with a rectangular (less rounded) style.
     getPillButtonClass(currentValue, buttonValue) {
       const active = currentValue === buttonValue;
-      const base = "px-3 py-1 text-xs font-medium focus:outline-none";
-      const shape = buttonValue ? "rounded-l-md" : "rounded-r-md";
+      const base = "px-2 py-0.5 text-xs font-medium focus:outline-none";
+      const shape = buttonValue ? "rounded-l" : "rounded-r";
       const activeClass = active
         ? "bg-blue-500 text-white"
         : "bg-white text-blue-500 hover:bg-blue-50";
@@ -197,14 +197,14 @@ label {
   transform: translateY(0px);
 }
 input, select {
-  font-size: 0.9rem;
-  line-height: 0.9rem;
+  font-size: 0.8rem;
+  line-height: 0.8rem;
   font-weight: 500;
   color: #333;
 }
 option {
-  font-size: 0.75rem;
-  line-height: 1rem;
+  font-size: 0.8rem;
+  line-height: 0.8rem;
   font-weight: 500;
   color: #333;
 }

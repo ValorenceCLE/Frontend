@@ -1,35 +1,38 @@
 <template>
-  <div class="flex justify-center w-full mb-1">
-    <div class="grid grid-cols-2 gap text-textColor w-full mr-10 ml-10 space-y-2 px-6 py-2">
-      <!-- Row 1: Relay Name -->
+  <div class="flex justify-center w-full px-2 py-1">
+    <div class="grid grid-cols-2 gap w-full space-y-1 bg-gray-100 border border-gray-500 rounded px-2 py-1">
+      <!-- Row 1: Enabled -->
+      <div class="flex items-center justify-start">
+        <label class="text-ModalLabel text-textColor">Enabled:</label>
+      </div>
+      <select
+        v-model="localRelay.enabled"
+        class="border border-gray-500 rounded bg-white"
+        @change="emitChanges"
+      >
+        <option :value="true">True</option>
+        <option :value="false">False</option>
+      </select>
+
+
+      <!-- Row 2: Relay Name -->
       <div class="flex items-center justify-start">
         <label class="text-ModalLabel text-textColor">Relay Name:</label>
       </div>
       <input
         type="text"
         v-model="localRelay.name"
-        class="border border-gray-400 rounded-md p-0.5"
+        class="border border-gray-500 rounded bg-white px-1"
         @input="emitChanges"
       />
-      <!-- Row 2: Enabled -->
-      <div class="flex items-center justify-start">
-        <label class="text-ModalLabel text-textColor">Enabled:</label>
-      </div>
-      <select
-        v-model="localRelay.enabled"
-        class="border border-gray-400 rounded-md p-0.5"
-        @change="emitChanges"
-      >
-        <option :value="true">True</option>
-        <option :value="false">False</option>
-      </select>
+
       <!-- Row 3: Power Up State -->
       <div class="flex items-center justify-start">
         <label class="text-ModalLabel text-textColor">Power Up State:</label>
       </div>
       <select
         v-model="localRelay.boot_state"
-        class="border border-gray-400 rounded-md p-0.5"
+        class="border border-gray-500 rounded bg-white"
         @change="emitChanges"
       >
         <option value="on">On</option>
@@ -42,7 +45,7 @@
       <input
         type="number"
         v-model="localRelay.pulse_time"
-        class="border border-gray-400 rounded-md p-0.5"
+        class="border border-gray-500 rounded bg-white px-1"
         @input="emitChanges"
       />
     </div>
@@ -88,14 +91,14 @@ label {
   transform: translateY(0px);
 }
 input, select {
-  font-size: 0.9rem;
-  line-height: 0.9rem;
+  font-size: 0.8rem;
+  line-height: 0.8rem;
   font-weight: 500;
   color: #333;
 }
 option {
-  font-size: 0.75rem;
-  line-height: 1rem;
+  font-size: 0.8rem;
+  line-height: 0.8rem;
   font-weight: 500;
   color: #333;
 }
