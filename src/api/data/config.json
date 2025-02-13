@@ -36,10 +36,28 @@
         "1": {
             "id": "relay_1",
             "name": "Router",
-            "enabled": true,
+            "active": true,
             "state": "on",
             "boot_state": "on",
             "pulse_time": 5,
+            "schedule": {
+                "enabled": true,
+                "on_time": "00:00",
+                "off_time": "23:59"
+            },
+            "monitor": {
+                "enabled": true,
+                "low_threshold": {
+                    "volts": 5,
+                    "watts": 0.5,
+                    "amps": 0.5
+                },
+                "high_threshold": {
+                    "volts": 5,
+                    "watts": 0.5,
+                    "amps": 0.5
+                }
+            },
             "dashboard": {
                 "on_button": {
                     "show": false,

@@ -112,6 +112,10 @@ module.exports = {
           lineHeight: '1.15rem',
           fontWeight: '700',
         } ],
+        'ModalBody': ['0.8rem', {
+          lineHeight: '0.8rem',
+          fontWeight: '400',
+        } ],
       },
     },
   },
