@@ -16,6 +16,8 @@ module.exports = {
         relayGreen: '#2a980c',  
         relayYellow: '#FFDF00', /*190, 73, 69*/
         relayRed: '#eb191a',
+        relayGray: '#d1d5db',
+        relayBlue: '#0a44a3',
         textColor: '#333',
         buttonSelected: '#3b82f6',
         buttonUnselected: '#d3d3d3',
@@ -115,6 +117,18 @@ module.exports = {
         'ModalBody': ['0.8rem', {
           lineHeight: '0.8rem',
           fontWeight: '400',
+        } ],
+        'ModalPreviewStatus': ['0.9rem', {
+          lineHeight: '0.9rem',
+          fontWeight: '600',
+        } ],
+        'ModalPreviewLabel': ['1.2rem', {
+          lineHeight: '1.2rem',
+          fontWeight: '700',
+        } ],
+        'ModalPreviewButton': ['0.9rem', {
+          lineHeight: '0.9rem',
+          fontWeight: '600',
         } ],
       },
     },

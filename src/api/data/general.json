@@ -33,9 +33,9 @@
         "emails": ["example email", "example email"]
     },
     "relays": {
-        "1": {
-            "id": "relay_1",
+        "relay1": {
             "name": "Router",
+            "id": "relay1",
             "enabled": true,
             "state": "on",
             "boot_state": "on",
@@ -61,9 +61,9 @@
                 }
             }
         },
-        "2": {
-            "id": "relay_2",
+        "relay2": {
             "name": "Camera",
+            "id": "relay2",
             "enabled": true,
             "state": "on",
             "boot_state": "on",
@@ -89,9 +89,9 @@
                 }
             }
         },
-        "3": {
-            "id": "relay_3",
+        "relay3": {
             "name": "Fan",
+            "id": "relay3",
             "enabled": true,
             "state": "on",
             "boot_state": "on",
@@ -117,9 +117,9 @@
                 }
             }
         },
-        "4": {
-            "id": "relay_4",
+        "relay4": {
             "name": "IR Light",
+            "id": "relay4",
             "enabled": true,
             "state": "on",
             "boot_state": "on",
@@ -145,9 +145,9 @@
                 }
             }
         },
-        "5": {
-            "id": "relay_5",
+        "relay5": {
             "name": "Strobe Light",
+            "id": "relay5",
             "enabled": true,
             "state": "on",
             "boot_state": "on",
@@ -173,9 +173,9 @@
                 }
             }
         },
-        "6": {
-            "id": "relay_6",
+        "relay6": {
             "name": "Aux 1",
+            "id": "relay6",
             "enabled": true,
             "state": "on",
             "boot_state": "on",

@@ -1,19 +1,19 @@
 <template>
   <div class="flex items-center justify-center w-full h-full">
-    <!-- Table Container -->
-    <div class="w-full mx-auto" style="max-width: 45rem">
-      <div class="w-full mx-auto p-3 bg-gray-200 border border-gray-500 rounded-md text-center flex flex-col items-center" style="max-width: 35rem">
-        <h1 class="text-3xl font-bold text-textColor">Relay Configuration</h1>
+    <div class="w-full mx-auto max-w-3xl">
+      <div class="w-full mx-auto py-2 bg-gray-200 border border-gray-500 rounded text-center flex flex-col items-center" style="max-width: 32rem">
+        <h1 class="text-ModalHeader text-textColor">Relay Configuration</h1>
         <p class="text-gray-600">Manage your relay configurations here.</p>
       </div>
-      <div v-if="Object.keys(relays).length > 0" class="bg-gray-200 rounded-md my-3 border-gray-500 border relative">
+
+      <div v-if="Object.keys(relays).length > 0" class="bg-gray-200 rounded my-3 border-gray-500 border relative">
         <table class="text-left w-full border-collapse rounded-md overflow-hidden">
           <thead>
             <tr class="bg-gray-200 border-b border-gray-500">
-              <th class="text-left py-3 px-4 text-textColor text-Subheader">Name</th>
-              <th class="text-center py-3 px-4 text-textColor text-Subheader">Relay Number</th>
-              <th class="text-center py-3 px-4 text-textColor text-Subheader">Enabled</th>
-              <th class="text-center py-3 px-4 text-textColor text-Subheader">Settings</th>
+              <th class="text-center py-1.5 px-3 text-textColor text-Subheader">ID</th>
+              <th class="text-center py-1.5 px-3 text-textColor text-Subheader">Name</th>
+              <th class="text-center py-1.5 px-3 text-textColor text-Subheader">Enabled</th>
+              <th class="text-center py-1.5 px-3 text-textColor text-Subheader">Settings</th>
             </tr>
           </thead>
           <tbody>
@@ -22,17 +22,17 @@
               :key="key"
               class="hover:bg-gray-100 border-t border-gray-300"
             >
-              <td class="py-2 px-4 text-textColor text-Body">{{ relay.name }}</td>
-              <td class="text-center py-2 px-4 text-textColor text-Body">
+              <td class="text-center py-1.5 px-3 text-textColor text-Body">
                 {{ (relay.id || key).replace('relay', '') }}
               </td>
-              <td class="text-center py-2 px-4">
+              <td class="py-1.5 px-3 text-textColor text-center text-Body">{{ relay.name }}</td>
+              <td class="text-center py-1.5 px-3">
                 <div
                   class="w-4 h-4 rounded-full mx-auto"
                   :class="{'bg-green-500': relay.enabled, 'bg-red-500': !relay.enabled}"
                 ></div>
               </td>
-              <td class="text-center py-2 px-4 text-Body">
+              <td class="text-center py-1.5 px-3 text-Body">
                 <button
                   class="bg-primaryMed hover:bg-primaryLight text-white py-1 px-3 rounded"
                   @click="openModal(key)"
@@ -47,7 +47,7 @@
       <div v-else class="text-center py-4">Loading relays...</div>
     </div>
 
-    <!-- Unified Edit Modal for both Relay and Dashboard Settings -->
+    <!-- Edit Modal -->
     <EditModal
       :show="showEditModal"
       :relay="currentRelay"
@@ -81,7 +81,7 @@ export default {
   },
   data() {
     return {
-      relays: {}, // Relay data fetched from the API
+      relays: {},
       showEditModal: false,
       currentRelay: {},
       currentRelayKey: "",
@@ -104,9 +104,10 @@ export default {
     },
     openModal(relayKey) {
       this.currentRelayKey = relayKey;
-      // Clone the relay data for editing.
+      // Make a copy of the chosen relay
       this.currentRelay = { ...this.relays[relayKey] };
-      // Ensure a dashboard object exists.
+
+      // If no dashboard object, set defaults
       if (!this.currentRelay.dashboard) {
         this.currentRelay.dashboard = {
           on_button: { show: false, status_text: "", status_color: "green", button_label: "" },
@@ -114,6 +115,11 @@ export default {
           pulse_button: { show: false, status_text: "", status_color: "yellow", button_label: "" },
         };
       }
+      // If no state, default to "off" or "on"
+      if (!this.currentRelay.state) {
+        this.currentRelay.state = "off";
+      }
+
       this.showEditModal = true;
     },
     closeModal() {
@@ -138,6 +144,4 @@ export default {
 };
 </script>
 
-<style scoped>
-/* Additional styles if needed */
-</style>
+<style scoped></style>

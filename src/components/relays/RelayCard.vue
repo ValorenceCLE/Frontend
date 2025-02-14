@@ -10,7 +10,7 @@
   >
     <!-- Left section: Name & Status -->
     <div
-      class="flex-[1] flex items-center justify-between p-3 border-r border-gray-300 rounded-l-md"
+      class="flex-[1] flex items-center justify-between p-3"
     >
       <!-- Name (left) -->
       <h3 class="text-Subheader text-textColor">{{ relayName }}</h3>

@@ -1,3 +1,14 @@
+<!--
+----- IMPORTANT -----
+- This file is a work in progress and is not yet ready for production use.
+----- DETAILS -----
+For now I dont think there is a place for anything like this.
+I am going to keep the file for now because I like the file and the concept.
+given the concept needs alot of work but the initial overview page isnt that badge
+once I connect the HistoricalGraph to real data with the backend I can evaluate the page better.
+----- END -----
+-->
+
 <template>
   <div>
     <!-- Trigger Square -->
