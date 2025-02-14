@@ -1,6 +1,6 @@
 <template>
   <header
-    class="flex items-center justify-between px-6 text-white shadow-md"
+    class="flex items-center justify-between px-3 text-white shadow-md"
     style="height: 4rem"
   >
     <!-- Logo Section -->
@@ -13,7 +13,7 @@
     </div>
 
     <!-- Navigation Section -->
-    <nav class="flex items-center space-x-4 text-Navbar">
+    <nav class="flex items-center space-x-3 text-Navbar">
       <!-- Development links to switch between user and admin -->
       <div class="space-x-4 absolute transform left-1/2">
         <router-link to="/user" class="hover:text-primaryLight">User</router-link>

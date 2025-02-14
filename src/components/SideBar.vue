@@ -1,6 +1,6 @@
 <template>
   <div
-    class="w-56 text-gray-200 font-semibold flex flex-col shadow-2xl"
+    class="w-52 text-gray-200 text-Form flex flex-col shadow-2xl"
     style="height: calc(100vh - var(--header-height) - var(--footer-height))"
   >
     <ul class="divide-y divide-gray-700">
@@ -34,21 +34,21 @@
               />
               <span>{{ menu.title }}</span>
             </div>
-            <span
-              class="transform transition-transform duration-200"
+            <img
+              :src="chevronDown"
+              alt="Chevron Down"
+              class="w-6 h-6 transform transition-transform duration-100"
               :class="{ 'rotate-180': dropdownStates[index] }"
-            >
-              ▼
-            </span>
+            />
           </div>
 
           <!-- Dropdown Items -->
-          <transition name="slide-dropdown">
+          <transition name="slide-dropdown" :key="dropdownStates[index]">
             <ul v-if="dropdownStates[index]" class="bg-gray-600">
               <li
                 v-for="(item, subIndex) in menu.items"
                 :key="subIndex"
-                class="pl-8 py-1 hover:bg-gray-500 transition-colors"
+                class="pl-8 py-0.5 hover:bg-gray-500 transition-colors"
               >
                 <router-link
                   :to="generateRoute(menu.title, item)"
@@ -70,11 +70,13 @@ import settingsIcon from "@/assets/icons/settings.svg";
 import relaysIcon from "@/assets/icons/relays.svg";
 import monitorIcon from "@/assets/icons/monitor.svg";
 import dashboardIcon from "@/assets/icons/dashboard.svg";
+import chevronDown from "@/assets/icons/chevron-down.svg";
 
 export default {
   name: "SideBar",
   data() {
     return {
+      chevronDown,
       menus: [
         {
           title: "Settings",
@@ -86,44 +88,34 @@ export default {
           icon: relaysIcon,
           items: ["Settings", "Logic"],
         },
-        // Uncomment when Logs is ready.
-        // {
-        //   title: "Logs",
-        //   icon: logsIcon,
-        //   items: ["System", "Router", "Camera"],
-        // },
         {
           title: "Monitor",
           icon: monitorIcon,
           items: ["Real Time", "Historical"],
         },
-        // Dashboard now becomes a direct link that routes to the base path.
         {
           title: "Dashboard",
           icon: dashboardIcon,
-          route: "", // empty string indicates base route
+          route: "",
         },
       ],
-      // Initialize one boolean per menu.
       dropdownStates: new Array(4).fill(false),
     };
   },
   computed: {
     basePath() {
-      // Determine the current base path (either /admin or /user)
       return this.$route.path.startsWith("/admin") ? "/admin" : "/user";
     },
   },
   methods: {
-    // Use direct assignment for Vue 3 reactivity.
     toggleDropdown(index) {
-      this.dropdownStates[index] = !this.dropdownStates[index];
+      this.dropdownStates = this.dropdownStates.map((state, i) => i === index ? !state : false);
     },
     generateRoute(menu, item) {
       const formattedItem = item
         .toLowerCase()
-        .replace(/\s+/g, "-") // Replace spaces with dashes
-        .replace(/\//g, "-"); // Replace slashes with dashes
+        .replace(/\s+/g, "-")
+        .replace(/\//g, "-");
       return `${this.basePath}/${menu.toLowerCase()}/${formattedItem}`;
     },
   },
@@ -133,7 +125,7 @@ export default {
 <style scoped>
 .slide-dropdown-enter-active,
 .slide-dropdown-leave-active {
-  transition: height 0.2s ease-out;
+  transition: height 0.4s ease-in-out;
   overflow: hidden;
 }
 .slide-dropdown-enter,
@@ -144,6 +136,10 @@ export default {
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 img {
-  filter: brightness(0) invert(1); /* Matches text color */
+  filter: brightness(0) invert(1);
+}
+.rotate-180 {
+  transform: rotate(180deg);
+  transition: transform 0.4s ease-in-out;
 }
 </style>
