@@ -14,17 +14,14 @@
 
     <!-- Navigation Section -->
     <nav class="flex items-center space-x-4 text-Navbar">
-      <!-- Adjust navigation paths dynamically This is for development only -->
+      <!-- Development links to switch between user and admin -->
       <div class="space-x-4 absolute transform left-1/2">
         <router-link to="/user" class="hover:text-primaryLight">User</router-link>
         <router-link to="/admin" class="hover:text-primaryLight">Admin</router-link>
       </div>
-      <router-link :to="`${basePath}/help`" class="hover:text-primaryLight">
-        Help
-      </router-link>
-      <router-link :to="`${basePath}/contact`" class="hover:text-primaryLight">
-        Contact
-      </router-link>
+      <!-- Use the computed basePath for help and contact so that they load within the current view -->
+      <router-link :to="`${basePath}/help`" class="hover:text-primaryLight">Help</router-link>
+      <router-link :to="`${basePath}/contact`" class="hover:text-primaryLight">Contact</router-link>
       <router-link to="/" class="hover:text-primaryLight">Logout</router-link>
     </nav>
   </header>
@@ -35,7 +32,7 @@ export default {
   name: "Header",
   computed: {
     basePath() {
-      // Detect whether the current path is admin or user
+      // Determines if the current route is in the admin or user section.
       return this.$route.path.startsWith("/admin") ? "/admin" : "/user";
     },
   },

@@ -5,43 +5,61 @@
   >
     <ul class="divide-y divide-gray-700">
       <li v-for="(menu, index) in menus" :key="index" class="relative">
-        <div
-          class="p-3 cursor-pointer flex justify-between items-center"
-          @click="toggleDropdown(index)"
-        >
-          <div class="flex items-center gap-2">
+        <!-- Direct link: if the menu item has a defined 'route' property -->
+        <div v-if="menu.hasOwnProperty('route')">
+          <router-link
+            :to="menu.title === 'Dashboard' ? basePath : `${basePath}/${menu.route}`"
+            class="p-3 flex items-center gap-2 hover:bg-gray-500 transition-colors"
+          >
             <img
               :src="menu.icon"
-              alt="{{ menu.title }} Icon"
+              :alt="menu.title + ' Icon'"
               class="w-5 h-5 text-gray-200"
             />
             <span>{{ menu.title }}</span>
-          </div>
-          <span
-            class="transform transition-transform duration-200"
-            :class="{ 'rotate-180': dropdownStates[index] }"
-          >
-            ▼
-          </span>
+          </router-link>
         </div>
 
-        <!-- Dropdown Items -->
-        <transition name="slide-dropdown">
-          <ul v-if="dropdownStates[index]" class="bg-gray-600">
-            <li
-              v-for="(item, subIndex) in menu.items"
-              :key="subIndex"
-              class="pl-8 py-1 hover:bg-gray-500 transition-colors"
+        <!-- Otherwise, render a dropdown for menus with items -->
+        <div v-else>
+          <div
+            class="p-3 cursor-pointer flex justify-between items-center"
+            @click="toggleDropdown(index)"
+          >
+            <div class="flex items-center gap-2">
+              <img
+                :src="menu.icon"
+                :alt="menu.title + ' Icon'"
+                class="w-5 h-5 text-gray-200"
+              />
+              <span>{{ menu.title }}</span>
+            </div>
+            <span
+              class="transform transition-transform duration-200"
+              :class="{ 'rotate-180': dropdownStates[index] }"
             >
-              <router-link
-                :to="generateRoute(menu.title, item)"
-                class="text-white no-underline"
+              ▼
+            </span>
+          </div>
+
+          <!-- Dropdown Items -->
+          <transition name="slide-dropdown">
+            <ul v-if="dropdownStates[index]" class="bg-gray-600">
+              <li
+                v-for="(item, subIndex) in menu.items"
+                :key="subIndex"
+                class="pl-8 py-1 hover:bg-gray-500 transition-colors"
               >
-                {{ item }}
-              </router-link>
-            </li>
-          </ul>
-        </transition>
+                <router-link
+                  :to="generateRoute(menu.title, item)"
+                  class="text-white no-underline"
+                >
+                  {{ item }}
+                </router-link>
+              </li>
+            </ul>
+          </transition>
+        </div>
       </li>
     </ul>
   </div>
@@ -68,6 +86,7 @@ export default {
           icon: relaysIcon,
           items: ["Settings", "Logic"],
         },
+        // Uncomment when Logs is ready.
         // {
         //   title: "Logs",
         //   icon: logsIcon,
@@ -78,16 +97,25 @@ export default {
           icon: monitorIcon,
           items: ["Real Time", "Historical"],
         },
+        // Dashboard now becomes a direct link that routes to the base path.
         {
           title: "Dashboard",
           icon: dashboardIcon,
-          items: ["Setup", "View"],
+          route: "", // empty string indicates base route
         },
       ],
-      dropdownStates: [],
+      // Initialize one boolean per menu.
+      dropdownStates: new Array(4).fill(false),
     };
   },
+  computed: {
+    basePath() {
+      // Determine the current base path (either /admin or /user)
+      return this.$route.path.startsWith("/admin") ? "/admin" : "/user";
+    },
+  },
   methods: {
+    // Use direct assignment for Vue 3 reactivity.
     toggleDropdown(index) {
       this.dropdownStates[index] = !this.dropdownStates[index];
     },
@@ -96,12 +124,12 @@ export default {
         .toLowerCase()
         .replace(/\s+/g, "-") // Replace spaces with dashes
         .replace(/\//g, "-"); // Replace slashes with dashes
-
-      return `/admin/${menu.toLowerCase()}/${formattedItem}`;
+      return `${this.basePath}/${menu.toLowerCase()}/${formattedItem}`;
     },
   },
 };
 </script>
+
 <style scoped>
 .slide-dropdown-enter-active,
 .slide-dropdown-leave-active {

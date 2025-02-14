@@ -3,7 +3,7 @@ import AdminView from "@/views/AdminView.vue";
 import UserView from "@/views/UserView.vue";
 // Import dynamic components
 
-// Header Links
+// Header Links (used as children)
 import Help from "@/components/etc/Help.vue";
 import Contact from "@/components/etc/Contact.vue";
 
@@ -17,16 +17,12 @@ import Emails from "@/components/settings/Emails.vue";
 import RelaySetup from "@/components/relays/RelaySetup.vue";
 import RelayLogic from "@/components/logic/RelayLogic.vue";
 
-// Admin Logs
-// import Logs from "@/components/etc/Logs.vue";
-
 // Admin Monitor
 import HistoricalGraph from "@/components/monitor/Historical.vue";
 import RealtimeGraph from "@/components/monitor/RealTime.vue";
 
 // Admin Dashboard
 import Dashboard from "@/components/etc/Dashboard.vue";
-import Analytics from "@/components/monitor/Analytics.vue";
 
 const routes = [
   { path: "/", component: () => import("@/views/LoginView.vue") },
@@ -36,12 +32,11 @@ const routes = [
     path: "/user",
     component: UserView,
     children: [
+      // Default child route renders the dashboard.
       {
         path: "",
         component: Dashboard,
       },
-
-      // Header Links in UserView
       {
         path: "help",
         component: Help,
@@ -50,6 +45,7 @@ const routes = [
         path: "contact",
         component: Contact,
       },
+      // Add other user-specific routes here.
     ],
   },
 
@@ -58,6 +54,7 @@ const routes = [
     path: "/admin",
     component: AdminView,
     children: [
+      // Default child route renders the dashboard.
       {
         path: "",
         component: Dashboard,
@@ -70,17 +67,6 @@ const routes = [
         path: "contact",
         component: Contact,
       },
-
-      // Dashboard route
-      {
-        path: "dashboard/view",
-        component: Dashboard,
-      },
-      {
-        path: "dashboard/setup",
-        component: Analytics,
-      },
-
       // Settings Routes
       {
         path: "settings/general",
@@ -98,35 +84,15 @@ const routes = [
         path: "settings/emails",
         component: Emails,
       },
-
       // Relay Routes
       {
         path: "relays/logic",
         component: RelayLogic,
       },
-      // {
-      //   path: "relays/schedule",
-      //   component: RelaySchedule,
-      // },
       {
         path: "relays/settings",
         component: RelaySetup,
       },
-
-      // Log Routes
-      // {
-      //   path: "logs/system",
-      //   component: Logs,
-      // },
-      // {
-      //   path: "logs/router",
-      //   component: Logs,
-      // },
-      // {
-      //   path: "logs/camera",
-      //   component: Logs,
-      // },
-
       // Monitor Routes
       {
         path: "monitor/historical",
