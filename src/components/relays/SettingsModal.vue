@@ -191,7 +191,7 @@ export default {
   data() {
     return {
       localRelay: {},
-      daysList: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+      daysList: ["M", "T", "W", "T", "F", "S", "S"],
     };
   },
   watch: {
