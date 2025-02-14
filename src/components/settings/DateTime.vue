@@ -1,7 +1,7 @@
 <template>
   <div class="flex items-center justify-center w-full h-full relative">
     <div class="w-full mx-auto rounded-md" style="max-width: 40rem">
-      <div class="bg-gray-200 shadow-lg rounded-md my-3 border border-gray-500 relative">
+      <div class="bg-gray-200 shadow rounded my-2 border border-gray-500 relative">
         <table class="text-left w-full border-collapse">
           <thead>
             <tr>
@@ -16,32 +16,32 @@
           <tbody class="text-textColor">
             <!-- Input Fields -->
             <tr>
-              <td class="py-2 px-5 text-Body font-bold">Primary NTP Server:</td>
-              <td class="py-2 px-2">
+              <td class="py-2 px-4 text-Body font-bold">Primary NTP Server:</td>
+              <td class="py-2 px-1">
                 <input
                   v-model="timezoneSettings.primary_ntp_server"
-                  class="border-grayMed border rounded w-3/4 px-2 text-Form"
+                  class="border-grayMed border rounded w-3/4 px-1 text-Form"
                   type="text"
                 />
               </td>
             </tr>
             <tr>
-              <td class="py-2 px-5 text-Body font-bold">Secondary NTP Server:</td>
-              <td class="py-2 px-2">
+              <td class="py-2 px-4 text-Body font-bold">Secondary NTP Server:</td>
+              <td class="py-2 px-1">
                 <input
                   v-model="timezoneSettings.secondary_ntp_server"
-                  class="border-grayMed border rounded w-3/4 px-2 text-Form"
+                  class="border-grayMed border rounded w-3/4 px-1 text-Form"
                   type="text"
                 />
               </td>
             </tr>
             <tr>
-              <td class="py-2 px-5 text-Body font-bold">Sync on Boot:</td>
-              <td class="py-2 px-2">
+              <td class="py-2 px-4 text-Body font-bold">Sync on Boot:</td>
+              <td class="py-2 px-1">
                 <div class="flex rounded-md w-max overflow-hidden border border-grayMed">
                   <button
                     :class="[
-                      'py-1 px-4  text-FormButton transition-colors',
+                      'py-0.5 px-3  text-FormButton transition-colors',
                       timezoneSettings.sync_on_boot
                         ? 'bg-primaryMed text-white'
                         : 'bg-buttonUnselected text-textColor hover:bg-buttonHover hover:text-white',
@@ -52,7 +52,7 @@
                   </button>
                   <button
                     :class="[
-                      'py-1 px-4 text-FormButton transition-colors',
+                      'py-0.5 px-3 text-FormButton transition-colors',
                       !timezoneSettings.sync_on_boot
                         ? 'bg-primaryMed text-white'
                         : 'bg-buttonUnselected text-textColor hover:bg-buttonHover hover:text-white',
@@ -65,12 +65,12 @@
               </td>
             </tr>
             <tr>
-              <td class="py-2 px-5 text-Body font-bold">Time Zone:</td>
-              <td class="py-2 px-2">
+              <td class="py-2 px-4 text-Body font-bold">Time Zone:</td>
+              <td class="py-2 px-1">
                 <select
                   v-model="timezoneSettings.time_zone"
                   @change="updateUTCOffset"
-                  class="border-grayMed border rounded w-3/4 px-2 text-Form"
+                  class="border-grayMed border rounded w-3/4 px-1 text-Form"
                 >
                   <option value="" disabled>Select Time Zone</option>
                   <option value="America/New_York">New York</option>
@@ -84,11 +84,11 @@
               </td>
             </tr>
             <tr>
-              <td class="py-2 px-5 text-Body font-bold">UTC Offset:</td>
-              <td class="py-2 px-2">
+              <td class="py-2 px-4 text-Body font-bold">UTC Offset:</td>
+              <td class="py-2 px-1">
                 <input
                   v-model="timezoneSettings.utc_offset"
-                  class="border-grayMed border rounded w-3/4 px-2 text-Form"
+                  class="border-grayMed border rounded w-3/4 px-1 text-Form"
                   type="text"
                 />
               </td>
@@ -96,7 +96,7 @@
 
             <!-- Submit & Clear Buttons -->
             <tr>
-              <td class="py-3 text-center" colspan="2">
+              <td class="py-2 text-center" colspan="2">
                 <div class="flex justify-center gap-2">
                   <!-- Submit Button -->
                   <button

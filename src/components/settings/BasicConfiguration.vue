@@ -1,20 +1,19 @@
 <template>
   <!-- Parent wrapper for everything -->
-  <div class="flex flex-col h-full">
+  <div class="flex flex-col h-full ">
     <!-- Main Container (Fields, Configuration, Submit/Cancel) -->
     <div
-      class="bg-gray-200 p-4 rounded-lg border border-gray-400 shadow-md flex flex-col"
+      class="bg-gray-200 rounded-lg border border-gray-500 shadow-md flex flex-col space-y-3"
     >
       <!-- Header -->
       <div class="flex flex-col items-center justify-center">
-        <h1 class="text-Header text-textColor font-bold -translate-y-1">
+        <h1 class="text-FormHeader text-textColor border-b-2 border-gray-500 w-full text-center p-2">
           Basic Configuration
         </h1>
-        <div class="w-full h-[2px] bg-gray-700 mx-auto mb-2 m-1"></div>
       </div>
 
       <!-- System Name (Inline) -->
-      <div class="flex items-center justify-between mt-4">
+      <div class="flex items-center justify-between px-4">
         <label class="text-Settings text-textColor">System Name:</label>
         <input
           v-model="systemName"
@@ -25,7 +24,7 @@
       </div>
 
       <!-- Reboot Time (Inline) -->
-      <div class="flex items-center justify-between mt-4">
+      <div class="flex items-center justify-between px-4">
         <label class="text-Settings text-textColor">Reboot Time:</label>
         <input
           v-model="rebootTime"
@@ -35,7 +34,7 @@
       </div>
 
       <!-- Ping Test -->
-      <div class="flex items-center justify-between mt-4">
+      <div class="flex items-center justify-between px-4">
         <label class="text-Settings text-textColor">Ping Test:</label>
         <div class="flex items-center space-x-1 w-[40%]">
           <input
@@ -56,7 +55,7 @@
       <!-- ========== CONFIGURATION SECTION ========== -->
 
       <!-- Upload Section -->
-      <div class="flex items-center justify-between mt-4 mb-4">
+      <div class="flex items-center justify-between px-4">
         <h3 class="text-Settings text-textColor">
           Upload Configuration:
           <!-- SHOW the uploaded file name ONLY if newConfigFileName is set -->
@@ -84,11 +83,11 @@
       </div>
 
       <!-- Download Section -->
-      <div class="flex items-center justify-between">
+      <div class="flex items-center justify-between px-4">
         <h3 class="text-Settings text-textColor">
           Download Configuration:
           <!-- ALWAYS show the currentConfigFileName here (no new file until submit) -->
-          <span v-if="currentConfigFileName" class="ml-2 text-sm text-gray-800">
+          <span v-if="currentConfigFileName" class="-ml-1 text-sm text-gray-800">
             ({{ currentConfigFileName }})
           </span>
         </h3>
@@ -107,17 +106,17 @@
       </div>
 
       <!-- ========== SUBMIT / CANCEL SECTION ========== -->
-      <div class="flex items-center justify-center space-x-2 mt-8">
+      <div class="flex items-center justify-center space-x-2 border-t border-gray-500 py-3">
         <button
           type="button"
-          class="bg-primaryMed hover:bg-primaryLight text-white font-bold py-2 px-4 flex justify-center rounded-md border border-gray-400 w-24"
+          class="bg-primaryMed hover:bg-primaryLight text-white text-FormButton py-1.5 px-3 flex justify-center rounded-md border border-gray-400 w-24"
           @click="handleSubmit"
         >
           Submit
         </button>
         <button
           type="button"
-          class="bg-textColor hover:bg-gray-700 text-white font-bold py-2 px-4 flex justify-center rounded-md border border-gray-400 w-24"
+          class="bg-textColor hover:bg-gray-700 text-white text-FormButton py-1.5 px-3 flex justify-center rounded-md border border-gray-400 w-24"
           @click="handleCancel"
         >
           Cancel
@@ -127,17 +126,17 @@
 
     <!-- ========== REBOOT BUTTONS ROW ========== -->
     <div
-      class="bg-gray-200 p-2 rounded-lg border border-gray-400 shadow-md flex flex-col mt-3"
+      class="bg-gray-200 p-2 rounded-lg border border-gray-500 shadow-md flex flex-col mt-3"
     >
       <div class="flex justify-between space-x-2">
         <button
-          class="w-[90%] bg-textColor hover:bg-red-800 text-white font-bold px-2 py-2 rounded shadow"
+          class="w-[90%] bg-textColor hover:bg-red-800 text-white text-FormButton px-2 py-2 rounded shadow"
           @click="confirmAction('Restart the Raspberry Pi', rebootDevice)"
         >
           Restart
         </button>
         <button
-          class="w-[90%] bg-textColor hover:bg-red-800 text-white font-bold px-2 py-2 rounded shadow"
+          class="w-[90%] bg-textColor hover:bg-red-800 text-white text-FormButton px-2 py-2 rounded shadow"
           @click="
             confirmAction(
               'Power Cycle the system\nThis will cut the main power then turn it back on',

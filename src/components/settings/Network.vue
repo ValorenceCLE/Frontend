@@ -1,7 +1,7 @@
 <template>
   <div class="flex items-center justify-center w-full h-full relative">
     <div class="w-full mx-auto rounded-md" style="max-width: 40rem">
-      <div class="bg-gray-200 shadow-lg rounded-md my-3 border-gray-500 border relative">
+      <div class="bg-gray-200 shadow rounded my-2 border-gray-500 border relative">
         <table class="text-left w-full border-collapse">
           <thead>
             <tr>
@@ -16,38 +16,38 @@
           <tbody class="text-textColor">
             <!-- Input Fields -->
             <tr>
-              <td class="py-2 px-5 text-Body font-bold">IP Address:</td>
-              <td class="py-2 px-2">
+              <td class="py-2 px-4 text-Body font-bold">IP Address:</td>
+              <td class="py-2 px-1">
                 <input
                   v-model="networkSettings.ip_address"
-                  class="border-grayMed border rounded w-3/4 px-2 text-Form"
+                  class="border-grayMed border rounded w-3/4 px-1 text-Form"
                   type="text"
                 />
               </td>
             </tr>
             <tr>
-              <td class="py-2 px-5 text-Body font-bold">Subnet Mask:</td>
-              <td class="py-2 px-2">
+              <td class="py-2 px-4 text-Body font-bold">Subnet Mask:</td>
+              <td class="py-2 px-1">
                 <input
                   v-model="networkSettings.subnet_mask"
-                  class="border-grayMed border rounded w-3/4 px-2 text-Form"
+                  class="border-grayMed border rounded w-3/4 px-1 text-Form"
                   type="text"
                 />
               </td>
             </tr>
             <tr>
-              <td class="py-2 px-5 text-Body font-bold">Gateway:</td>
-              <td class="py-2 px-2">
+              <td class="py-2 px-4 text-Body font-bold">Gateway:</td>
+              <td class="py-2 px-1">
                 <input
                   v-model="networkSettings.gateway"
-                  class="border-grayMed border rounded w-3/4 px-2 text-Form"
+                  class="border-grayMed border rounded w-3/4 px-1 text-Form"
                   type="text"
                 />
               </td>
             </tr>
             <tr>
-              <td class="py-2 px-5 text-Body font-bold">Use DHCP:</td>
-              <td class="py-2 px-2">
+              <td class="py-2 px-4 text-Body font-bold">Use DHCP:</td>
+              <td class="py-2 px-1">
                 <div class="flex rounded-md w-max overflow-hidden border border-grayMed">
                   <button
                     :class="[
@@ -77,38 +77,38 @@
               </td>
             </tr>
             <tr>
-              <td class="py-2 px-5 text-Body font-bold">Preferred DNS:</td>
-              <td class="py-2 px-2">
+              <td class="py-2 px-4 text-Body font-bold">Preferred DNS:</td>
+              <td class="py-2 px-1">
                 <input
                   v-model="networkSettings.perfered_dns"
-                  class="border-grayMed border rounded w-3/4 px-2 text-Form"
+                  class="border-grayMed border rounded w-3/4 px-1 text-Form"
                   type="text"
                 />
               </td>
             </tr>
             <tr>
-              <td class="py-2 px-5 text-Body font-bold">Alternate DNS:</td>
-              <td class="py-2 px-2">
+              <td class="py-2 px-4 text-Body font-bold">Alternate DNS:</td>
+              <td class="py-2 px-1">
                 <input
                   v-model="networkSettings.alternate_dns"
-                  class="border-grayMed border rounded w-3/4 px-2 text-Form"
+                  class="border-grayMed border rounded w-3/4 px-1 text-Form"
                   type="text"
                 />
               </td>
             </tr>
             <tr>
-              <td class="py-2 px-5 text-Body font-bold">HTTPS Port:</td>
-              <td class="py-2 px-2">
+              <td class="py-2 px-4 text-Body font-bold">HTTPS Port:</td>
+              <td class="py-2 px-1">
                 <input
                   v-model="networkSettings.https_port"
-                  class="border-grayMed border rounded w-3/4 px-2 text-Form"
+                  class="border-grayMed border rounded w-3/4 px-1 text-Form"
                   type="number"
                 />
               </td>
             </tr>
             <!-- Submit Button -->
             <tr>
-              <td class="py-3 text-center" colspan="2">
+              <td class="py-2 text-center" colspan="2">
                 <div class="flex justify-center gap-2">
                   <!-- Submit Button -->
                   <button

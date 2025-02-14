@@ -2,7 +2,7 @@
   <div class="w-full mx-auto" style="width: 60rem">
     <!-- Header -->
     <div
-      class="bg-gray-200 p-3 rounded-lg shadow-md border border-gray-400 max-w-xl flex justify-center items-center mx-auto"
+      class="bg-gray-200 p-3 rounded-md shadow border border-gray-500 max-w-xl flex justify-center items-center mx-auto"
     >
       <div class="flex flex-col items-center justify-center w-full h-12">
         <!-- Main title: "Basic Settings" -->
@@ -18,14 +18,14 @@
       <div class="flex-[1.2] flex flex-col gap-3">
         <!-- Controller Section -->
         <div
-          class="bg-gray-200 p-1 rounded-lg border border-gray-400 shadow-md flex flex-col items-center justify-start flex-1"
+          class="bg-gray-200 rounded-lg border border-gray-500 shadow-md flex flex-col items-center justify-start flex-1"
         >
           <h1
-            class="text-center border-b-2 border-gray-700 w-full text-FormSubmit text-textColor"
+            class="text-center border-b border-gray-500 w-full text-FormSubmit text-textColor"
           >
             Controller
           </h1>
-          <div class="mt-2 space-y-0.5 text-Form text-textColor text-left px-2 w-full">
+          <div class="space-y-0.5 text-Form text-textColor text-left px-2 w-full p-1">
             <div class="flex justify-between">
               Serial Number:
               <span>100000001d546663</span>
@@ -55,14 +55,14 @@
 
         <!-- Router Section -->
         <div
-          class="bg-gray-200 p-1 rounded-lg border border-gray-400 shadow-md flex flex-col items-center justify-start flex-1"
+          class="bg-gray-200  rounded-lg border border-gray-500 shadow-md flex flex-col items-center justify-start flex-1"
         >
           <h1
-            class="text-center border-b-2 border-gray-700 w-full text-FormSubmit text-textColor"
+            class="text-center border-b border-gray-500 w-full text-FormSubmit text-textColor"
           >
             Router
           </h1>
-          <div class="mt-2 space-y-1 text-Form text-textColor text-left px-2 w-full">
+          <div class="space-y-0.5 text-Form text-textColor text-left px-2 w-full p-1">
             <div class="flex justify-between">
               Serial Number:
               <span>192F-52EB-C0F2</span>
@@ -75,7 +75,6 @@
               Uptime:
               <span>5 Hours</span>
             </div>
-
             <div class="flex justify-between">
               Logs:
               <span>
@@ -93,14 +92,14 @@
 
         <!-- Camera Section -->
         <div
-          class="bg-gray-200 p-2 rounded-lg border border-gray-400 shadow-md flex flex-col items-center justify-start flex-1"
+          class="bg-gray-200  rounded-lg border border-gray-500 shadow-md flex flex-col items-center justify-start flex-1"
         >
           <h1
-            class="text-center border-b-2 border-gray-700 w-full text-FormSubmit text-textColor"
+            class="text-center border-b border-gray-500 w-full text-FormSubmit text-textColor"
           >
             Camera
           </h1>
-          <div class="mt-2 space-y-1 text-Form text-textColor text-left px-2 w-full">
+          <div class="space-y-0.5 text-Form text-textColor text-left px-2 w-full py-1">
             <div class="flex justify-between">
               Serial Number:
               <span>192F-52EB-C0F2</span>
@@ -113,7 +112,6 @@
               Uptime:
               <span>5 Hours</span>
             </div>
-
             <div class="flex justify-between">
               Logs:
               <span>

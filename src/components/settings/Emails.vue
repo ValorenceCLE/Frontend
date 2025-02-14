@@ -1,7 +1,7 @@
 <template>
   <div class="flex items-center justify-center w-full h-full relative">
     <div class="w-full mx-auto rounded-md" style="max-width: 40rem">
-      <div class="bg-gray-200 shadow-lg rounded-md my-3 border border-gray-500 relative">
+      <div class="bg-gray-200 shadow rounded my-2 border border-gray-500 relative">
         <table class="text-left w-full border-collapse">
           <thead>
             <tr>
@@ -16,11 +16,11 @@
           <tbody class="text-textColor">
             <!-- SMTP Server -->
             <tr>
-              <td class="py-2 px-5 text-Body font-bold">SMTP Server:</td>
-              <td class="py-2 px-2">
+              <td class="py-2 px-4 text-Body font-bold">SMTP Server:</td>
+              <td class="py-2 px-1">
                 <input
                   v-model="emailSettings.smtp_server"
-                  class="border-grayMed border rounded w-3/4 px-2 text-Form"
+                  class="border-grayMed border rounded w-3/4 px-1 text-Form"
                   type="text"
                   autocomplete="off"
                 />
@@ -28,11 +28,11 @@
             </tr>
             <!-- SMTP Port -->
             <tr>
-              <td class="py-2 px-5 text-Body font-bold">SMTP Port:</td>
-              <td class="py-2 px-2">
+              <td class="py-2 px-4 text-Body font-bold">SMTP Port:</td>
+              <td class="py-2 px-1">
                 <input
                   v-model="emailSettings.smtp_port"
-                  class="border-grayMed border rounded w-3/4 px-2 text-Form"
+                  class="border-grayMed border rounded w-3/4 px-1 text-Form"
                   type="number"
                   autocomplete="off"
                 />
@@ -40,11 +40,11 @@
             </tr>
             <!-- SMTP User -->
             <tr>
-              <td class="py-2 px-5 text-Body font-bold">SMTP User:</td>
-              <td class="py-2 px-2">
+              <td class="py-2 px-4 text-Body font-bold">SMTP User:</td>
+              <td class="py-2 px-1">
                 <input
                   v-model="emailSettings.smtp_user"
-                  class="border-grayMed border rounded w-3/4 px-2 text-Form"
+                  class="border-grayMed border rounded w-3/4 px-1 text-Form"
                   type="text"
                   autocomplete="off"
                 />
@@ -52,11 +52,11 @@
             </tr>
             <!-- SMTP Password -->
             <tr>
-              <td class="py-2 px-5 text-Body font-bold">SMTP Password:</td>
-              <td class="py-2 px-2">
+              <td class="py-2 px-4 text-Body font-bold">SMTP Password:</td>
+              <td class="py-2 px-1">
                 <input
                   v-model="emailSettings.smtp_password"
-                  class="border-grayMed border rounded w-3/4 px-2 text-Form"
+                  class="border-grayMed border rounded w-3/4 px-1 text-Form"
                   type="password"
                   autocomplete="off"
                 />
@@ -64,11 +64,11 @@
             </tr>
             <!-- SMTP Secure -->
             <tr>
-              <td class="py-2 px-5 text-Body font-bold">SMTP Secure:</td>
-              <td class="py-2 px-2">
+              <td class="py-2 px-4 text-Body font-bold">SMTP Secure:</td>
+              <td class="py-2 px-1">
                 <select
                   v-model="emailSettings.smtp_secure"
-                  class="border-grayMed border rounded w-3/4 px-2 text-Form"
+                  class="border-grayMed border rounded w-3/4 px-1 text-Form"
                 >
                   <option value="tls">TLS</option>
                   <option value="ssl">SSL</option>
@@ -77,11 +77,11 @@
             </tr>
             <!-- Return Email -->
             <tr>
-              <td class="py-2 px-5 text-Body font-bold">Return Email:</td>
-              <td class="py-2 px-2">
+              <td class="py-2 px-4 text-Body font-bold">Return Email:</td>
+              <td class="py-2 px-1">
                 <input
                   v-model="emailSettings.return_email"
-                  class="border-grayMed border rounded w-3/4 px-2 text-Form"
+                  class="border-grayMed border rounded w-3/4 px-1 text-Form"
                   type="email"
                   autocomplete="off"
                 />
@@ -89,11 +89,11 @@
             </tr>
             <!-- Email Addresses -->
             <tr v-for="(email, index) in emailSettings.emails" :key="index">
-              <td class="py-2 px-5 text-Body font-bold">Email {{ index + 1 }}:</td>
-              <td class="py-2 px-2">
+              <td class="py-2 px-4 text-Body font-bold">Email {{ index + 1 }}:</td>
+              <td class="py-2 px-1">
                 <input
                   v-model="emailSettings.emails[index]"
-                  class="border-grayMed border rounded w-3/4 px-2 text-Form"
+                  class="border-grayMed border rounded w-3/4 px-1 text-Form"
                   type="email"
                   autocomplete="off"
                 />
@@ -101,7 +101,7 @@
             </tr>
             <!-- Submit & Clear Buttons -->
             <tr>
-              <td class="py-3 text-center" colspan="2">
+              <td class="py-2 text-center" colspan="2">
                 <div class="flex justify-center gap-2">
                   <!-- Submit Button -->
                   <button
