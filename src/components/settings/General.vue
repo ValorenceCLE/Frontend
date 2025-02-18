@@ -2,18 +2,18 @@
   <div class="w-full mx-auto" style="width: 60rem">
     <!-- Header -->
     <div
-      class="bg-gray-200 p-3 rounded-md shadow border border-gray-500 max-w-xl flex justify-center items-center mx-auto"
+      class="bg-gray-200 px-4 py-2 rounded-md shadow border border-gray-500 max-w-xl flex justify-center items-center mx-auto"
     >
-      <div class="flex flex-col items-center justify-center w-full h-12">
+      <div class="flex flex-col items-center justify-center w-full h-14">
         <!-- Main title: "Basic Settings" -->
-        <h1 class="text-FormHeader text-textColor font-bold mb-1">Protoype DPM #1</h1>
+        <h1 class="text-FormHeader text-textColor mb-1">Protoype DPM #1</h1>
         <p class="text-Body text-textColor">{{ formattedDateTime }}</p>
         <!-- Subheader line: "System Time: ..." -->
       </div>
     </div>
 
     <!-- Main Layout with Equal Height Columns -->
-    <div class="w-full mt-3 mb-3 flex text-center space-x-3 break-words items-stretch">
+    <div class="w-full mt-2 mb-2 flex text-center space-x-3 break-words items-stretch">
       <!-- Left Column (Three Stacked Content Boxes with Additional Content) -->
       <div class="flex-[1.2] flex flex-col gap-3">
         <!-- Controller Section -->
@@ -21,15 +21,15 @@
           class="bg-gray-200 rounded-lg border border-gray-500 shadow-md flex flex-col items-center justify-start flex-1"
         >
           <h1
-            class="text-center border-b border-gray-500 w-full text-FormSubmit text-textColor"
+            class="text-center border-b border-gray-900 w-full text-Subheader text-textColor"
           >
             Controller
           </h1>
-          <div class="space-y-0.5 text-Form text-textColor text-left px-2 w-full p-1">
-            <div class="flex justify-between">
+          <div class="space-y-1 text-Form font-semibold  text-textColor text-left w-full px-2 py-1">
+            <!-- <div class="flex justify-between">
               Serial Number:
               <span>100000001d546663</span>
-            </div>
+            </div> -->
             <div class="flex justify-between">
               CPU Load
               <span>17%</span>
@@ -55,18 +55,18 @@
 
         <!-- Router Section -->
         <div
-          class="bg-gray-200  rounded-lg border border-gray-500 shadow-md flex flex-col items-center justify-start flex-1"
+          class="bg-gray-200 rounded-lg border border-gray-500 shadow-md flex flex-col items-center justify-start flex-1"
         >
           <h1
-            class="text-center border-b border-gray-500 w-full text-FormSubmit text-textColor"
+            class="text-center border-b border-gray-900 w-full text-FormSubmit text-textColor"
           >
             Router
           </h1>
-          <div class="space-y-0.5 text-Form text-textColor text-left px-2 w-full p-1">
-            <div class="flex justify-between">
+          <div class="space-y-1 text-Form font-semibold  text-textColor text-left w-full px-2 py-1">
+            <!-- <div class="flex justify-between">
               Serial Number:
               <span>192F-52EB-C0F2</span>
-            </div>
+            </div> -->
             <div class="flex justify-between">
               Status:
               <span>Online</span>
@@ -92,18 +92,18 @@
 
         <!-- Camera Section -->
         <div
-          class="bg-gray-200  rounded-lg border border-gray-500 shadow-md flex flex-col items-center justify-start flex-1"
+          class="bg-gray-200 rounded border border-gray-500 shadow flex flex-col items-center justify-start flex-1"
         >
           <h1
-            class="text-center border-b border-gray-500 w-full text-FormSubmit text-textColor"
+            class="text-center border-b border-gray-900 w-full text-FormSubmit text-textColor"
           >
             Camera
           </h1>
-          <div class="space-y-0.5 text-Form text-textColor text-left px-2 w-full py-1">
-            <div class="flex justify-between">
+          <div class="space-y-1 text-Form font-semibold  text-textColor text-left w-full px-2 py-1">
+            <!-- <div class="flex justify-between">
               Serial Number:
-              <span>192F-52EB-C0F2</span>
-            </div>
+              <span>192F52EBC0F2</span>
+            </div> -->
             <div class="flex justify-between">
               Status:
               <span>Online</span>

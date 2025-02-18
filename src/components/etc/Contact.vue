@@ -1,15 +1,15 @@
 <template>
   <div class="flex items-center justify-center w-full h-full p-6">
-    <div class="w-full max-w-3xl bg-gray-200 shadow-lg rounded-md border border-gray-500">
+    <div class="w-full max-w-2xl bg-gray-200 shadow rounded-md border border-gray-500">
       <!-- Form Header with Full-Width Border -->
-      <div class="border-b border-gray-500 p-3">
+      <div class="border-b border-gray-500 px-4 py-2">
         <h1 class="text-textColor text-Header font-bold text-center">Contact Us</h1>
       </div>
       <!-- Contact Form -->
-      <form @submit.prevent="sendMessage" class="p-6">
+      <form @submit.prevent="sendMessage" class="px-4 py-2">
         <!-- Name -->
-        <div class="mb-4">
-          <label for="name" class="block text-Body text-textColor mb-2">Name:</label>
+        <div class="m-2">
+          <label for="name" class="block text-Body text-textColor mb-1">Name:</label>
           <input
             v-model="form.name"
             id="name"
@@ -20,8 +20,8 @@
           />
         </div>
         <!-- Email -->
-        <div class="mb-4">
-          <label for="email" class="block text-Body text-textColor mb-2">Email:</label>
+        <div class="m-2">
+          <label for="email" class="block text-Body text-textColor mb-1">Email:</label>
           <input
             v-model="form.email"
             id="email"
@@ -32,8 +32,8 @@
           />
         </div>
         <!-- Phone Number -->
-        <div class="mb-4">
-          <label for="phone" class="block text-Body text-textColor mb-2"
+        <div class="m-2">
+          <label for="phone" class="block text-Body text-textColor mb-1"
             >Phone Number:</label
           >
           <input
@@ -45,8 +45,8 @@
           />
         </div>
         <!-- Agency -->
-        <div class="mb-4">
-          <label for="agency" class="block text-Body text-textColor mb-2">Agency:</label>
+        <div class="m-2">
+          <label for="agency" class="block text-Body text-textColor mb-1">Agency:</label>
           <input
             v-model="form.agency"
             id="agency"
@@ -56,8 +56,8 @@
           />
         </div>
         <!-- Subject -->
-        <div class="mb-4">
-          <label for="subject" class="block text-Body text-textColor mb-2"
+        <div class="m-2">
+          <label for="subject" class="block text-Body text-textColor mb-1"
             >Subject:</label
           >
           <input
@@ -70,8 +70,8 @@
           />
         </div>
         <!-- Message Body -->
-        <div class="mb-6">
-          <label for="message" class="block text-Body text-textColor mb-2"
+        <div class="m-2">
+          <label for="message" class="block text-Body text-textColor mb-1"
             >Message:</label
           >
           <textarea
@@ -79,23 +79,23 @@
             id="message"
             class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="Enter your message"
-            rows="5"
+            rows="4"
             required
           ></textarea>
         </div>
         <!-- Buttons -->
-        <div class="flex justify-center space-x-4">
+        <div class="flex justify-center space-x-2">
           <!-- Send Message Button -->
           <button
             type="submit"
-            class="bg-primaryMed hover:bg-primaryLight text-white text-FormButton py-2 px-4 rounded"
+            class="bg-primaryMed hover:bg-primaryLight text-white text-FormSubmit py-1 px-4 rounded w-24"
           >
-            Send Message
+            Send
           </button>
           <!-- Cancel Button -->
           <button
             type="button"
-            class="bg-grayDark hover:bg-gray-700 text-white text-FormButton py-2 px-4 rounded"
+            class="bg-grayDark hover:bg-gray-700 text-white text-FormSubmit py-1 px-4 rounded w-24"
             @click="clearForm"
           >
             Cancel

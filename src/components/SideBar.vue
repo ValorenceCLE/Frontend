@@ -37,7 +37,7 @@
             <img
               :src="chevronDown"
               alt="Chevron Down"
-              class="w-6 h-6 transform transition-transform duration-100"
+              class="w-6 h-6 transform transition-transform duration-200"
               :class="{ 'rotate-180': dropdownStates[index] }"
             />
           </div>
@@ -125,7 +125,7 @@ export default {
 <style scoped>
 .slide-dropdown-enter-active,
 .slide-dropdown-leave-active {
-  transition: height 0.4s ease-in-out;
+  transition: height 0.5s ease-in-out;
   overflow: hidden;
 }
 .slide-dropdown-enter,
@@ -140,6 +140,6 @@ img {
 }
 .rotate-180 {
   transform: rotate(180deg);
-  transition: transform 0.4s ease-in-out;
+  transition: transform 0.5s ease-in-out;
 }
 </style>

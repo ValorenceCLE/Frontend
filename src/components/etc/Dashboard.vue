@@ -2,7 +2,7 @@
   <div class="w-full max-w-4xl mx-auto">
     <!-- Dashboard Header -->
     <div
-      class="bg-gray-200 p-2 rounded-lg shadow-md border border-gray-400 max-w-xl flex justify-center items-center mx-auto"
+      class="bg-gray-200 px-4 py-2 rounded-md shadow border border-gray-500 max-w-xl flex justify-center items-center mx-auto"
     >
       <h1 class="text-Header text-textColor">R&D Demo Unit</h1>
     </div>
@@ -10,16 +10,16 @@
     <!-- The container we measure for a unified scale -->
     <div
       ref="scalingContainer"
-      class="w-full mt-3 mb-3 flex text-center space-x-3 overflow-auto break-words"
+      class="w-full my-2 flex text-center space-x-2 overflow-auto break-words"
     >
       <!-- Left Column (Control Panel) -->
-      <div class="flex-[2] bg-gray-200 p-1 rounded-lg border border-gray-400 shadow-lg">
+      <div class="flex-[2] bg-gray-200 rounded border border-gray-500">
         <!-- If you want a dynamic heading style here, use leftTitleStyle. 
                Or just do a static style. 
                Let's do a dynamic approach for demonstration. -->
         <h1 :style="leftTitleStyle" class="text-center">Status</h1>
-        <div class="border-solid border border-gray-700 ml-2 mr-2"></div>
-        <div class="mt-3 space-y-2 text-Body text-textColor text-left px-3">
+        <div class="border-solid border border-gray-700"></div>
+        <div class="mt-1 space-y-2 text-Body text-textColor text-left px-3 py-1.5 ">
           <div class="flex justify-between">
             <strong>Router:</strong>
             <span>Online</span>
@@ -40,7 +40,7 @@
       </div>
 
       <!-- Middle Column: "Main Power" -->
-      <div class="flex-[1.5] bg-gray-200 p-1 rounded-lg h-48 border border-gray-400">
+      <div class="flex-[1.5] bg-gray-200 p-1 rounded h-44 border border-gray-500">
         <Gauge
           title="Main Power"
           :min="0"
@@ -54,7 +54,7 @@
 
       <!-- Right Column: "Temperature" -->
       <div
-        class="flex-[1.5] bg-gray-200 p-1 rounded-lg h-48 border border-gray-400 shadow-lg"
+        class="flex-[1.5] bg-gray-200 p-1 rounded h-44 border border-gray-500"
       >
         <Gauge
           title="Temperature"
@@ -69,7 +69,7 @@
     </div>
 
     <!-- Relay Cards Section -->
-    <div class="w-full mt-3 space-y-2">
+    <div class="w-full mt-2 space-y-1.5">
       <RelayCard
         v-for="(relay, index) in relays"
         :key="index"

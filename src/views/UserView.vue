@@ -4,7 +4,7 @@
 
     <div class="flex-grow flex">
       <!-- Main content area without sidebar -->
-      <div class="flex-grow bg-crosshatch-pattern bg-background p-4">
+      <div class="flex-grow bg-crosshatch-pattern bg-background p-4 flex items-center justify-center">
         <router-view />
       </div>
     </div>

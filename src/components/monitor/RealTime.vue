@@ -1,8 +1,8 @@
 <template>
-  <div class="flex flex-col items-center justify-center w-full h-full mx-auto max-w-5xl">
+  <div class="flex flex-col items-center justify-center w-full h-full mx-auto max-w-4xl">
     <!-- Header Section -->
     <div
-      class="w-full max-w-xl p-3 bg-gray-100 border border-gray-500 rounded-md shadow-md"
+      class="w-full max-w-xl p-2 bg-gray-100 border border-gray-500 rounded-md shadow-md"
     >
       <h1 class="text-Header text-textColor text-center py-1">Live Monitoring</h1>
 
@@ -15,7 +15,7 @@
           <label class="font-bold mr-2">Source:</label>
           <select
             v-model="selectedSource"
-            class="border border-gray-500 rounded p-1"
+            class="border border-gray-500 rounded p-1 text-textColor text-Form"
             :disabled="isRunning"
           >
             <option class="text-textColor text-Form" disabled value="">

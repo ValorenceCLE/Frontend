@@ -2,10 +2,10 @@
   <div class="flex flex-col items-center justify-center w-full h-full">
     <!-- Header -->
     <div
-      class="w-full max-w-xl p-3 bg-gray-200 border border-gray-500 rounded-md text-center"
+      class="w-full max-w-xl py-2 bg-gray-200 border border-gray-500 rounded-md text-center"
     >
-      <h1 class="text-3xl font-bold text-textColor">Relay Logic Management</h1>
-      <p class="text-gray-600">Manage your conditional tasks and relay logic here.</p>
+      <h1 class="text-Header text-textColor">Relay Logic Management</h1>
+      <p class="text-textColor text-ModayBody -mb-1">Manage your conditional tasks and relay logic here.</p>
     </div>
 
     <!-- Tasks Table -->

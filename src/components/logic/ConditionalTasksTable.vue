@@ -1,41 +1,42 @@
 <template>
   <div
     v-if="Object.keys(tasks).length"
-    class="w-full max-w-4xl bg-gray-200 rounded-lg shadow-md border border-gray-500 p-6 my-4"
+    class="w-full max-w-4xl bg-gray-200 rounded-md shadow border border-gray-500 mt-2"
   >
-    <div class="flex justify-between items-center mb-4 px-4">
+    <div class="flex justify-between items-center m-2 ">
       <h2 class="text-Subheader text-textColor">Conditional Tasks</h2>
       <button
         @click="$emit('openAddTask')"
-        class="bg-primaryMed hover:bg-primaryLight text-white py-2 px-4 rounded shadow flex items-center"
+        class="bg-primaryMed hover:bg-primaryLight text-white py-2 px-4 rounded shadow flex items-center text-ModalLabel"
+        
       >
-        <img src="@/assets/icons/add.svg" alt="Add" class="w-4 h-4 mr-2" />
+        <img src="@/assets/icons/add.svg" alt="Add" class="w-5 h-5 -ml-2 mr-2" style="filter: brightness(0); filter: invert(1);"/>
         Add Conditional Task
       </button>
     </div>
     <table class="w-full text-center border-collapse rounded-md">
       <thead>
-        <tr class="bg-gray-200 border-b border-gray-300">
-          <th class="py-3 px-4 text-textColor text-Subheader">Name</th>
-          <th class="py-3 px-4 text-textColor text-Subheader">Trigger</th>
-          <th class="py-3 px-4 text-textColor text-Subheader">Actions</th>
-          <th class="py-3 px-4 text-textColor text-Subheader">Edit</th>
+        <tr class="bg-gray-200 border-b border-gray-500">
+          <th class="px-2 text-textColor text-Subheader">Name</th>
+          <th class="px-2 text-textColor text-Subheader">Trigger</th>
+          <th class="px-2 text-textColor text-Subheader">Actions</th>
+          <th class="px-2 text-textColor text-Subheader">Edit</th>
         </tr>
       </thead>
-      <tbody>
+      <tbody class="text-textColor">
         <tr v-for="(task, id) in tasks" :key="id">
-          <td class="py-2 px-4 text-textColor">{{ task.name }}</td>
-          <td class="py-2 px-4 text-textColor">
+          <td class="py-1.5 px-3">{{ task.name }}</td>
+          <td class="py-1.5 px-3">
             {{ getFormattedTrigger(task) }}
           </td>
-          <td class="py-2 px-4 text-textColor">
+          <td class="py-1.5 px-3">
             <ul class="list-disc list-inside">
               <li v-for="(action, index) in getFormattedActions(task)" :key="index">
                 {{ action }}
               </li>
             </ul>
           </td>
-          <td class="py-2 px-4 flex justify-center space-x-2">
+          <td class="py-1.5 px-3 flex justify-center space-x-1">
             <button
               @click="$emit('editTask', task)"
               class="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded"
@@ -53,7 +54,7 @@
       </tbody>
     </table>
   </div>
-  <p v-else class="text-center text-gray-600">No conditional tasks available.</p>
+  <p v-else class="text-center text-textColor">No conditional tasks available.</p>
 </template>
 
 <script>

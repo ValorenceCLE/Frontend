@@ -2,7 +2,7 @@
   <form @submit.prevent.stop="handleSubmit">
     <!-- Task Name Section -->
     <div class="mb-4">
-      <label class="block text-Body text-textColor mb-1">Task Name:</label>
+      <label class="block text-Subheader text-textColor mb-1">Task Name:</label>
       <input
         v-model="task.name"
         type="text"

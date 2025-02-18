@@ -1,21 +1,21 @@
 <template>
-  <div class="flex flex-col items-center justify-center w-full h-full mx-auto max-w-5xl space-y-3">
+  <div class="flex flex-col items-center justify-center w-full h-full mx-auto max-w-5xl space-y-2">
     <!-- Header Section -->
-    <div class="w-full max-w-xl p-2 bg-gray-100 border border-gray-500 rounded-md shadow-md">
+    <div class="w-full max-w-xl p-2 bg-gray-100 border border-gray-500 rounded-md shadow">
       <h1 class="text-Header text-textColor text-center py-1">Historical Graph</h1>
       <!-- Custom Nested Dropdown for Source Selection (Label & Button Inline) -->
-      <div class="relative flex items-center justify-center mt-2" ref="dropdownRef">
-        <label class="text-Form text-textColor mr-2">Source:</label>
+      <div class="relative flex items-center justify-center mt-1" ref="dropdownRef">
+        <label class="text-Form text-textColor mr-2 font-bold">Source:</label>
         <button
           @click="toggleDropdown"
-          class="bg-gray-200 border border-gray-500 rounded p-0.5 w-4/12"
+          class="bg-gray-200 border border-gray-500 rounded px-2 w-fit"
         >
           {{ selectedSourceField ? selectedSourceField : 'Select Source' }}
         </button>
         <!-- Primary Dropdown: Opens below the input section -->
         <div
           v-if="open"
-          class="absolute top-full mt-1 rounded-md shadow-lg bg-white ring-1 ring-textColor ring-opacity-2 z-10"
+          class="absolute top-full mt-1 rounded-md shadow bg-white ring-1 ring-textColor ring-opacity-2 z-10"
         >
           <div>
             <div
@@ -27,11 +27,11 @@
             >
               <!-- Source Category Button -->
               <button
-                class="w-auto text-left m-2 py-0.5 text-md text-textColor flex justify-between items-center overflow-hidden"
+                class="w-auto text-left m-1 text-md text-textColor flex justify-between items-center overflow-hidden"
               >
                 {{ source }}
                 <svg
-                  class="h-4 w-4"
+                  class="h-4 w-4 ml-2"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -47,7 +47,7 @@
               <!-- Nested Dropdown for Fields: Opens to the right of the main dropdown -->
               <div
                 v-if="openNested === source"
-                class="absolute top-0 left-full ml-1 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-20 border border-gray-500 overflow-hidden"
+                class="absolute top-0 left-full ml-1 rounded-md shadow bg-white ring-1 ring-black ring-opacity-5 z-20 border border-gray-500 overflow-hidden"
               >
                 <div>
                   <button

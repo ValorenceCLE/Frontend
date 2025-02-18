@@ -6,17 +6,17 @@
         - bg-white, border, shadow-md, and rounded-md for styling
     -->
   <div
-    class="w-full flex items-center bg-white border border-gray-400 rounded-lg shadow-lg"
+    class="w-full flex items-center bg-white border border-gray-500 rounded-lg shadow-lg"
   >
     <!-- Left section: Name & Status -->
     <div
-      class="flex-[1] flex items-center justify-between p-3"
+      class="flex-[1] flex items-center justify-between px-3 py-1.5"
     >
       <!-- Name (left) -->
       <h3 class="text-Subheader text-textColor">{{ relayName }}</h3>
 
       <!-- Status (right) -->
-      <span :class="statusClass" class="text-Status font-semibold px-6 py-1 rounded-md">
+      <span :class="statusClass" class="text-Status font-semibold w-fit px-3 py-1 rounded-md">
         {{ displayStatus }}
       </span>
     </div>
@@ -28,13 +28,13 @@
         - .flex h-full space-x-2 items-center justify-center 
           so buttons line up horizontally, share space, and are centered vertically
       -->
-    <div class="flex-[2] p-2 border-l border-gray-300 rounded-r-md shadow-md">
+    <div class="flex-[2] p-2 border-l border-gray-400 rounded-r-md shadow-md">
       <div class="flex h-full space-x-2 items-center justify-center">
         <!-- ON button -->
         <button
           v-if="buttons.on"
           @click="turnOn"
-          class="flex-1 bg-gray-200 text-Body text-textColor border border-gray-400 hover:bg-gray-300 px-3 py-2 rounded-md text-center shadow-md"
+          class="flex-1 bg-gray-200 text-Body text-textColor border border-gray-500 hover:bg-gray-300 px-3 py-1.5 rounded-md text-center shadow"
         >
           {{ buttons.on }}
         </button>
@@ -43,7 +43,7 @@
         <button
           v-if="buttons.off"
           @click="turnOff"
-          class="flex-1 bg-gray-200 text-Body text-textColor border border-gray-400 hover:bg-gray-300 px-3 py-2 rounded-md text-center shadow-md"
+          class="flex-1 bg-gray-200 text-Body text-textColor border border-gray-500 hover:bg-gray-300 px-3 py-1.5 rounded-md text-center shadow"
         >
           {{ buttons.off }}
         </button>
@@ -52,7 +52,7 @@
         <button
           v-if="buttons.pulse"
           @click="pulse"
-          class="flex-1 bg-gray-200 text-Body text-textColor border border-gray-400 hover:bg-gray-300 px-3 py-2 rounded-md text-center shadow-md"
+          class="flex-1 bg-gray-200 text-Body text-textColor border border-gray-500 hover:bg-gray-300 px-3 py-1.5 rounded-md text-center shadow"
         >
           {{ buttons.pulse }}
         </button>

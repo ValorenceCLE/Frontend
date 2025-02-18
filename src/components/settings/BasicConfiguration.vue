@@ -3,11 +3,11 @@
   <div class="flex flex-col h-full ">
     <!-- Main Container (Fields, Configuration, Submit/Cancel) -->
     <div
-      class="bg-gray-200 rounded-lg border border-gray-500 shadow-md flex flex-col space-y-3"
+      class="bg-gray-200 rounded border border-gray-500 shadow flex flex-col space-y-2"
     >
       <!-- Header -->
       <div class="flex flex-col items-center justify-center">
-        <h1 class="text-FormHeader text-textColor border-b-2 border-gray-500 w-full text-center p-2">
+        <h1 class="text-FormHeader text-textColor border-b border-gray-900 w-full text-center p-1">
           Basic Configuration
         </h1>
       </div>
@@ -73,7 +73,7 @@
           />
           <button
             type="button"
-            class="flex items-center justify-center bg-textColor hover:bg-primaryMed text-white font-semibold px-4 py-2 rounded shadow w-[150px]"
+            class="flex items-center justify-center bg-textColor hover:bg-primaryMed text-white font-semibold px-3 py-1.5 rounded shadow w-[150px]"
             @click="openFilePicker"
           >
             <img src="@/assets/icons/upload.svg" alt="Upload Icon" class="w-5 h-5 mr-2" />
@@ -93,7 +93,7 @@
         </h3>
         <button
           type="button"
-          class="flex items-center justify-center bg-textColor hover:bg-primaryMed text-white font-semibold px-4 py-2 rounded shadow w-[150px]"
+          class="flex items-center justify-center bg-textColor hover:bg-primaryMed text-white font-semibold px-3 py-1.5 rounded shadow w-[150px]"
           @click="exportConfiguration"
         >
           <img
@@ -106,7 +106,7 @@
       </div>
 
       <!-- ========== SUBMIT / CANCEL SECTION ========== -->
-      <div class="flex items-center justify-center space-x-2 border-t border-gray-500 py-3">
+      <div class="flex items-center justify-center space-x-2 border-t border-gray-500 p-2">
         <button
           type="button"
           class="bg-primaryMed hover:bg-primaryLight text-white text-FormButton py-1.5 px-3 flex justify-center rounded-md border border-gray-400 w-24"
@@ -126,17 +126,17 @@
 
     <!-- ========== REBOOT BUTTONS ROW ========== -->
     <div
-      class="bg-gray-200 p-2 rounded-lg border border-gray-500 shadow-md flex flex-col mt-3"
+      class="bg-gray-200 p-2 rounded border border-gray-500 shadow-md flex flex-col mt-1"
     >
       <div class="flex justify-between space-x-2">
         <button
-          class="w-[90%] bg-textColor hover:bg-red-800 text-white text-FormButton px-2 py-2 rounded shadow"
+          class="w-[90%] bg-textColor hover:bg-red-800 text-white text-FormButton px-2 py-2 rounded-md shadow"
           @click="confirmAction('Restart the Raspberry Pi', rebootDevice)"
         >
           Restart
         </button>
         <button
-          class="w-[90%] bg-textColor hover:bg-red-800 text-white text-FormButton px-2 py-2 rounded shadow"
+          class="w-[90%] bg-textColor hover:bg-red-800 text-white text-FormButton px-2 py-2 rounded-md shadow"
           @click="
             confirmAction(
               'Power Cycle the system\nThis will cut the main power then turn it back on',
@@ -147,7 +147,7 @@
           Power Cycle
         </button>
         <button
-          class="w-[90%] bg-textColor hover:bg-red-800 text-white font-bold px-2 py-2 rounded shadow"
+          class="w-[90%] bg-textColor hover:bg-red-800 text-white font-bold px-2 py-2 rounded-md shadow"
           @click="confirmAction('Restore factory defaults', factoryReset)"
         >
           Restore Default

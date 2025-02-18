@@ -3,19 +3,19 @@
     v-if="show"
     class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
   >
-    <div class="bg-white rounded-lg shadow-lg w-full max-w-2xl">
+    <div class="bg-white rounded-md shadow w-full max-w-2xl">
       <!-- Modal Header -->
-      <div class="flex justify-between items-center p-4 border-b border-gray-300">
-        <h2 class="text-Subheader text-textColor">{{ title }}</h2>
+      <div class="flex justify-between items-center px-3 py-1.5 border-b border-gray-500">
+        <h2 class="text-Header text-textColor">{{ title }}</h2>
         <button
           @click="$emit('close')"
-          class="text-gray-500 hover:text-gray-700 text-2xl"
+          class="text-gray-700 hover:text-gray-900 text-3xl"
         >
           &times;
         </button>
       </div>
       <!-- Modal Body -->
-      <div class="p-4">
+      <div class="px-3 py-1.5">
         <slot></slot>
       </div>
     </div>

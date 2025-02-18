@@ -1,23 +1,23 @@
 <template>
   <!-- Outer container, similar styling to Contact.vue -->
-  <div class="flex items-center justify-center w-full h-full p-6">
+  <div class="flex items-center justify-center w-full h-full">
     <!-- Main Card Container -->
-    <div class="w-full max-w-3xl bg-gray-200 shadow-lg rounded-md border border-gray-500">
+    <div class="w-full max-w-3xl bg-gray-200 shadow rounded border border-gray-500">
       <!-- Header -->
-      <div class="border-b border-gray-500 p-3">
-        <h1 class="text-textColor text-Header font-bold text-center">FAQ</h1>
+      <div class="border-b border-gray-500 px-3 py-1.5">
+        <h1 class="text-textColor text-Header text-center">FAQ</h1>
       </div>
 
       <!-- FAQ List -->
-      <div class="p-6">
-        <p class="text-textColor text-Body mb-4 text-center">
+      <div class="px-4 py-2">
+        <p class="text-textColor text-Body mb-2 text-center">
           Click any topic below to see more information
         </p>
 
         <!-- Loop through each FAQ item and display a clickable button -->
         <div v-for="(faq, index) in faqItems" :key="index" class="mb-2">
           <button
-            class="w-full text-center py-2 px-3 bg-white border border-gray-300 rounded-md hover:bg-gray-100 hover:shadow-sm focus:outline-none cursor-pointer flex items-center justify-center"
+            class="w-full text-center px-3 py-2 bg-white border border-gray-300 rounded-md hover:bg-gray-100 hover:shadow-sm focus:outline-none cursor-pointer flex items-center justify-center"
             @click="openFAQ(faq)"
           >
             <strong class="text-textColor">{{ faq.title }}</strong>
@@ -33,14 +33,14 @@
       @click="closeModal"
     >
       <!-- Stop propagation so that clicks inside the modal do not close it -->
-      <div class="bg-white rounded-lg shadow-lg w-1/3 relative border-gray-600 border" @click.stop>
+      <div class="bg-white rounded-lg shadow-lg w-1/2 relative border-gray-600 border" @click.stop>
         <!-- Modal Header -->
-        <div class="flex items-center justify-between p-4 border-b border-gray-600">
+        <div class="flex items-center justify-between px-4 py-2 border-b border-gray-600">
           <h2 class="text-textColor text-center flex-1 text-FormHeader font-bold">
             {{ selectedTitle }}
           </h2>
           <button
-            class="text-gray-800 font-extrabold text-xl hover:text-gray-900"
+            class="text-gray-800 font-extrabold text-2xl hover:text-gray-900"
             @click="closeModal"
           >
             ✕
