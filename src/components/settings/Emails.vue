@@ -14,7 +14,6 @@
             </tr>
           </thead>
           <!-- Tiny spacer below header -->
-          <div class="py-1"></div>
           <tbody class="text-textColor">
             <!-- SMTP Server -->
             <tr class="text-center">
