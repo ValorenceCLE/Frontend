@@ -1,5 +1,5 @@
 <template>
-  <div class="flex items-center justify-center w-full h-full relative shadow">
+  <div class="flex items-center justify-center w-full h-full relative">
     <div class="w-full mx-auto rounded-md" style="max-width: 40rem">
       <div class="bg-gray-200 shadow rounded border-gray-500 border relative">
         <table class="w-full border-collapse">
@@ -13,10 +13,7 @@
               </th>
             </tr>
           </thead>
-          <!-- Extra vertical spacing below header -->
-          <div class="py-1"></div>
           <tbody class="text-textColor">
-            <!-- Primary NTP Server -->
             <tr class="text-center">
               <td class="text-Body font-bold py-1">Primary NTP Server:</td>
               <td>

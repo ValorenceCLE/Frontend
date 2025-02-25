@@ -1,8 +1,9 @@
 <template>
-  <div class="w-full mx-auto" style="width: 60rem">
-    <!-- Header -->
+  <div class="flex items-center justify-center w-full h-full relative">
+    <div class="w-full mx-auto relative" style="width: 60rem">
+          <!-- Header -->
     <div
-      class="bg-gray-200 px-4 py-2 rounded-md shadow border border-gray-500 max-w-xl flex justify-center items-center mx-auto"
+      class="bg-gray-200 px-2 py-2 rounded-md shadow border border-gray-500 max-w-xl flex justify-center items-center mx-auto relative"
     >
       <div class="flex flex-col items-center justify-center w-full h-14">
         <!-- Main title: "Basic Settings" -->
@@ -13,7 +14,7 @@
     </div>
 
     <!-- Main Layout with Equal Height Columns -->
-    <div class="w-full mt-2 mb-2 flex text-center space-x-3 break-words items-stretch">
+    <div class="w-full mt-2 mb-2 flex text-center space-x-2 break-words items-stretch">
       <!-- Left Column (Three Stacked Content Boxes with Additional Content) -->
       <div class="flex-[1.2] flex flex-col gap-3">
         <!-- Controller Section -->
@@ -21,7 +22,7 @@
           class="bg-gray-200 rounded-lg border border-gray-500 shadow-md flex flex-col items-center justify-start flex-1"
         >
           <h1
-            class="text-center border-b border-gray-900 w-full text-Subheader text-textColor"
+            class="text-center border-b border-gray-900 w-full text-FormSubmit text-textColor"
           >
             Controller
           </h1>
@@ -132,6 +133,8 @@
         <BasicConfiguration class="flex-1" />
       </div>
     </div>
+    </div>
+
   </div>
 </template>
 
