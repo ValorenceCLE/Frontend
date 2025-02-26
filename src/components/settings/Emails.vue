@@ -36,7 +36,7 @@
               <td>
                 <div class="flex justify-center">
                   <input
-                    v-model="emailSettings.smtp_port"
+                    v-model.number="emailSettings.smtp_port"
                     class="border-gray-500 border rounded text-Form text-center w-52"
                     type="number"
                     autocomplete="off"
@@ -106,7 +106,7 @@
               </td>
             </tr>
 
-            <!-- Dynamic Optional Emails (inline remove icon) -->
+            <!-- Dynamic Optional Emails -->
             <tr
               v-for="(email, index) in emailSettings.emails"
               :key="index"
@@ -136,15 +136,15 @@
             <!-- Add Email Button -->
             <tr class="text-center">
               <td colspan="2" class="pt-1.5">
-              <div class="flex justify-center">
-                <button
-                class="bg-textColor text-white text-ModalLabel py-1 px-5 justify-center rounded border border-gray-500"
-                :disabled="emailSettings.emails.length >= maxEmails"
-                @click="addNewEmail"
-                >
-                Add Email
-                </button>
-              </div>
+                <div class="flex justify-center">
+                  <button
+                    class="bg-textColor text-white text-ModalLabel py-1 px-5 justify-center rounded border border-gray-500"
+                    :disabled="emailSettings.emails.length >= maxEmails"
+                    @click="addNewEmail"
+                  >
+                    Add Email
+                  </button>
+                </div>
               </td>
             </tr>
 
@@ -152,17 +152,15 @@
             <tr>
               <td class="pt-4 pb-2 text-center" colspan="2">
                 <div class="flex justify-center gap-2">
-                  <!-- Submit Button -->
                   <button
                     class="bg-primaryMed hover:bg-primaryLight text-white text-FormSubmit py-1 flex justify-center rounded-md border border-gray-500 w-24"
                     @click="submitSettings"
                   >
                     Submit
                   </button>
-                  <!-- Clear Button -->
                   <button
                     class="bg-grayDark hover:bg-gray-700 text-white text-FormSubmit py-1 flex justify-center rounded-md border border-gray-500 w-24"
-                    @click="clearUnsavedEmails"
+                    @click="clearSettings"
                   >
                     Clear
                   </button>
@@ -177,12 +175,13 @@
 </template>
 
 <script>
-import DummyAPI from "@/api/dummyApi";
+import { useConfigStore } from '@/store/config';
 
 export default {
   name: "Emails",
   data() {
     return {
+      // Local copy for editing email settings
       emailSettings: {
         smtp_server: "",
         smtp_port: 587,
@@ -190,20 +189,28 @@ export default {
         smtp_password: "",
         smtp_secure: "tls",
         return_email: "",
-        emails: [], // optional emails
+        emails: [],
       },
+      // Backup copy for reverting changes
       backupSettings: {},
       maxEmails: 5,
     };
   },
+  computed: {
+    // Access the global configuration store
+    configStore() {
+      return useConfigStore();
+    }
+  },
   methods: {
-    fetchEmailSettings() {
-      const response = DummyAPI.get("/api/emails");
-      if (response.success) {
-        this.emailSettings = { ...response.data };
+    loadEmailSettings() {
+      if (this.configStore.configData && this.configStore.configData.email) {
+        // Copy email settings from the global config into the local editable copy
+        this.emailSettings = { ...this.configStore.configData.email };
         if (!Array.isArray(this.emailSettings.emails)) {
           this.emailSettings.emails = [];
         }
+        // Deep copy for backup
         this.backupSettings = JSON.parse(JSON.stringify(this.emailSettings));
       }
     },
@@ -216,24 +223,45 @@ export default {
       this.emailSettings.emails.splice(index, 1);
     },
     submitSettings() {
-      const response = DummyAPI.post("/api/emails", this.emailSettings);
-      if (response.success) {
-        console.log("Settings successfully updated:", response.data);
-        this.backupSettings = JSON.parse(JSON.stringify(this.emailSettings));
-      }
+      // Merge the updated email settings into the full configuration
+      const updatedConfig = {
+        ...this.configStore.configData,
+        email: { ...this.emailSettings }
+      };
+      // Use the store action to update the configuration via the API
+      this.configStore.updateConfig(updatedConfig)
+        .then(() => {
+          // On success, update the backup copy
+          this.backupSettings = JSON.parse(JSON.stringify(this.emailSettings));
+        })
+        .catch((error) => {
+          console.error("Failed to update email settings:", error);
+        });
     },
-    clearUnsavedEmails() {
-      this.emailSettings.emails = [...this.backupSettings.emails];
-    },
+    clearSettings() {
+      // Revert local changes using the backup copy
+      this.emailSettings = JSON.parse(JSON.stringify(this.backupSettings));
+    }
   },
   mounted() {
-    this.fetchEmailSettings();
-  },
+    if (this.configStore.configData) {
+      this.loadEmailSettings();
+    } else {
+      const unwatch = this.$watch(
+        () => this.configStore.configData,
+        (newVal) => {
+          if (newVal) {
+            this.loadEmailSettings();
+            unwatch();
+          }
+        }
+      );
+    }
+  }
 };
 </script>
 
 <style scoped>
-/* Match the focus ring color & border style from Network.vue */
 input:focus {
   outline: 0.75px solid #333;
   border-color: #333;
@@ -242,5 +270,4 @@ select:focus {
   outline: 0.75px solid #333;
   border-color: #333;
 }
-
 </style>

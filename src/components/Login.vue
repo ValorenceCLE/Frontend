@@ -54,7 +54,7 @@ export default {
     async login() {
       try {
         const response = await axios.post(
-          "/auth/login",
+          "http://localhost:8000/auth/login",
           new URLSearchParams({
             username: this.username,
             password: this.password,

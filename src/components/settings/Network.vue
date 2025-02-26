@@ -12,7 +12,7 @@
                 Network Settings
               </th>
             </tr>
-          </thead >
+          </thead>
           <tbody class="text-textColor">
             <!-- IP Address -->
             <tr class="text-center">
@@ -29,7 +29,7 @@
             </tr>
 
             <!-- Subnet Mask -->
-            <tr class=" text-center">
+            <tr class="text-center">
               <td class="text-Body font-bold py-1">Subnet Mask:</td>
               <td>
                 <div class="flex justify-center">
@@ -49,7 +49,7 @@
                 <div class="flex justify-center">
                   <input
                     v-model="networkSettings.gateway"
-                    class="border-gray-500 border rounded text-Form text-center w-48" 
+                    class="border-gray-500 border rounded text-Form text-center w-48"
                     type="text"
                   />
                 </div>
@@ -65,22 +65,22 @@
                     <button
                       :class="[
                         'py-0.5 px-3 text-FormButton transition-colors',
-                        networkSettings.dhcp_enabled
+                        networkSettings.dhcp
                           ? 'bg-primaryMed text-white'
-                          : 'bg-buttonUnselected text-textColor hover:bg-buttonHover hover:text-white',
+                          : 'bg-buttonUnselected text-textColor hover:bg-buttonHover hover:text-white'
                       ]"
-                      @click="networkSettings.dhcp_enabled = true"
+                      @click="networkSettings.dhcp = true"
                     >
                       Yes
                     </button>
                     <button
                       :class="[
                         'py-0.5 px-3 text-FormButton transition-colors font-bold',
-                        !networkSettings.dhcp_enabled
+                        !networkSettings.dhcp
                           ? 'bg-primaryMed text-white'
-                          : 'bg-buttonUnselected text-textColor hover:bg-buttonHover hover:text-white',
+                          : 'bg-buttonUnselected text-textColor hover:bg-buttonHover hover:text-white'
                       ]"
-                      @click="networkSettings.dhcp_enabled = false"
+                      @click="networkSettings.dhcp = false"
                     >
                       No
                     </button>
@@ -92,10 +92,10 @@
             <!-- Preferred DNS -->
             <tr class="text-center">
               <td class="text-Body font-bold py-1">Preferred DNS:</td>
-              <td >
+              <td>
                 <div class="flex justify-center">
                   <input
-                    v-model="networkSettings.perfered_dns"
+                    v-model="networkSettings.primary_dns"
                     class="border-gray-500 border rounded text-Form text-center w-48"
                     type="text"
                   />
@@ -109,7 +109,7 @@
               <td>
                 <div class="flex justify-center">
                   <input
-                    v-model="networkSettings.alternate_dns"
+                    v-model="networkSettings.secondary_dns"
                     class="border-gray-500 border rounded text-Form text-center w-48"
                     type="text"
                   />
@@ -123,7 +123,7 @@
               <td>
                 <div class="flex justify-center">
                   <input
-                    v-model="networkSettings.https_port"
+                    v-model.number="networkSettings.https_port"
                     class="border-gray-500 border rounded text-Form text-center w-48"
                     type="number"
                   />
@@ -158,45 +158,78 @@
 </template>
 
 <script>
-import DummyAPI from "@/api/dummyApi";
+import { useConfigStore } from '@/store/config';
 
 export default {
   name: "Network",
   data() {
     return {
+      // Local copy for editing network settings
       networkSettings: {
         ip_address: "",
         subnet_mask: "",
         gateway: "",
-        dhcp_enabled: false,
-        perfered_dns: "",
-        alternate_dns: "",
-        https_port: "",
+        dhcp: false,
+        primary_dns: "",
+        secondary_dns: "",
+        https_port: 443,
       },
-      backupSettings: {},
+      // Backup copy for "Clear" functionality
+      backupSettings: {}
     };
   },
+  computed: {
+    // Access the global configuration store
+    configStore() {
+      return useConfigStore();
+    }
+  },
   methods: {
-    fetchNetworkSettings() {
-      const response = DummyAPI.get("/api/network");
-      if (response.success) {
-        this.networkSettings = { ...response.data };
-        this.backupSettings = { ...response.data };
+    loadNetworkSettings() {
+      if (this.configStore.configData && this.configStore.configData.network) {
+        // Copy network settings from the global config into the local editable copy
+        this.networkSettings = { ...this.configStore.configData.network };
+        this.backupSettings = { ...this.configStore.configData.network };
       }
     },
     submitSettings() {
-      const response = DummyAPI.post("/api/network", this.networkSettings);
-      if (response.success) {
-        console.log("Settings successfully updated:", response.data);
-      }
+      // Merge the updated network settings into the full configuration
+      const updatedConfig = { 
+        ...this.configStore.configData, 
+        network: { ...this.networkSettings } 
+      };
+      // Use the store action to update the configuration (which posts to the API)
+      this.configStore.updateConfig(updatedConfig)
+        .then(() => {
+          // On success, update the backup copy
+          this.backupSettings = { ...this.networkSettings };
+        })
+        .catch((error) => {
+          console.error("Failed to update network settings:", error);
+        });
     },
     clearSettings() {
+      // Revert local changes using the backup copy
       this.networkSettings = { ...this.backupSettings };
-    },
+    }
   },
   mounted() {
-    this.fetchNetworkSettings();
-  },
+    // If the global config is loaded, initialize local network settings.
+    // Otherwise, watch for when it becomes available.
+    if (this.configStore.configData) {
+      this.loadNetworkSettings();
+    } else {
+      const unwatch = this.$watch(
+        () => this.configStore.configData,
+        (newVal) => {
+          if (newVal) {
+            this.loadNetworkSettings();
+            unwatch(); // Remove the watcher once loaded.
+          }
+        }
+      );
+    }
+  }
 };
 </script>
 

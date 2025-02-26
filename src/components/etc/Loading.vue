@@ -1,7 +1,7 @@
 <template>
   <div v-if="isLoading" class="loading-overlay">
     <div class="loading-popup">
-      <p>Loading...</p>
+      <p class="text-textColor text-Subheader">Loading...</p>
     </div>
   </div>
 </template>

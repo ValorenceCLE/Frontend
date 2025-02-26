@@ -14,6 +14,7 @@
             </tr>
           </thead>
           <tbody class="text-textColor">
+            <!-- Primary NTP Server -->
             <tr class="text-center">
               <td class="text-Body font-bold py-1">Primary NTP Server:</td>
               <td>
@@ -140,12 +141,13 @@
 </template>
 
 <script>
-import DummyAPI from "@/api/dummyApi";
+import { useConfigStore } from '@/store/config';
 
 export default {
   name: "DateTime",
   data() {
     return {
+      // Local editable copy of the date/time settings
       timezoneSettings: {
         primary_ntp_server: "",
         secondary_ntp_server: "",
@@ -153,7 +155,9 @@ export default {
         time_zone: "",
         utc_offset: "",
       },
+      // Backup copy for reverting changes
       backupSettings: {},
+      // Mapping of time zones to UTC offsets
       VALID_TIME_ZONES: {
         "America/New_York": -5,
         "America/Chicago": -6,
@@ -165,38 +169,82 @@ export default {
       },
     };
   },
+  computed: {
+    // Access the global config store
+    configStore() {
+      return useConfigStore();
+    }
+  },
   methods: {
-    fetchTimezoneSettings() {
-      const response = DummyAPI.get("/api/timezone");
-      if (response.success) {
-        this.timezoneSettings = { ...response.data };
-        this.backupSettings = { ...response.data };
+    loadTimezoneSettings() {
+      if (this.configStore.configData && this.configStore.configData.date_time) {
+        const dt = this.configStore.configData.date_time;
+        // Map the global keys to our local naming convention
+        this.timezoneSettings = {
+          primary_ntp_server: dt.primary_ntp || "",
+          secondary_ntp_server: dt.secondary_ntp || "",
+          sync_on_boot: dt.synchronize,
+          time_zone: dt.timezone || "",
+          utc_offset: dt.utc_offset !== undefined ? dt.utc_offset.toString() : "",
+        };
+        this.backupSettings = { ...this.timezoneSettings };
       }
     },
     submitSettings() {
-      const response = DummyAPI.post("/api/timezone", this.timezoneSettings);
-      if (response.success) {
-        console.log("Settings successfully updated:", response.data);
-      }
+      // Map local fields back to the global configuration structure
+      const updatedDateTime = {
+        primary_ntp: this.timezoneSettings.primary_ntp_server,
+        secondary_ntp: this.timezoneSettings.secondary_ntp_server,
+        synchronize: this.timezoneSettings.sync_on_boot,
+        timezone: this.timezoneSettings.time_zone,
+        utc_offset: parseInt(this.timezoneSettings.utc_offset, 10)
+      };
+      // Merge the updated date/time settings into the global configuration
+      const updatedConfig = {
+        ...this.configStore.configData,
+        date_time: updatedDateTime
+      };
+      // Call the store action to post the updated configuration to the API
+      this.configStore.updateConfig(updatedConfig)
+        .then(() => {
+          // On success, update the backup copy
+          this.backupSettings = { ...this.timezoneSettings };
+        })
+        .catch((error) => {
+          console.error("Failed to update Date/Time settings:", error);
+        });
     },
     clearSettings() {
+      // Revert local changes from the backup copy
       this.timezoneSettings = { ...this.backupSettings };
     },
     updateUTCOffset() {
-      // Update the UTC offset based on the selected timezone
+      // Update the UTC offset based on the selected time zone
       const selectedZone = this.timezoneSettings.time_zone;
-      this.timezoneSettings.utc_offset =
-        this.VALID_TIME_ZONES[selectedZone]?.toString() || "";
-    },
+      this.timezoneSettings.utc_offset = this.VALID_TIME_ZONES[selectedZone]?.toString() || "";
+    }
   },
   mounted() {
-    this.fetchTimezoneSettings();
-  },
+    if (this.configStore.configData) {
+      this.loadTimezoneSettings();
+    } else {
+      // Watch for when the global config becomes available
+      const unwatch = this.$watch(
+        () => this.configStore.configData,
+        (newVal) => {
+          if (newVal) {
+            this.loadTimezoneSettings();
+            unwatch(); // Remove watcher once loaded
+          }
+        }
+      );
+    }
+  }
 };
 </script>
 
 <style scoped>
-/* Match the focus ring color & border style from Network.vue */
+/* Match the focus ring color & border style from the Network component */
 input:focus {
   outline: 0.75px solid #333;
   border-color: #333;

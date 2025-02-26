@@ -2,9 +2,7 @@
   <!-- Parent wrapper for everything -->
   <div class="flex flex-col h-full ">
     <!-- Main Container (Fields, Configuration, Submit/Cancel) -->
-    <div
-      class="bg-gray-200 rounded border border-gray-500 shadow flex flex-col space-y-2"
-    >
+    <div class="bg-gray-200 rounded border border-gray-500 shadow flex flex-col space-y-2">
       <!-- Header -->
       <div class="flex flex-col items-center justify-center">
         <h1 class="text-FormHeader text-textColor border-b border-gray-900 w-full text-center p-1">
@@ -16,7 +14,7 @@
       <div class="flex items-center justify-between px-4">
         <label class="text-Settings text-textColor">System Name:</label>
         <input
-          v-model="systemName"
+          v-model="system_name"
           type="text"
           class="w-[40%] p-1 border border-gray-400 rounded"
           placeholder="Enter system name"
@@ -27,7 +25,7 @@
       <div class="flex items-center justify-between px-4">
         <label class="text-Settings text-textColor">Reboot Time:</label>
         <input
-          v-model="rebootTime"
+          v-model="reboot_time"
           type="time"
           class="w-[40%] p-1 border border-gray-400 rounded"
         />
@@ -38,7 +36,7 @@
         <label class="text-Settings text-textColor">Ping Test:</label>
         <div class="flex items-center space-x-1 w-[40%]">
           <input
-            v-model="pingTarget"
+            v-model="ping_target"
             type="text"
             class="flex-1 p-1 border border-gray-400 rounded"
             placeholder="Enter IP or domain"
@@ -58,9 +56,9 @@
       <div class="flex items-center justify-between px-4">
         <h3 class="text-Settings text-textColor">
           Upload Configuration:
-          <!-- SHOW the uploaded file name ONLY if newConfigFileName is set -->
-          <span v-if="newConfigFileName" class="ml-2 text-sm text-gray-800">
-            ({{ newConfigFileName }})
+          <!-- SHOW the uploaded file name ONLY if new_config_file_name is set -->
+          <span v-if="new_config_file_name" class="ml-2 text-sm text-gray-800">
+            ({{ new_config_file_name }})
           </span>
         </h3>
         <div>
@@ -86,9 +84,9 @@
       <div class="flex items-center justify-between px-4">
         <h3 class="text-Settings text-textColor">
           Download Configuration:
-          <!-- ALWAYS show the currentConfigFileName here (no new file until submit) -->
-          <span v-if="currentConfigFileName" class="-ml-1 text-sm text-gray-800">
-            ({{ currentConfigFileName }})
+          <!-- ALWAYS show the current_config_file_name here (no new file until submit) -->
+          <span v-if="current_config_file_name" class="-ml-1 text-sm text-gray-800">
+            ({{ current_config_file_name }})
           </span>
         </h3>
         <button
@@ -137,12 +135,7 @@
         </button>
         <button
           class="w-[90%] bg-textColor hover:bg-red-800 text-white text-FormButton px-2 py-2 rounded-md shadow"
-          @click="
-            confirmAction(
-              'Power Cycle the system\nThis will cut the main power then turn it back on',
-              rebootSystem
-            )
-          "
+          @click="confirmAction('Power Cycle the system\nThis will cut the main power then turn it back on', rebootSystem)"
         >
           Power Cycle
         </button>
@@ -158,31 +151,175 @@
 </template>
 
 <script>
+import { ref, onMounted, onBeforeUnmount, computed, watch } from 'vue';
+import { useConfigStore } from '@/store/config';
+
 export default {
-  name: "Basic",
-  data() {
-    return {
-      systemName: "",
-      rebootTime: "",
-      currentTime: new Date(),
-      pingTarget: "",
+  name: "BasicConfiguration",
+  setup() {
+    const configStore = useConfigStore();
 
-      // 1) The official/saved config file name
-      currentConfigFileName: "MainConfig.json",
+    // Local editable state (using snake case) for the general configuration
+    const system_name = ref("");
+    const reboot_time = ref("");
+    const ping_target = ref("");
 
-      // 2) A temporary file name if user uploads a new one.
-      //    Only show if non-null
-      newConfigFileName: null,
+    // File names for upload/download
+    const current_config_file_name = ref("MainConfig.json");
+    const new_config_file_name = ref(null);
+    // Temporary storage for the uploaded configuration object
+    const uploaded_config = ref(null);
+
+    // Current time for display
+    const currentTime = ref(new Date());
+    let timer = null;
+
+    // Load the general configuration from the store into local state
+    const loadConfig = () => {
+      if (configStore.configData && configStore.configData.general) {
+        system_name.value = configStore.configData.general.system_name || "";
+        reboot_time.value = configStore.configData.general.reboot_time || "";
+      }
     };
-  },
-  computed: {
-    // We keep this in case other parts of your code rely on it,
-    // but no longer show it in the template for Download/Upload labels
-    displayedConfigFileName() {
-      return this.newConfigFileName || this.currentConfigFileName;
-    },
-    formattedDateTime() {
-      const date = this.currentTime;
+
+    // Watch for the configStore to become available if not already loaded
+    if (!configStore.configData) {
+      const stopWatch = watch(
+        () => configStore.configData,
+        (newVal) => {
+          if (newVal) {
+            loadConfig();
+            stopWatch();
+          }
+        }
+      );
+    } else {
+      loadConfig();
+    }
+
+    // Open the hidden file input
+    const openFilePicker = () => {
+      configFile.value.click();
+    };
+
+    // Reference for the file input element
+    const configFile = ref(null);
+
+    // Handle file selection: store file name and parsed config without calling API
+    const handleFileSelection = (event) => {
+      const file = event.target.files[0];
+      if (file) {
+        new_config_file_name.value = file.name;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const parsedConfig = JSON.parse(e.target.result);
+            // Just store the parsed config in a temporary variable
+            uploaded_config.value = parsedConfig;
+            console.log("Configuration file selected:", file.name);
+          } catch (err) {
+            console.error("Error parsing the configuration file:", err);
+          }
+        };
+        reader.readAsText(file);
+      }
+    };
+
+    // Download the current full configuration as a JSON file
+    const exportConfiguration = () => {
+      if (configStore.configData) {
+        const data = JSON.stringify(configStore.configData, null, 2);
+        const blob = new Blob([data], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        // Always use the official (current) file name
+        link.download = current_config_file_name.value;
+        link.click();
+        URL.revokeObjectURL(url);
+      }
+    };
+
+    // Submit local changes (system_name and reboot_time) and/or uploaded config file to update the global configuration
+    const handleSubmit = () => {
+      if (new_config_file_name.value && uploaded_config.value) {
+        // If a new file has been selected, update the configuration with the uploaded file content
+        configStore.updateConfig(uploaded_config.value)
+          .then(() => {
+            if (uploaded_config.value.general) {
+              system_name.value = uploaded_config.value.general.system_name || "";
+              reboot_time.value = uploaded_config.value.general.reboot_time || "";
+            }
+            // Finalize the new file name only after submission
+            current_config_file_name.value = new_config_file_name.value;
+            new_config_file_name.value = null;
+            uploaded_config.value = null;
+            console.log("Configuration file uploaded and applied successfully.");
+          })
+          .catch((error) => {
+            console.error("Failed to update configuration via file upload:", error);
+          });
+      } else {
+        // Otherwise, update only the general fields from local state
+        const updatedGeneral = {
+          ...configStore.configData.general,
+          system_name: system_name.value,
+          reboot_time: reboot_time.value,
+        };
+        const updatedConfig = {
+          ...configStore.configData,
+          general: updatedGeneral,
+        };
+        configStore.updateConfig(updatedConfig)
+          .then(() => {
+            console.log("Basic configuration updated successfully.");
+          })
+          .catch((error) => {
+            console.error("Failed to update basic configuration:", error);
+          });
+      }
+    };
+
+    // Cancel local changes: reload from store and clear any pending file upload
+    const handleCancel = () => {
+      loadConfig();
+      new_config_file_name.value = null;
+      uploaded_config.value = null;
+      console.log("Changes have been canceled.");
+    };
+
+    // Ping test method
+    const runPingTest = () => {
+      alert(`Pinging ${ping_target.value}...`);
+      // Real ping logic would go here
+    };
+
+    // Confirmation helper for reboot actions
+    const confirmAction = (actionName, callback) => {
+      const confirmMessage = `You are about to ${actionName}.\n\nAre you sure you want to continue?`;
+      if (window.confirm(confirmMessage)) {
+        callback();
+      }
+    };
+
+    const rebootDevice = () => {
+      console.log("Rebooting device...");
+      alert("Device is restarting now...");
+    };
+
+    const rebootSystem = () => {
+      console.log("Rebooting system...");
+      alert("Beginning power cycle...\nPlease do not navigate away from this page.");
+    };
+
+    const factoryReset = () => {
+      console.log("Performing factory reset...");
+      alert("Factory reset initiated! This will restore all settings to default.");
+    };
+
+    // Computed property for formatted current time
+    const formattedDateTime = computed(() => {
+      const date = currentTime.value;
       const year = date.getFullYear();
       const month = String(date.getMonth() + 1).padStart(2, "0");
       const day = String(date.getDate()).padStart(2, "0");
@@ -190,91 +327,43 @@ export default {
       const minutes = String(date.getMinutes()).padStart(2, "0");
       const seconds = String(date.getSeconds()).padStart(2, "0");
       return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-    },
-  },
-  methods: {
-    // Confirmation helper
-    confirmAction(actionName, callback) {
-      const confirmMessage = `You are about to ${actionName}.\n\nAre you sure you want to continue?`;
-      if (window.confirm(confirmMessage)) {
-        callback();
-      }
-    },
+    });
 
-    runPingTest() {
-      alert(`Pinging ${this.pingTarget}...`);
-      // Real ping logic would go here
-    },
+    // Timer to update currentTime every second
+    onMounted(() => {
+      timer = setInterval(() => {
+        currentTime.value = new Date();
+      }, 1000);
+    });
+    onBeforeUnmount(() => {
+      clearInterval(timer);
+    });
 
-    // Open file dialog
-    openFilePicker() {
-      this.$refs.configFile.click();
-    },
-    handleFileSelection(event) {
-      const file = event.target.files[0];
-      if (file) {
-        this.newConfigFileName = file.name;
-        console.log("File selected:", file.name);
-      }
-    },
-
-    // Download the current official config file
-    exportConfiguration() {
-      const data = { message: "This is a sample configuration file." };
-      const blob = new Blob([JSON.stringify(data, null, 2)], {
-        type: "application/json",
-      });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      // Always use the official (current) name, not any newly uploaded file
-      link.download = this.currentConfigFileName;
-      link.click();
-      URL.revokeObjectURL(url);
-    },
-
-    // Submit -> finalize new file name
-    handleSubmit() {
-      if (this.newConfigFileName) {
-        this.currentConfigFileName = this.newConfigFileName;
-        this.newConfigFileName = null;
-      }
-      console.log("Form submitted with:", {
-        systemName: this.systemName,
-        rebootTime: this.rebootTime,
-        configFileName: this.currentConfigFileName,
-      });
-    },
-
-    // Cancel -> discard new file name
-    handleCancel() {
-      this.newConfigFileName = null;
-      this.systemName = "";
-      this.rebootTime = "";
-      console.log("Changes have been canceled.");
-    },
-
-    rebootDevice() {
-      console.log("Rebooting device...");
-      alert("Device is restarting now...");
-    },
-    rebootSystem() {
-      console.log("Rebooting system...");
-      alert("Beginning power cycle...\nPlease do not navigate away from this page.");
-    },
-    factoryReset() {
-      console.log("Performing factory reset...");
-      alert("Factory reset initiated! This will restore all settings to default.");
-    },
-  },
-  mounted() {
-    // Keep the current time updated if used elsewhere
-    this.timer = setInterval(() => {
-      this.currentTime = new Date();
-    }, 1000);
-  },
-  beforeUnmount() {
-    clearInterval(this.timer);
+    return {
+      // Local state
+      system_name,
+      reboot_time,
+      ping_target,
+      current_config_file_name,
+      new_config_file_name,
+      currentTime,
+      formattedDateTime,
+      // Methods
+      openFilePicker,
+      handleFileSelection,
+      exportConfiguration,
+      handleSubmit,
+      handleCancel,
+      runPingTest,
+      confirmAction,
+      rebootDevice,
+      rebootSystem,
+      factoryReset,
+      // File input reference
+      configFile,
+      // Expose the configStore if needed in template
+      configStore,
+    };
   },
 };
 </script>

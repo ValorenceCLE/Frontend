@@ -4,22 +4,20 @@
     <div
       class="bg-gray-200 px-4 py-2 rounded-md shadow border border-gray-500 max-w-xl flex justify-center items-center mx-auto"
     >
-      <h1 class="text-Header text-textColor">R&D Demo Unit</h1>
+      <!-- Dynamic system_name header from the config store -->
+      <h1 class="text-Header text-textColor">{{ system_name }}</h1>
     </div>
 
     <!-- The container we measure for a unified scale -->
     <div
       ref="scalingContainer"
-      class="w-full my-2 flex text-center space-x-2 overflow-auto break-words"
+      class="w-full my-2 flex text-center space-x-2 overflow-auto break-words items-stretch"
     >
       <!-- Left Column (Control Panel) -->
       <div class="flex-[2] bg-gray-200 rounded border border-gray-500">
-        <!-- If you want a dynamic heading style here, use leftTitleStyle. 
-               Or just do a static style. 
-               Let's do a dynamic approach for demonstration. -->
         <h1 :style="leftTitleStyle" class="text-center">Status</h1>
         <div class="border-solid border border-gray-700"></div>
-        <div class="mt-1 space-y-2 text-Body text-textColor text-left px-3 py-1.5 ">
+        <div class="mt-1 space-y-2 text-Body text-textColor text-left px-3 py-1.5">
           <div class="flex justify-between">
             <strong>Router:</strong>
             <span>Online</span>
@@ -53,9 +51,7 @@
       </div>
 
       <!-- Right Column: "Temperature" -->
-      <div
-        class="flex-[1.5] bg-gray-200 p-1 rounded h-44 border border-gray-500"
-      >
+      <div class="flex-[1.5] bg-gray-200 p-1 rounded h-44 border border-gray-500">
         <Gauge
           title="Temperature"
           :min="0"
@@ -71,44 +67,26 @@
     <!-- Relay Cards Section -->
     <div class="w-full mt-2 space-y-1.5">
       <RelayCard
-        v-for="(relay, index) in relays"
-        :key="index"
-        :initialName="relay.name"
-        :initialStatus="relay.status"
-        :initialButtons="relay.buttons"
+        v-for="relay in enabled_relays"
+        :key="relay.id"
+        :relay="relay"
       />
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount, nextTick, computed } from "vue";
+import { ref, onMounted, onBeforeUnmount, nextTick, computed, watch } from "vue";
 import Gauge from "@/components/etc/Gauge.vue";
 import RelayCard from "@/components/relays/RelayCard.vue";
-import RelayApi from "@/api/dummyApi";
+import { useConfigStore } from "@/store/config";
 
-// We measure scalingContainer to compute a shared scale factor
 // Reference to the scaling container element
 const scalingContainer = ref(null);
-
-// Reactive variables to store the container's width and height
 const containerWidth = ref(0);
 const containerHeight = ref(0);
 
-onMounted(() => {
-  // Measure the scaling container dimensions when the component is mounted
-  measureScalingContainer();
-  // Add a resize event listener to re-measure the container on window resize
-  window.addEventListener("resize", measureScalingContainer, { passive: true });
-});
-
-onBeforeUnmount(() => {
-  // Remove the resize event listener when the component is about to be unmounted
-  window.removeEventListener("resize", measureScalingContainer);
-});
-
 function measureScalingContainer() {
-  // Measure the container dimensions after the DOM has been updated
   nextTick(() => {
     if (scalingContainer.value) {
       containerWidth.value = scalingContainer.value.clientWidth;
@@ -117,21 +95,27 @@ function measureScalingContainer() {
   });
 }
 
-// Computed property to calculate a dynamic scale based on container dimensions
+onMounted(() => {
+  measureScalingContainer();
+  window.addEventListener("resize", measureScalingContainer, { passive: true });
+});
+onBeforeUnmount(() => {
+  window.removeEventListener("resize", measureScalingContainer);
+});
+
+// Shared scale computed from container dimensions
 const sharedScale = computed(() => {
   const w = containerWidth.value;
   const h = containerHeight.value;
   if (!w || !h) return 1;
-
-  // Use the smaller dimension to determine the scale
   const dimension = Math.min(w, h);
   let s = dimension / 400;
-  if (s < 1.0) s = 1.0; // Minimum scale
-  if (s > 2.0) s = 2.0; // Maximum scale
+  if (s < 1.0) s = 1.0;
+  if (s > 2.0) s = 2.0;
   return s;
 });
 
-// Computed property to dynamically style the left column heading
+// Dynamically style the left column heading
 const leftTitleStyle = computed(() => ({
   fontSize: `${Math.round(22 * sharedScale.value)}px`,
   fontWeight: "bolder",
@@ -139,28 +123,33 @@ const leftTitleStyle = computed(() => ({
   textAlign: "center",
 }));
 
-/** Relay & Demo data */
-const relays = ref([]);
+// Global configuration store
+const configStore = useConfigStore();
+
+// System name derived from the global config's general object
+const system_name = computed(() => {
+  return configStore.configData && configStore.configData.general && configStore.configData.general.system_name
+    ? configStore.configData.general.system_name
+    : "R&D Demo Unit";
+});
+
+// Compute enabled relays from the global configuration (relays object using snake_case keys)
+const enabled_relays = computed(() => {
+  if (!configStore.configData || !configStore.configData.relays) return [];
+  return Object.values(configStore.configData.relays).filter(relay => relay.enabled);
+});
+
+// Demo gauge values
 const temperature = ref(20);
 const volts = ref(0);
 let intervalId = null;
 
 onMounted(() => {
-  // Example: random updates
   intervalId = setInterval(() => {
-    // 0–120
-    temperature.value = Math.floor(Math.random() * 121);
-    // 0–24
-    volts.value = Math.floor(Math.random() * 25);
+    temperature.value = Math.floor(Math.random() * 121); // 0–120°F
+    volts.value = Math.floor(Math.random() * 25);         // 0–24V
   }, 3000);
-
-  // Dummy fetch
-  const response = RelayApi.get("/api/relays");
-  if (response.success) {
-    relays.value = response.data;
-  }
 });
-
 onBeforeUnmount(() => {
   if (intervalId) clearInterval(intervalId);
 });

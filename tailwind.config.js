@@ -18,12 +18,12 @@ module.exports = {
         grayLight: '#d3d3d3',
         background: '#fcfcfc',
 
-        // Relay Colors
-        relayGreen: '#2a980c',
-        relayYellow: '#FFDF00',
-        relayRed: '#eb191a',
-        relayGray: '#d1d5db',
-        relayBlue: '#0a44a3',
+        // Relay Status Icon Background Colors
+        relayStatusgreen: '#2a980c',
+        relayStatusyellow: '#FFDF00',
+        relaStatusred: '#eb191a',
+        relayStatusgray: '#d1d5db',
+        relayStatusblue: '#0a44a3',
 
         // Text & Button Colors
         textColor: '#333',
