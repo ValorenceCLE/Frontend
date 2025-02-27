@@ -63,16 +63,14 @@
             />
             <div class="flex items-center space-x-0.5">
               <span
-                class="text-xl cursor-pointer transition-colors"
-                style="transform: translateY(-1px)"
+                class="text-2xl cursor-pointer transition-colors leading-none"
                 :class="currentPage === 'settings' ? 'text-textColor' : 'text-gray-400 hover:text-gray-600'"
                 @click="switchPage('settings')"
               >
                 •
               </span>
               <span
-                class="text-xl cursor-pointer transition-colors"
-                style="transform: translateY(-1px)"
+                class="text-2xl cursor-pointer transition-colors leading-none"
                 :class="currentPage === 'dashboard' ? 'text-textColor' : 'text-gray-400 hover:text-gray-600'"
                 @click="switchPage('dashboard')"
               >
@@ -82,11 +80,11 @@
             <img
               :src="chevronRight"
               alt="Next Page"
-              class="w-5 h-5 cursor-pointer hover:scale-110 transition-transform"
+              class="w-5 h-5 cursor-pointer hover:scale-110 transition-transform "
               @click="nextPage"
             />
           </div>
-          <div class="flex justify-center space-x-1 text-ModalButton p-0.5" style="transform: translateY(-3px)">
+          <div class="flex justify-center space-x-1 text-ModalButton p-1">
             <button
               class="bg-primaryMed hover:bg-primaryLight text-white rounded-md px-2 py-0.5 w-auto flex items-center justify-center"
               @click="saveChanges"
@@ -132,6 +130,7 @@ export default {
       xIcon,
       chevronLeft,
       chevronRight,
+      // This local object (editedRelay) is used to hold all changes from the child
       editedRelay: {},
       currentPage: "settings", // "settings" or "dashboard"
     };
@@ -147,11 +146,12 @@ export default {
     },
   },
   watch: {
+    // Whenever the 'relay' prop changes from the outside,
+    // we do a deep copy to avoid overwriting local changes by reference.
     relay: {
       immediate: true,
       handler(newRelay) {
-        // Shallow copy or deep copy if needed
-        this.editedRelay = { ...newRelay };
+        this.editedRelay = JSON.parse(JSON.stringify(newRelay));
       },
     },
   },
@@ -172,11 +172,26 @@ export default {
         this.currentPage = "dashboard";
       }
     },
-    // Merge from SettingsModal
+    // Called when the child emits 'fields-updated'
     handleRelayFields(updatedFields) {
-      this.editedRelay = { ...this.editedRelay, ...updatedFields };
+      // If there's a `schedule` key in updatedFields, merge it carefully
+      if (updatedFields.schedule) {
+        this.editedRelay.schedule = {
+          // keep existing schedule fields
+          ...this.editedRelay.schedule,
+          // override with what's new
+          ...updatedFields.schedule
+        };
+      }
+
+      // Merge all other top-level fields (excluding schedule)
+      Object.keys(updatedFields).forEach(key => {
+        if (key !== "schedule") {
+          this.editedRelay[key] = updatedFields[key];
+        }
+      });
     },
-    // Merge from DashboardModal
+    // Called when the DashboardModal emits 'dashboard-updated'
     handleDashboardFields(updatedObj) {
       // We expect updatedObj might be { dashboard: {}, state: 'on' }
       if (updatedObj.dashboard) {
@@ -187,6 +202,7 @@ export default {
       }
     },
     saveChanges() {
+      // This is when you finalize everything, sending the updated relay back up
       const updatedRelay = { ...this.editedRelay };
       this.$emit("update-relay", { relayKey: this.relayKey, updatedRelay });
       this.$emit("updated");

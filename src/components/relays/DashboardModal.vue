@@ -113,9 +113,9 @@
     </div>
 
     <!-- =============== CARD 2: PREVIEW =============== -->
-    <div class="bg-gray-100 border border-gray-500 rounded mt-4">
+    <div class="bg-gray-100 border border-gray-500 rounded mt-3">
       <!-- Header row with preview toggle -->
-      <div class="border-b border-gray-500 px-4 py-2 flex justify-between items-center">
+      <div class="border-b border-gray-500 px-3 py-1.5 flex justify-between items-center">
         <label class="text-ModalInfo text-textColor">Preview</label>
         <div class="inline-flex rounded overflow-hidden border border-blue-500">
           <button

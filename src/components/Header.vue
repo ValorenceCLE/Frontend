@@ -12,8 +12,14 @@
 </template>
 
 <script>
+import { useConfigStore } from "@/store/config";
+
 export default {
   name: "Header",
+  setup() {
+    const configStore = useConfigStore();
+    return { configStore };
+  },
   computed: {
     basePath() {
       return this.$route.path.startsWith("/admin") ? "/admin" : "/user";
@@ -21,8 +27,11 @@ export default {
   },
   methods: {
     logout() {
-      console.log("🔒 Logging out user...");
+      // Clear local storage
       localStorage.removeItem("token");
+      localStorage.removeItem("token_exp");
+      
+      // Redirect to login page
       this.$router.push("/");
     },
   },

@@ -27,9 +27,14 @@ import Loading from "./components/etc/Loading.vue";
 import ToastNotification from "./components/etc/ToastNotification.vue";
 
 const configStore = useConfigStore();
+
 // Globally fetch configuration on app mount
 onMounted(() => {
-  configStore.fetchConfig();
+  // Only fetch config if we have a token
+  const token = localStorage.getItem("token");
+  if (token) {
+    configStore.fetchConfig();
+  }
 });
 </script>
 

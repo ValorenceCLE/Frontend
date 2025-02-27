@@ -1,6 +1,6 @@
 <template>
   <div class="flex justify-center items-center w-full h-full">
-    <div class="bg-gray-200 rounded-md shadow shadow-gray-400 overflow-hidden w-full max-w-lg">
+    <div class="bg-gray-200 rounded-lg shadow shadow-gray-400 sha overflow-hidden w-full max-w-md border border-gray-400">
       <div class="bg-primaryDark text-white py-2 text-center rounded-t-md">
         <h1 class="text-Header">Sign In</h1>
       </div>
@@ -41,8 +41,10 @@
 <script>
 import axios from 'axios';
 import { jwtDecode } from "jwt-decode";
+import { useConfigStore } from "@/store/config";
 
 export default {
+  name: "Login",
   data() {
     return {
       username: "",
@@ -68,12 +70,32 @@ export default {
 
         const token = response.data.access_token;
         localStorage.setItem("token", token);
+
+        const configStore = useConfigStore();
+        configStore.fetchConfig();
+
+        // Decode the token to get expiration time (exp claim is in seconds)
+        const decoded = jwtDecode(token);
+        const exp = decoded.exp; // expiration time in seconds
+        localStorage.setItem("token_exp", exp);
+
+        // Calculate time left and warn the user (e.g., 60 seconds before expiry)
+        const currentTime = Math.floor(Date.now() / 1000);
+        const ttl = exp - currentTime;
+        if (ttl > 60) {
+          setTimeout(() => {
+            alert("Your session is about to expire. Please log in again.");
+          }, (ttl - 60) * 1000);
+        } else {
+          alert("Your session is about to expire soon. Please log in again.");
+        }
+
         const decodedToken = jwtDecode(token);
         const userRole = decodedToken.role;
         this.$router.push(userRole === "admin" ? "/admin" : "/user");
       } catch (error) {
         this.errorMessage =
-          error.response?.data?.message || "🚨 Login failed. Please try again.";
+          error.response?.data?.message || "Login failed. Please try again.";
       }
     },
   },

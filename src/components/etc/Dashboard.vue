@@ -76,7 +76,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount, nextTick, computed, watch } from "vue";
+import { ref, onMounted, onBeforeUnmount, nextTick, computed } from "vue";
 import Gauge from "@/components/etc/Gauge.vue";
 import RelayCard from "@/components/relays/RelayCard.vue";
 import { useConfigStore } from "@/store/config";

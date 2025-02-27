@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from "vue-router";
 import { jwtDecode } from "jwt-decode";
 import AdminView from "@/views/AdminView.vue";
 import UserView from "@/views/UserView.vue";
+import LoginView from "@/views/LoginView.vue";
 // Import dynamic components
 
 // Header Links (used as children)
@@ -26,7 +27,8 @@ import RealtimeGraph from "@/components/monitor/RealTime.vue";
 import Dashboard from "@/components/etc/Dashboard.vue";
 
 const routes = [
-  { path: "/", component: () => import("@/views/LoginView.vue") },
+  { path: "/", component: LoginView, meta: { requiresAuth: false } },
+  { path: "/login", component: LoginView, meta: { requiresAuth: false } },
   
   // User Routes
   {

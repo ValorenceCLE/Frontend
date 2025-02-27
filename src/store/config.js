@@ -11,9 +11,23 @@
 // For example anytime network settings are changed, the entire network object is passed
 // then all this function needs to do is map to the correct object in the config
 
-// /src/store/config.js
-import { defineStore } from 'pinia'
-import axios from 'axios'
+import axios from 'axios';
+import { defineStore } from 'pinia';
+
+axios.interceptors.response.use(
+  response => response,
+  error => {
+    if (error.response && error.response.status === 401) {
+      // Optionally, check for a specific message or error code here.
+      alert("Your session has expired. Please log in again.");
+      localStorage.removeItem("token");
+      localStorage.removeItem("token_exp");
+      // Redirect to login page (or clear state, etc.)
+      window.location.href = "/"; // Adjust as needed for your router setup
+    }
+    return Promise.reject(error);
+  }
+);
 
 export const useConfigStore = defineStore('config', {
   state: () => ({
@@ -22,51 +36,43 @@ export const useConfigStore = defineStore('config', {
     error: null
   }),
   actions: {
-    // Fetch configuration with JWT in the header
     async fetchConfig() {
-      this.loading = true
-      this.error = null
+      this.loading = true;
+      this.error = null;
       try {
-        // Retrieve JWT token from local storage (set in Login.vue)
-        const token = localStorage.getItem("token")
+        const token = localStorage.getItem("token");
         if (!token) {
-          throw new Error("No token found. Please log in.")
+          console.warn("No token found, redirecting to login.");
+          window.location.href = "/login";
         }
         const response = await axios.get("http://localhost:8000/config/", {
-          headers: {
-            // Attach the token as a Bearer token in the Authorization header
-            Authorization: `Bearer ${token}`
-          }
-        })
-        this.configData = response.data
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        this.configData = response.data;
       } catch (err) {
-        this.error = err.response?.data?.message || err.message
+        this.error = err.response?.data?.message || err.message;
       } finally {
-        this.loading = false
+        this.loading = false;
       }
     },
-
-    // Update configuration with JWT in the header
     async updateConfig(newConfig) {
-      this.loading = true
-      this.error = null
+      this.loading = true;
+      this.error = null;
       try {
-        const token = localStorage.getItem("token")
+        const token = localStorage.getItem("token");
         if (!token) {
-          throw new Error("No token found. Please log in.")
+          throw new Error("No token found. Please log in.");
         }
         await axios.post("http://localhost:8000/config/", newConfig, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        })
-        // Update local store after successful POST
-        this.configData = newConfig
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        this.configData = newConfig;
       } catch (err) {
-        this.error = err.response?.data?.message || err.message
+        this.error = err.response?.data?.message || err.message;
       } finally {
-        this.loading = false
+        this.loading = false;
       }
     }
   }
-})
+});
+
