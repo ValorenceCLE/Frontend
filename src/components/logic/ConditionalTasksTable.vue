@@ -8,9 +8,13 @@
       <button
         @click="$emit('openAddTask')"
         class="bg-primaryMed hover:bg-primaryLight text-white py-2 px-4 rounded shadow flex items-center text-ModalLabel"
-        
       >
-        <img src="@/assets/icons/add.svg" alt="Add" class="w-5 h-5 -ml-2 mr-2" style="filter: brightness(0); filter: invert(1);"/>
+        <img
+          src="@/assets/icons/add.svg"
+          alt="Add"
+          class="w-5 h-5 -ml-2 mr-2"
+          style="filter: brightness(0); filter: invert(1);"
+        />
         Add Conditional Task
       </button>
     </div>
@@ -66,35 +70,16 @@ export default {
     tasks: { type: Object, required: true },
     relays: { type: Object, required: true },
   },
-  data() {
-    return {
-      // Field options mapping for general sources
-      fieldOptionsMapping: {
-        environment: ["Temperature", "Humidity"],
-        network: ["Packet Loss (%)", "Latency"],
-        cellular: ["SINR", "RSRP", "RSRQ"],
-        mainPower: ["Volts", "Watts", "Amps"],
-      },
-    };
-  },
   methods: {
-    /**
-     * Formats a trigger using the formatter and field options.
-     * @param {Object} task - The task object (contains source, field, operator, value).
-     * @returns {string} - Formatted trigger string.
-     */
     getFormattedTrigger(task) {
       if (!task || typeof task !== "object") {
         console.warn("Task is undefined or not an object:", task);
         return "Invalid Trigger";
       }
-
-      console.log("Formatting trigger for task:", task);
-
-      return formatTrigger(task, this.relays, this.fieldOptionsMapping);
+      return formatTrigger(task, this.relays);
     },
     getFormattedActions(task) {
-      return formatActions(task.actions, this.relays);
+      return formatActions(task.actions || [], this.relays);
     },
   },
 };

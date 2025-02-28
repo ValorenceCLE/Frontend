@@ -15,7 +15,7 @@
     <!-- Trigger Form -->
     <TriggerForm
       v-model="task"
-      :field-options="availableFields"
+      :field-options="fieldOptions"
       :enabled-relays="enabledRelays"
     />
 
@@ -49,38 +49,16 @@ export default {
   name: "TaskForm",
   components: { TriggerForm, ActionsForm },
   props: {
-    initialTask: {
-      type: Object,
-      required: true,
-    },
-    enabledRelays: {
-      type: Array,
-      required: true,
-    },
-    fieldOptions: {
-      type: Object,
-      required: true,
-    },
+    initialTask: { type: Object, required: true },
+    enabledRelays: { type: Array, required: true },
+    fieldOptions: { type: Object, required: true },
   },
   data() {
     return {
-      task: this.initializeTask(this.initialTask), // Initialize task structure
+      task: this.initializeTask(this.initialTask),
     };
   },
-  computed: {
-    availableFields() {
-      const source = this.task.source;
-      if (!source) return [];
-      const isRelay = this.enabledRelays.some((relay) => relay.id === source);
-      return isRelay ? ["Volts", "Watts", "Amps"] : this.fieldOptions[source] || [];
-    },
-  },
   methods: {
-    /**
-     * Initializes the task object to ensure it matches the expected structure.
-     * @param {Object} task - The initial task object.
-     * @returns {Object} - The initialized task object.
-     */
     initializeTask(task) {
       return {
         id: task.id || null,
@@ -92,17 +70,11 @@ export default {
         actions: task.actions ? JSON.parse(JSON.stringify(task.actions)) : [],
       };
     },
-    /**
-     * Handles the task form submission and emits the updated task.
-     */
     handleSubmit() {
       this.$emit("task-submit", JSON.parse(JSON.stringify(this.task)));
     },
   },
   watch: {
-    /**
-     * Watches for changes in the initial task and updates the form.
-     */
     initialTask(newTask) {
       this.task = this.initializeTask(newTask);
     },
@@ -110,6 +82,4 @@ export default {
 };
 </script>
 
-<style scoped>
-/* Add any specific styles if necessary */
-</style>
+<style scoped></style>

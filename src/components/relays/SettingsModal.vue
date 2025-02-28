@@ -88,7 +88,7 @@
       <div class="border-b border-gray-500 px-3 py-1.5 flex justify-between items-center">
         <label class="text-ModalInfo text-textColor">Schedule</label>
         
-        <!-- Toggle for Enabled/Disabled -->
+        <!-- Toggle for Enabled/Disabled (unchanged) -->
         <div class="inline-flex rounded overflow-hidden border border-blue-500">
           <button
             @click="setScheduleEnabled(true)"
@@ -111,7 +111,7 @@
           <div>
             <div class="grid grid-cols-2 items-center">
               <div class="flex items-center justify-start">
-                <label class="text-ModalLabel text-textColor">Time On (24h):</label>
+                <label class="text-ModalLabel text-textColor">Turn On:</label>
               </div>
               <div>
                 <input
@@ -130,7 +130,7 @@
           <div>
             <div class="grid grid-cols-2 items-center">
               <div class="flex items-center justify-start">
-                <label class="text-ModalLabel text-textColor">Time Off (24h):</label>
+                <label class="text-ModalLabel text-textColor">Turn Off:</label>
               </div>
               <div>
                 <input
@@ -149,26 +149,19 @@
           <div>
             <div class="grid grid-cols-2 items-center">
               <div class="flex items-center justify-start">
-                <label class="text-ModalLabel text-textColor">Days of Week:</label>
+                <label class="text-ModalLabel text-textColor">Days:</label>
               </div>
-              <div>
-                <!-- We'll display the days in a single row, rounding only the first/last button -->
-                <div class="inline-flex">
-                  <button
-                    v-for="(day, idx) in daysList"
-                    :key="day"
-                    type="button"
-                    @click="toggleDay(day)"
-                    :class="[
-                      'px-2 py-1 border border-gray-300 text-sm font-semibold hover:bg-blue-50 focus:outline-none',
-                      dayButtonClass(day),
-                      idx === 0 ? 'rounded-l' : '',
-                      idx === daysList.length - 1 ? 'rounded-r' : ''
-                    ]"
-                  >
-                    {{ day }}
-                  </button>
-                </div>
+              <!-- We'll display the days in a single row, using the same style approach -->
+              <div class="inline-flex rounded overflow-hidden justify-center">
+                <button
+                  v-for="(day, idx) in daysList"
+                  :key="day"
+                  type="button"
+                  @click="toggleDay(day)"
+                  :class="getDayButtonClass(day, idx)"
+                >
+                  {{ day }}
+                </button>
               </div>
             </div>
           </div>
@@ -195,9 +188,7 @@ export default {
   data() {
     return {
       localRelay: {},
-      // We'll use the same day order you had before:
       daysList: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-      // For convenience, we store each day’s bit value in a lookup
       dayValues: {
         Sun: 2,
         Mon: 4,
@@ -214,8 +205,6 @@ export default {
     relay: {
       immediate: true,
       handler(newVal) {
-        // If the parent is updated with the newly typed times, we won't lose them.
-        // If parent never updates, we re-initialize to empty each time the prop changes.
         this.localRelay = {
           ...newVal,
           schedule: {
@@ -235,21 +224,47 @@ export default {
       this.localRelay.schedule.enabled = value;
       this.emitChanges();
     },
+
+    /**
+     * Re-use the same style as the "Enabled/Disabled" toggle:
+     * bg-blue-500 text-white if active, else bg-white text-blue-500 hover:bg-blue-50.
+     */
     getPillButtonClass(currentValue, buttonValue) {
       const active = currentValue === buttonValue;
       const base = "px-2 py-0.5 text-xs font-medium focus:outline-none";
       const shape = buttonValue ? "rounded-l" : "rounded-r";
       const activeClass = active
         ? "bg-blue-500 text-white"
-        : "bg-white text-blue-500 hover:bg-blue-50";
+        : "bg-white text-blue-500 hover:bg-blue-100";
       return `${base} ${shape} ${activeClass}`;
+    },
+
+    /* ========== DAYS-OF-WEEK TOGGLE CLASS ========== */
+    getDayButtonClass(day, idx) {
+      // This function mimics getPillButtonClass but checks if the day is selected or not
+      const base = "px-2 text-sm font-medium focus:outline-blue-700 border border-blue-500";
+      // shape: only first button gets 'rounded-l', only last gets 'rounded-r'
+      let shape = "";
+      if (idx === 0) shape = "rounded-l";
+      else if (idx === this.daysList.length - 1) shape = "rounded-r";
+
+      // Determine if the day bit is set
+      const bit = this.dayValues[day];
+      const currentMask = this.localRelay.schedule.days_mask;
+      const isSet = (currentMask & bit) === bit;
+
+      // If set => "bg-blue-500 text-white"
+      // Else => "bg-white text-blue-500 hover:bg-blue-50"
+      if (isSet) {
+        return `${base} ${shape} bg-blue-500 text-white`;
+      }
+      return `${base} ${shape} bg-white text-blue-500 hover:bg-blue-50`;
     },
 
     /* ========== BITWISE DAY TOGGLING ========== */
     toggleDay(day) {
       const bit = this.dayValues[day];
       const currentMask = this.localRelay.schedule.days_mask;
-      // Check if it's already set
       const isSet = (currentMask & bit) === bit;
       if (isSet) {
         // Turn it OFF
@@ -260,19 +275,9 @@ export default {
       }
       this.emitChanges();
     },
-    dayButtonClass(day) {
-      const bit = this.dayValues[day];
-      const currentMask = this.localRelay.schedule.days_mask;
-      // If the bit is set, add a highlight class
-      if ((currentMask & bit) === bit) {
-        return "btn-sel bg-green-400 text-white border-green-400";
-      }
-      return "";
-    },
 
     /* ========== EMIT CHANGES TO PARENT ========== */
     emitChanges() {
-      // This sends the entire localRelay object (including schedule.days_mask, time_on, time_off)
       this.$emit("fields-updated", { ...this.localRelay });
     },
   },
@@ -280,7 +285,7 @@ export default {
 </script>
 
 <style scoped>
-/* Keep your existing style rules: */
+/* Keep your existing style rules (plus the text-color from your example) */
 label {
   transform: translateY(0px);
 }
@@ -304,12 +309,9 @@ select:focus {
   box-shadow: 0 0 0 0.75px rgba(51, 51, 51, 0.5);
 }
 
-/* This class is toggled on selected day buttons: */
-.btn-sel {
-  background-color: #4ade80; /* or your green preference */
-  color: white;
-  border-color: #4ade80;
-}
+/* We no longer rely on .btn-sel for the day toggles.
+   We replicate the "enabled/disabled" style with getDayButtonClass() instead.
+*/
 
 /* Transition for schedule content toggling */
 .fade-enter-active,

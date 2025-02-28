@@ -19,7 +19,11 @@
             <option value="mainPower">Main Power</option>
           </optgroup>
           <optgroup label="Relay Power">
-            <option v-for="relay in enabledRelays" :key="relay.id" :value="relay.id">
+            <option
+              v-for="relay in enabledRelays"
+              :key="relay.id"
+              :value="relay.id"
+            >
               {{ relay.name }}
             </option>
           </optgroup>
@@ -42,7 +46,7 @@
         </select>
       </div>
 
-      <!-- Operator Dropdown -->
+      <!-- Operator -->
       <div class="flex-1">
         <label class="block text-Body text-textColor mb-1">Operator:</label>
         <select
@@ -59,7 +63,7 @@
         </select>
       </div>
 
-      <!-- Value Input -->
+      <!-- Value -->
       <div class="flex-1">
         <label class="block text-Body text-textColor mb-1">Value:</label>
         <input
@@ -79,25 +83,13 @@
 export default {
   name: "TriggerForm",
   props: {
-    modelValue: {
-      type: Object,
-      required: true,
-    },
-    enabledRelays: {
-      type: Array,
-      required: true,
-    },
+    modelValue: { type: Object, required: true },
+    enabledRelays: { type: Array, required: true },
+    fieldOptions: { type: Object, required: true },
   },
   data() {
     return {
       availableFields: [],
-      // Move field mapping directly into this component
-      fieldOptionsMapping: {
-        environment: ["Temperature", "Humidity"],
-        network: ["Packet Loss (%)", "Latency"],
-        cellular: ["SINR", "RSRP", "RSRQ"],
-        mainPower: ["Volts", "Watts", "Amps"],
-      },
     };
   },
   computed: {
@@ -111,13 +103,6 @@ export default {
     },
   },
   watch: {
-    // Ensure fields are updated when a new task loads
-    modelValue: {
-      immediate: true,
-      handler() {
-        this.updateFieldOptions();
-      },
-    },
     "trigger.source": {
       immediate: true,
       handler() {
@@ -131,16 +116,17 @@ export default {
         this.availableFields = [];
         return;
       }
-
+      // if a user picked a relay from enabledRelays
       const isRelay = this.enabledRelays.some(
         (relay) => relay.id === this.trigger.source
       );
-
+      // if it's a relay => "Volts", "Watts", "Amps"
+      // else => map from fieldOptions
       this.availableFields = isRelay
         ? ["Volts", "Watts", "Amps"]
-        : this.fieldOptionsMapping[this.trigger.source] || [];
+        : this.fieldOptions[this.trigger.source] || [];
 
-      // Reset field if it's not in the new available fields
+      // if current field isn't in the new array, reset it
       if (!this.availableFields.includes(this.trigger.field)) {
         this.trigger.field = "";
       }
@@ -149,6 +135,4 @@ export default {
 };
 </script>
 
-<style scoped>
-/* Add any specific styles if necessary */
-</style>
+<style scoped></style>

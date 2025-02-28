@@ -26,18 +26,10 @@
 export default {
   name: "TaskModal",
   props: {
-    show: {
-      type: Boolean,
-      required: true,
-    },
-    title: {
-      type: String,
-      required: true,
-    },
+    show: { type: Boolean, required: true },
+    title: { type: String, required: true },
   },
 };
 </script>
 
-<style scoped>
-/* Optional: Add transition effects or additional styles */
-</style>
+<style scoped></style>

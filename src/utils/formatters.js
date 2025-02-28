@@ -1,57 +1,56 @@
-export function formatTrigger(task, relays = {}, fieldOptionsMapping = {}) {
-    console.log("Received task in formatTrigger:", task);
-    console.log("Available relays:", relays);
-    
-    const { source, field, operator, value } = task;
-  
-    if (!source || !field || !operator || value === undefined) {
-      console.warn("Task is missing required trigger properties:", task);
-      return "Invalid Trigger";
-    }
-  
-    let sourceName = source; // Default to raw source
-  
-    // 🔹 Check if `source` is inside `relays`
-    if (relays[source]) {
-      console.log(`Relay found for source ${source}:`, relays[source]);
-      sourceName = relays[source].name; // Use the relay name
-    } else {
-      console.warn(`Relay not found for source ${source}.`);
-    }
-  
-    return `${sourceName} ${field} ${operator} ${value}`;
+// formatters.js
+export function formatTrigger(task, relays = {}) {
+  console.log("Received task in formatTrigger:", task);
+  console.log("Available relays:", relays);
+
+  const { source, field, operator, value } = task;
+  if (!source || !field || !operator || value === undefined) {
+    console.warn("Task is missing required trigger properties:", task);
+    return "Invalid Trigger";
   }
-  
+
+  let sourceName = source; // fallback name if not found
+  // We look for a numeric key whose .id matches "relay_1", "relay_2", etc.
+  const foundKey = Object.keys(relays).find((k) => relays[k].id === source);
+  if (foundKey) {
+    console.log(`Relay found for source ${source}:`, relays[foundKey]);
+    sourceName = relays[foundKey].name;
+  } else {
+    console.warn(`Relay not found for source ${source}.`);
+  }
+
+  return `${sourceName} ${field} ${operator} ${value}`;
+}
+
 /**
  * Formats an array of actions into human-readable text.
  * @param {Array} actions - The actions array from the task.
- * @param {Object} relays - An object mapping relay IDs to relay metadata (e.g., names).
+ * @param {Object} relays - numeric store keys -> relay objects
  * @returns {Array} - An array of formatted action strings.
  */
 export function formatActions(actions = [], relays = {}) {
   if (!actions.length) return ["No actions defined"];
-
-  return actions.map(action => displayAction(action, relays));
+  return actions.map((action) => displayAction(action, relays));
 }
 
-/**
- * Formats a single action into a readable label.
- * @param {Object} action - The action object.
- * @param {Object} relays - An object mapping relay IDs to relay metadata.
- * @returns {string} - Formatted action string.
- */
-export function displayAction(action, relays) {
+function displayAction(action, relays) {
   if (!action || typeof action.type !== "string") {
     return "Unknown Action";
   }
 
   switch (action.type) {
     case "email":
-      return `Email`;
+      return "Email";
     case "io":
-      const relay = relays[action.target];
-      const relayName = relay ? relay.name : action.target;
-      return `${relayName}: ${action.state.toUpperCase()}`;
+      // action.target might be "relay_2", etc.
+      const foundKey = Object.keys(relays).find(
+        (k) => relays[k].id === action.target
+      );
+      if (!foundKey) {
+        return `Unknown Relay: ${action.target}`;
+      }
+      const rName = relays[foundKey].name;
+      return `${rName}: ${action.state.toUpperCase()}`;
     case "reboot":
       return "Reboot";
     case "log":

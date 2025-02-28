@@ -33,7 +33,7 @@
         </optgroup>
       </select>
 
-      <!-- Relay Action Details (Only Shown for Relay Actions) -->
+      <!-- Relay Action Details (Only for type 'io') -->
       <div v-if="action.type === 'io'">
         <label class="text-Body text-textColor mt-2">Set To:</label>
         <select
@@ -94,12 +94,10 @@ export default {
         this.$emit("update:modelValue", val);
       },
     },
-    /**
-     * Computed property to handle displaying relay names while storing the correct values.
-     */
     displayActionType() {
       return this.actions.map((action) => {
         if (action.type === "io") {
+          // if it's 'io', action.target might be 'relay_1'
           const relay = this.enabledRelays.find((r) => r.id === action.target);
           return relay ? relay.id : "io";
         }
@@ -108,22 +106,15 @@ export default {
     },
   },
   methods: {
-    /**
-     * Handles changes to the action type.
-     * - If a relay is selected, the type becomes `"io"` and target is assigned.
-     * - If another action is selected, it ensures unnecessary fields are removed.
-     * @param {Number} index - The index of the action in the array.
-     * @param {String} newType - The selected action type.
-     */
     onActionTypeChange(index, newType) {
       const action = this.actions[index];
 
       if (this.isRelayAction(newType)) {
-        const selectedRelay = this.enabledRelays.find((relay) => relay.id === newType);
+        const selectedRelay = this.enabledRelays.find((r) => r.id === newType);
         if (selectedRelay) {
-          action.target = selectedRelay.id; // Store relay ID as target
-          action.type = "io"; // Internally set as "io"
-          action.state = action.state || "on"; // Default state
+          action.type = "io";
+          action.target = selectedRelay.id;
+          action.state = action.state || "on";
         }
         delete action.message;
       } else if (newType === "email") {
@@ -132,28 +123,17 @@ export default {
         delete action.target;
         delete action.state;
       } else {
+        // e.g. "reboot", "log", "awsLog"
         action.type = newType;
         delete action.target;
         delete action.state;
         delete action.message;
       }
-
-      // Ensure Vue detects changes
       this.actions.splice(index, 1, { ...action });
     },
-
-    /**
-     * Checks if the given type corresponds to a relay action.
-     * @param {String} type - The action type.
-     * @returns {Boolean} - True if it's a relay action.
-     */
     isRelayAction(type) {
-      return this.enabledRelays.some((relay) => relay.id === type);
+      return this.enabledRelays.some((r) => r.id === type);
     },
-
-    /**
-     * Adds a new action to the list.
-     */
     addAction() {
       if (this.actions.length < 3) {
         this.actions.push({
@@ -164,11 +144,6 @@ export default {
         });
       }
     },
-
-    /**
-     * Removes an action from the list.
-     * @param {Number} index - The index of the action to remove.
-     */
     removeAction(index) {
       this.actions.splice(index, 1);
     },
@@ -176,6 +151,4 @@ export default {
 };
 </script>
 
-<style scoped>
-/* Add any specific styles if necessary */
-</style>
+<style scoped></style>
