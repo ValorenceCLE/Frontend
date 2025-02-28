@@ -8,7 +8,7 @@
     <!-- Two Columns: Left (Source, Operator), Right (Field, Value) -->
     <div class="grid grid-cols-2 gap-4 px-2 py-1">
       <!-- Left Column -->
-      <div class="flex flex-col space-y-2">
+      <div class="flex flex-col space-y-1.5">
         <!-- SOURCE -->
         <div class="flex items-center justify-between">
           <label class="text-ModalLabel text-textColor ml-2">
@@ -18,7 +18,7 @@
             v-model="trigger.source"
             @change="updateFieldOptions"
             class="border border-gray-400 rounded px-1 py-0.5 text-sm mr-2"
-            style="width: 60%; text-align: right;"
+            style="width: 60%; text-align: left;"
             required
           >
             <option disabled value="">Select Source</option>
@@ -48,7 +48,7 @@
           <select
             v-model="trigger.operator"
             class="border border-gray-400 rounded px-1 py-0.5 text-sm mr-2"
-            style="width: 60%; text-align: right;"
+            style="width: 60%; text-align: left;"
             :disabled="!trigger.source"
             required
           >
@@ -62,7 +62,7 @@
       </div>
 
       <!-- Right Column -->
-      <div class="flex flex-col space-y-2">
+      <div class="flex flex-col space-y-1.5">
         <!-- FIELD -->
         <div class="flex items-center justify-between">
           <label class="text-ModalLabel text-textColor ml-2">
@@ -71,7 +71,7 @@
           <select
             v-model="trigger.field"
             class="border border-gray-400 rounded px-1 py-0.5 text-sm mr-2"
-            style="width: 60%; text-align: right;"
+            style="width: 60%; text-align: left;"
             :disabled="!trigger.source"
             required
           >
@@ -95,7 +95,7 @@
             v-model.number="trigger.value"
             type="number"
             class="border border-gray-400 rounded px-1 py-0.5 text-sm mr-2"
-            style="width: 60%; text-align: right;"
+            style="width: 60%; text-align: left;"
             placeholder="0"
             :disabled="!trigger.field"
             required

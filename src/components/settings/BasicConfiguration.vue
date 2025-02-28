@@ -165,7 +165,7 @@ export default {
     const ping_target = ref("");
 
     // File names for upload/download
-    const current_config_file_name = ref("MainConfig.json");
+    const current_config_file_name = ref("Config.json");
     const new_config_file_name = ref(null);
     // Temporary storage for the uploaded configuration object
     const uploaded_config = ref(null);

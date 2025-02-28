@@ -153,9 +153,9 @@ export default {
     // Dynamically display system name from global config general object
     displayed_system_name() {
       const config = useConfigStore().configData;
-      return config && config.general && config.general.system_name
-        ? config.general.system_name
-        : "Prototype DPM #1";
+      return config && config.general && config.general.name
+        ? config.general.name
+        : "DPM #1";
     },
     formattedDateTime() {
       const date = this.currentTime;
