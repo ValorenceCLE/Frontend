@@ -17,9 +17,9 @@
 </template>
 
 <script>
-import Header from "@/components/Header.vue";
-import Footer from "@/components/Footer.vue";
-import SideBar from "@/components/SideBar.vue";
+import Header from "@/components/base/Header.vue";
+import Footer from "@/components/base/Footer.vue";
+import SideBar from "@/components/base/SideBar.vue";
 
 export default {
   name: "AdminView",

@@ -11,6 +11,8 @@ module.exports = {
         primaryDark: '#0a1f44',
         primaryMed: '#1e3a8a',
         primaryLight: '#3b82f6',
+        redDark: '#440a1f',
+        redMed: '#b4274c',
 
         // Grays & Background
         grayDark: '#212529',
@@ -21,7 +23,7 @@ module.exports = {
         // Relay Status Icon Background Colors
         relayStatusgreen: '#2a980c',
         relayStatusyellow: '#FFDF00',
-        relaStatusred: '#eb191a',
+        relayStatusred: '#eb191a',
         relayStatusgray: '#d1d5db',
         relayStatusblue: '#0a44a3',
 
@@ -89,6 +91,7 @@ module.exports = {
         ModalPreviewStatus: ['0.9rem', { lineHeight: '0.9rem', fontWeight: '600' }],
         ModalPreviewLabel: ['1.2rem', { lineHeight: '1.2rem', fontWeight: '700' }],
         ModalPreviewButton: ['0.9rem', { lineHeight: '0.9rem', fontWeight: '600' }],
+        AddTask: ['1.15rem', { lineHeight: '1.25rem', fontWeight: '600' }],
 
 
         // New cleaned up and reduced font sizes for more consistent usage

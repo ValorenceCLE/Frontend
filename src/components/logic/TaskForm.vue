@@ -1,42 +1,49 @@
 <template>
-  <form @submit.prevent.stop="handleSubmit">
-    <!-- Task Name Section -->
-    <div class="mb-4">
-      <label class="block text-Subheader text-textColor mb-1">Task Name:</label>
-      <input
-        v-model="task.name"
-        type="text"
-        placeholder="Enter task name"
-        class="w-full border-gray-300 rounded-md p-2 shadow-sm"
-        required
+  <form @submit.prevent="handleSaveAndExit" class="space-y-2">
+    <!-- TASK NAME -->
+    <div class="bg-gray-100 border border-gray-500 rounded">
+      <div class="border-b border-gray-500">
+        <h3 class="text-ModalInfo text-textColor px-2 py-1">Task Information</h3>
+      </div>
+      <div class="grid grid-cols-2 items-center px-2 py-1">
+        <label class="text-ModalLabel text-textColor text-left ">Task Name:</label>
+        <input
+          v-model="task.name"
+          type="text"
+          class="w-full border border-gray-500 rounded p-0.5 text-sm bg-white pl-1"
+          required
+        />
+      </div>
+    </div>
+
+    <!-- TRIGGER FORM -->
+    <div class="bg-gray-100 border border-gray-500 rounded">
+      <TriggerForm
+        v-model="task"
+        :field-options="fieldOptions"
+        :enabled-relays="enabledRelays"
       />
     </div>
 
-    <!-- Trigger Form -->
-    <TriggerForm
-      v-model="task"
-      :field-options="fieldOptions"
-      :enabled-relays="enabledRelays"
-    />
+    <!-- ACTIONS FORM -->
+    <div class="bg-gray-100 border border-gray-500 rounded">
+      <ActionsForm
+        v-model="task.actions"
+        :enabled-relays="enabledRelays"
+      />
+    </div>
 
-    <!-- Actions Form -->
-    <ActionsForm v-model="task.actions" :enabled-relays="enabledRelays" />
-
-    <!-- Save and Cancel Buttons -->
-    <div class="flex justify-end space-x-4 mt-6">
-      <button
-        type="submit"
-        class="bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded"
-      >
-        Save
-      </button>
-      <button
-        type="button"
-        @click="$emit('cancel')"
-        class="bg-gray-300 hover:bg-gray-400 text-gray-800 py-2 px-4 rounded"
-      >
-        Cancel
-      </button>
+    <!-- SINGLE BUTTON: "Save & Exit" -->
+    <div>
+      <div class="flex justify-center text-ModalButton">
+        <button
+          type="submit"
+          class="bg-primaryMed hover:bg-primaryLight text-white 
+                 rounded-md px-2 py-0.5 w-auto flex items-center justify-center"
+        >
+          <span style="transform: translateY(-1px)">Save & Exit</span>
+        </button>
+      </div>
     </div>
   </form>
 </template>
@@ -70,16 +77,27 @@ export default {
         actions: task.actions ? JSON.parse(JSON.stringify(task.actions)) : [],
       };
     },
-    handleSubmit() {
+    // Merges "save" and "cancel" logic: after saving, we also emit "cancel" to exit.
+    handleSaveAndExit() {
+      // 1) Emit the updated task
       this.$emit("task-submit", JSON.parse(JSON.stringify(this.task)));
+      // 2) Then close this form (like "Exit")
+      this.$emit("cancel");
     },
   },
   watch: {
-    initialTask(newTask) {
-      this.task = this.initializeTask(newTask);
+    initialTask(newVal) {
+      this.task = this.initializeTask(newVal);
     },
   },
 };
 </script>
 
-<style scoped></style>
+<style scoped>
+/* 
+  In keeping with EditModal.vue’s style, 
+  we use a single button with .bg-primaryMed, 
+  minimal vertical padding (py-0.5), 
+  and .border-t.border-gray-500 at the container’s top for the footer bar.
+*/
+</style>

@@ -1,64 +1,56 @@
 <template>
-  <div
-    v-if="Object.keys(tasks).length"
-    class="w-full max-w-4xl bg-gray-200 rounded-md shadow border border-gray-500 mt-2"
-  >
-    <div class="flex justify-between items-center m-2 ">
-      <h2 class="text-Subheader text-textColor">Conditional Tasks</h2>
-      <button
-        @click="$emit('openAddTask')"
-        class="bg-primaryMed hover:bg-primaryLight text-white py-2 px-4 rounded shadow flex items-center text-ModalLabel"
-      >
-        <img
-          src="@/assets/icons/add.svg"
-          alt="Add"
-          class="w-5 h-5 -ml-2 mr-2"
-          style="filter: brightness(0); filter: invert(1);"
-        />
-        Add Conditional Task
-      </button>
-    </div>
-    <table class="w-full text-center border-collapse rounded-md">
+  <div class="w-full">
+    <!-- Table Header (similar to RelaySetup.vue) -->
+    
+
+    <!-- Actual Table -->
+    <table class="w-full text-center border-collapse rounded overflow-hidden">
       <thead>
-        <tr class="bg-gray-200 border-b border-gray-500">
-          <th class="px-2 text-textColor text-Subheader">Name</th>
-          <th class="px-2 text-textColor text-Subheader">Trigger</th>
-          <th class="px-2 text-textColor text-Subheader">Actions</th>
-          <th class="px-2 text-textColor text-Subheader">Edit</th>
+        <tr class="bg-gray-200 border-b border-gray-400">
+          <th class="px-2 py-1 text-textColor text-Subheader">Name</th>
+          <th class="px-2 py-1 text-textColor text-Subheader">Trigger</th>
+          <th class="px-2 py-1 text-textColor text-Subheader">Actions</th>
+          <th class="px-2 py-1 text-textColor text-Subheader">Edit</th>
         </tr>
       </thead>
       <tbody class="text-textColor">
-        <tr v-for="(task, id) in tasks" :key="id">
-          <td class="py-1.5 px-3">{{ task.name }}</td>
-          <td class="py-1.5 px-3">
-            {{ getFormattedTrigger(task) }}
-          </td>
-          <td class="py-1.5 px-3">
+        <tr v-for="(task, id) in tasks" :key="id" class="hover:bg-gray-100 border-t border-gray-300">
+          <td class="py-0.5 text-Body">{{ task.name }}</td>
+          <td class="py-0.5 text-Body">{{ getFormattedTrigger(task) }}</td>
+          <td class="py-0.5 text-Body">
             <ul class="list-disc list-inside">
-              <li v-for="(action, index) in getFormattedActions(task)" :key="index">
-                {{ action }}
+              <li v-for="(action, idx) in getFormattedActions(task)" :key="idx">
+          {{ action }}
               </li>
             </ul>
           </td>
-          <td class="py-1.5 px-3 flex justify-center space-x-1">
+            <td class=" flex justify-center items-center space-x-1" style="transform: translateY(0.75rem);"  >
             <button
               @click="$emit('editTask', task)"
-              class="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded"
+              class="bg-primaryMed hover:bg-primaryLight text-white p-1.5 rounded flex items-center justify-center"
             >
-              <img src="@/assets/icons/edit.svg" alt="Edit" class="w-4 h-4" />
+              <img src="@/assets/icons/edit.svg" alt="Edit" class="w-4 h-4 invert" style="transform: translateY(1px); transform: translateX(1px)" />
             </button>
             <button
               @click="$emit('deleteTask', id)"
-              class="bg-red-500 hover:bg-red-600 text-white p-2 rounded"
+              class="bg-relayStatusred hover:bg-red-700 text-white p-1.5 rounded flex items-center justify-center"
             >
-              <img src="@/assets/icons/trash.svg" alt="Delete" class="w-4 h-4" />
+              <img src="@/assets/icons/trash.svg" alt="Delete" class="w-4 h-4 invert" />
             </button>
           </td>
         </tr>
       </tbody>
     </table>
+    <div class="flex justify-center items-center border-t border-gray-500 py-1.5 mt-1">
+      <button
+        class="bg-primaryMed hover:bg-primaryLight text-white py-1.5 px-3 w-fit rounded flex items-center text-AddTask"
+        @click="$emit('openAddTask')"
+      >
+        <img src="@/assets/icons/add.svg" alt="Add" class="w-5 h-5 mr-2 -ml-1 invert"/>
+        Add Task
+      </button>
+    </div>
   </div>
-  <p v-else class="text-center text-textColor">No conditional tasks available.</p>
 </template>
 
 <script>
@@ -72,10 +64,6 @@ export default {
   },
   methods: {
     getFormattedTrigger(task) {
-      if (!task || typeof task !== "object") {
-        console.warn("Task is undefined or not an object:", task);
-        return "Invalid Trigger";
-      }
       return formatTrigger(task, this.relays);
     },
     getFormattedActions(task) {
@@ -84,3 +72,7 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+
+</style>

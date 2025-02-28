@@ -6,8 +6,8 @@ import LoginView from "@/views/LoginView.vue";
 // Import dynamic components
 
 // Header Links (used as children)
-import Help from "@/components/etc/Help.vue";
-import Contact from "@/components/etc/Contact.vue";
+import Help from "@/components/base/Help.vue";
+import Contact from "@/components/base/Contact.vue";
 
 // Admin Settings
 import General from "@/components/settings/General.vue";
@@ -24,7 +24,7 @@ import HistoricalGraph from "@/components/monitor/Historical.vue";
 import RealtimeGraph from "@/components/monitor/RealTime.vue";
 
 // Admin Dashboard
-import Dashboard from "@/components/etc/Dashboard.vue";
+import Dashboard from "@/components/dashboard/Dashboard.vue";
 
 const routes = [
   { path: "/", component: LoginView, meta: { requiresAuth: false } },

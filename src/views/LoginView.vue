@@ -11,9 +11,9 @@
 </template>
 
 <script>
-import Header from "../components/Header.vue";
-import Footer from "../components/Footer.vue";
-import Login from "../components/Login.vue";
+import Header from "@/components/base/Header.vue";
+import Footer from "@/components/base/Footer.vue";
+import Login from "@/components/base/Login.vue";
 
 export default {
   components: {

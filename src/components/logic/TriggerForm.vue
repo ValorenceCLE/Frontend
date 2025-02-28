@@ -1,79 +1,106 @@
 <template>
-  <div class="mb-4">
-    <h3 class="text-Subheader text-textColor border-b border-gray-500 pb-2">Trigger</h3>
-    <div class="flex flex-col md:flex-row md:space-x-4 mt-4 space-y-4 md:space-y-0">
-      <!-- Source Dropdown -->
-      <div class="flex-1">
-        <label class="block text-Body text-textColor mb-1">Source:</label>
-        <select
-          v-model="trigger.source"
-          @change="updateFieldOptions"
-          class="w-full border-gray-300 rounded-md p-2 shadow-sm"
-          required
-        >
-          <option disabled value="">Select a source</option>
-          <optgroup label="General">
-            <option value="environment">Environment</option>
-            <option value="network">Network</option>
-            <option value="cellular">Cellular</option>
-            <option value="mainPower">Main Power</option>
-          </optgroup>
-          <optgroup label="Relay Power">
+  <div>
+    <!-- Section Header -->
+    <div class="border-b border-gray-500">
+      <h3 class="text-ModalInfo text-textColor px-2 py-1">Triggers</h3>
+    </div>
+
+    <!-- Two Columns: Left (Source, Operator), Right (Field, Value) -->
+    <div class="grid grid-cols-2 gap-4 px-2 py-1">
+      <!-- Left Column -->
+      <div class="flex flex-col space-y-2">
+        <!-- SOURCE -->
+        <div class="flex items-center justify-between">
+          <label class="text-ModalLabel text-textColor ml-2">
+            Source:
+          </label>
+          <select
+            v-model="trigger.source"
+            @change="updateFieldOptions"
+            class="border border-gray-400 rounded px-1 py-0.5 text-sm mr-2"
+            style="width: 60%; text-align: right;"
+            required
+          >
+            <option disabled value="">Select Source</option>
+            <optgroup label="General">
+              <option value="environment">Environment</option>
+              <option value="network">Network</option>
+              <option value="cellular">Cellular</option>
+              <option value="mainPower">Main Power</option>
+            </optgroup>
+            <optgroup label="Relay Power">
+              <option
+                v-for="relay in enabledRelays"
+                :key="relay.id"
+                :value="relay.id"
+              >
+                {{ relay.name }}
+              </option>
+            </optgroup>
+          </select>
+        </div>
+
+        <!-- OPERATOR -->
+        <div class="flex items-center justify-between">
+          <label class="text-ModalLabel text-textColor ml-2">
+            Operator:
+          </label>
+          <select
+            v-model="trigger.operator"
+            class="border border-gray-400 rounded px-1 py-0.5 text-sm mr-2"
+            style="width: 60%; text-align: right;"
+            :disabled="!trigger.source"
+            required
+          >
+            <option disabled value="">Select Operator</option>
+            <option value=">">Greater (&gt;)</option>
+            <option value="<">Less (&lt;)</option>
+            <option value="=">Equal (=)</option>
+            <option value="!=">Not Equal (!=)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Right Column -->
+      <div class="flex flex-col space-y-2">
+        <!-- FIELD -->
+        <div class="flex items-center justify-between">
+          <label class="text-ModalLabel text-textColor ml-2">
+            Field:
+          </label>
+          <select
+            v-model="trigger.field"
+            class="border border-gray-400 rounded px-1 py-0.5 text-sm mr-2"
+            style="width: 60%; text-align: right;"
+            :disabled="!trigger.source"
+            required
+          >
+            <option disabled value="">Select Field</option>
             <option
-              v-for="relay in enabledRelays"
-              :key="relay.id"
-              :value="relay.id"
+              v-for="field in availableFields"
+              :key="field"
+              :value="field"
             >
-              {{ relay.name }}
+              {{ field }}
             </option>
-          </optgroup>
-        </select>
-      </div>
+          </select>
+        </div>
 
-      <!-- Field Dropdown -->
-      <div class="flex-1">
-        <label class="block text-Body text-textColor mb-1">Field:</label>
-        <select
-          v-model="trigger.field"
-          class="w-full border-gray-300 rounded-md p-2 shadow-sm"
-          :disabled="!trigger.source"
-          required
-        >
-          <option disabled value="">Select a field</option>
-          <option v-for="field in availableFields" :key="field" :value="field">
-            {{ field }}
-          </option>
-        </select>
-      </div>
-
-      <!-- Operator -->
-      <div class="flex-1">
-        <label class="block text-Body text-textColor mb-1">Operator:</label>
-        <select
-          v-model="trigger.operator"
-          class="w-full border-gray-500 rounded-md p-2 shadow-sm"
-          :disabled="!trigger.field"
-          required
-        >
-          <option disabled value="">Select operator</option>
-          <option value=">">Greater Than (&gt;)</option>
-          <option value="<">Less Than (&lt;)</option>
-          <option value="=">=</option>
-          <option value="!=">!=</option>
-        </select>
-      </div>
-
-      <!-- Value -->
-      <div class="flex-1">
-        <label class="block text-Body text-textColor mb-1">Value:</label>
-        <input
-          v-model.number="trigger.value"
-          type="number"
-          placeholder="Enter value"
-          class="w-full border-gray-300 rounded-md p-2 shadow-sm"
-          :disabled="!trigger.operator"
-          required
-        />
+        <!-- VALUE -->
+        <div class="flex items-center justify-between">
+          <label class="text-ModalLabel text-textColor ml-2">
+            Value:
+          </label>
+          <input
+            v-model.number="trigger.value"
+            type="number"
+            class="border border-gray-400 rounded px-1 py-0.5 text-sm mr-2"
+            style="width: 60%; text-align: right;"
+            placeholder="0"
+            :disabled="!trigger.field"
+            required
+          />
+        </div>
       </div>
     </div>
   </div>
@@ -93,6 +120,7 @@ export default {
     };
   },
   computed: {
+    // The main task trigger object
     trigger: {
       get() {
         return this.modelValue;
@@ -116,17 +144,15 @@ export default {
         this.availableFields = [];
         return;
       }
-      // if a user picked a relay from enabledRelays
+      // If user picked a relay, then show Volts/Watts/Amps
       const isRelay = this.enabledRelays.some(
         (relay) => relay.id === this.trigger.source
       );
-      // if it's a relay => "Volts", "Watts", "Amps"
-      // else => map from fieldOptions
       this.availableFields = isRelay
-        ? ["Volts", "Watts", "Amps"]
+        ? ["volts", "watts", "amps"]
         : this.fieldOptions[this.trigger.source] || [];
 
-      // if current field isn't in the new array, reset it
+      // Reset field if it is no longer in the list
       if (!this.availableFields.includes(this.trigger.field)) {
         this.trigger.field = "";
       }
@@ -135,4 +161,16 @@ export default {
 };
 </script>
 
-<style scoped></style>
+<style scoped>
+/* 
+  The outer container is .grid.grid-cols-2.gap-4
+  Left column -> Source / Operator
+  Right column -> Field / Value
+
+  Each row uses a .flex with .justify-between, 
+  so label is left, input is right.
+
+  Inline style "width: 70%; text-align: right;" 
+  ensures the input is more to the right side.
+*/
+</style>

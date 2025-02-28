@@ -77,8 +77,8 @@
 
 <script setup>
 import { ref, onMounted, onBeforeUnmount, nextTick, computed } from "vue";
-import Gauge from "@/components/etc/Gauge.vue";
-import RelayCard from "@/components/relays/RelayCard.vue";
+import Gauge from "@/components/dashboard/Gauge.vue";
+import RelayCard from "@/components/dashboard/RelayCard.vue";
 import { useConfigStore } from "@/store/config";
 
 // Reference to the scaling container element
