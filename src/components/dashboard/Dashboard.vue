@@ -2,7 +2,7 @@
   <div class="w-full max-w-4xl mx-auto">
     <!-- Dashboard Header -->
     <div
-      class="bg-gray-200 px-4 py-2 rounded-md shadow border border-gray-500 max-w-xl flex justify-center items-center mx-auto"
+      class="bg-gray-200 px-3 py-1.5 rounded-md shadow border border-gray-500 max-w-xl flex justify-center items-center mx-auto"
     >
       <!-- Dynamic system_name header from the config store -->
       <h1 class="text-Header text-textColor">{{ system_name }}</h1>
@@ -17,7 +17,7 @@
       <div class="flex-[2] bg-gray-200 rounded border border-gray-500">
         <h1 :style="leftTitleStyle" class="text-center">Status</h1>
         <div class="border-solid border border-gray-700"></div>
-        <div class="mt-1 space-y-2 text-Body text-textColor text-left px-3 py-1.5">
+        <div class="mt-1 space-y-1.5 text-Body text-textColor text-left px-3 py-1.5">
           <div class="flex justify-between">
             <strong>Router:</strong>
             <span>Online</span>
@@ -128,9 +128,9 @@ const configStore = useConfigStore();
 
 // System name derived from the global config's general object
 const system_name = computed(() => {
-  return configStore.configData && configStore.configData.general && configStore.configData.general.system_name
-    ? configStore.configData.general.system_name
-    : "R&D Demo Unit";
+  return configStore.configData && configStore.configData.general && configStore.configData.general.name
+    ? configStore.configData.general.name
+    : "Unnamed System";
 });
 
 // Compute enabled relays from the global configuration (relays object using snake_case keys)
