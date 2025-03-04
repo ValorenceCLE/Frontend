@@ -45,7 +45,7 @@ export const useConfigStore = defineStore('config', {
           console.warn("No token found, redirecting to login.");
           window.location.href = "/login";
         }
-        const response = await axios.get("http://localhost:8000/api/config/", {
+        const response = await axios.get("/api/config/", {
           headers: { Authorization: `Bearer ${token}` }
         });
         this.configData = response.data;
@@ -63,7 +63,7 @@ export const useConfigStore = defineStore('config', {
         if (!token) {
           throw new Error("No token found. Please log in.");
         }
-        await axios.post("http://localhost:8000/api/config/", newConfig, {
+        await axios.post("/api/config/", newConfig, {
           headers: { Authorization: `Bearer ${token}` }
         });
         this.configData = newConfig;
