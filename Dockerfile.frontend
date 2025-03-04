@@ -1,27 +1,27 @@
-# --- Stage 1: Build Vue app ---
-FROM node:20.9.0-alpine as build-stage
+# Stage 1: Build the Vue App
+FROM node:20-alpine AS build-stage
 WORKDIR /app
+
+# Copy package files and install dependencies
 COPY package*.json ./
-RUN npm install
+RUN npm install --frozen-lockfile
+
+# Copy source code and build
 COPY . .
 RUN npm run build
-    
-# --- Stage 2: Serve with NGINX ---
+
+# Stage 2: Serve with NGINX
 FROM nginx:alpine
-    
-# Remove the default NGINX config
-RUN rm /etc/nginx/conf.d/default.conf
-    
-# Copy your custom nginx.conf
-COPY nginx.conf /etc/nginx/conf.d/
-    
-# Copy the built Vue app files
-COPY --from=build-stage /app/dist /usr/share/nginx/html
-    
-# Copy the certificate files into the container (adjust the source path as needed)
-COPY etc/localhost.crt /etc/nginx/certs/localhost.crt
-COPY etc/localhost.key /etc/nginx/certs/localhost.key
-    
-EXPOSE 80 443
+WORKDIR /usr/share/nginx/html
+
+# Remove any default files from NGINX
+RUN rm -rf ./*
+
+# Copy built static files from build stage into NGINX html folder
+COPY --from=build-stage /app/dist ./
+
+# Copy custom NGINX configuration (located in the same folder as this Dockerfile)
+COPY nginx.conf /etc/nginx/nginx.conf
+
+EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
-    
