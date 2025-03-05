@@ -334,6 +334,9 @@ export default {
       timer = setInterval(() => {
         currentTime.value = new Date();
       }, 1000);
+      if (configStore.configData && configStore.configData.general) {
+        system_name.value = configStore.configData.general.system_name || '';
+      };
     });
     onBeforeUnmount(() => {
       clearInterval(timer);
@@ -365,6 +368,15 @@ export default {
       configStore,
     };
   },
+  computed: {
+    // Dynamically display system name from global config general object
+    displayed_system_name() {
+      const config = this.configStore.configData;
+      return config && config.general && config.general.system_name
+        ? config.general.system_name
+        : "DPM #1";
+    },
+  }
 };
 </script>
 
