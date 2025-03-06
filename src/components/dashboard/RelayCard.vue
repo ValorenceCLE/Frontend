@@ -88,11 +88,11 @@ const statusStyle = computed(() => {
     }
   }
   const mapping = {
-    green: "#2a980c",
-    yellow: "#FFDF00",
-    red: "#eb191a",
-    gray: "#d1d5db",
-    blue: "#0a44a3",
+    green: "relayStatusgreen",
+    yellow: "relayStatusyellow",
+    red: "relayStatusred",
+    gray: "relayStatusgray",
+    blue: "relayStatusblue",
   };
   return { backgroundColor: mapping[colorKey] || mapping.gray };
 });
