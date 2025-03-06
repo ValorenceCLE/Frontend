@@ -39,7 +39,7 @@
 </template>
 
 <script>
-import axios from 'axios';
+import { login as authLogin } from "@/api/authService";
 import { jwtDecode } from "jwt-decode";
 import { useConfigStore } from "@/store/config";
 
@@ -55,33 +55,21 @@ export default {
   methods: {
     async login() {
       try {
-        const response = await axios.post(
-          "/api/auth/login",
-          new URLSearchParams({
-            username: this.username,
-            password: this.password,
-          }),
-          {
-            headers: {
-              "Content-Type": "application/x-www-form-urlencoded",
-            },
-          }
-        );
-
-        const token = response.data.access_token;
-        localStorage.setItem("token", token);
-
+        // Call the auth service for login
+        const tokenData = await authLogin(this.username, this.password);
+        const token = tokenData.access_token;
+        
+        // Fetch configuration after login
         const configStore = useConfigStore();
         configStore.fetchConfig();
-
-        // Decode the token to get expiration time (exp claim is in seconds)
+        
+        // Decode token for role and expiration details
         const decoded = jwtDecode(token);
         const exp = decoded.exp; // expiration time in seconds
-        localStorage.setItem("token_exp", exp);
-
-        // Calculate time left and warn the user (e.g., 60 seconds before expiry)
         const currentTime = Math.floor(Date.now() / 1000);
         const ttl = exp - currentTime;
+        
+        // Set up a warning for session expiration
         if (ttl > 60) {
           setTimeout(() => {
             alert("Your session is about to expire. Please log in again.");
@@ -89,18 +77,18 @@ export default {
         } else {
           alert("Your session is about to expire soon. Please log in again.");
         }
-
-        const decodedToken = jwtDecode(token);
-        const userRole = decodedToken.role;
+        
+        // Route based on the user role
+        const userRole = decoded.role;
         this.$router.push(userRole === "admin" ? "/admin" : "/user");
       } catch (error) {
-        this.errorMessage =
-          error.response?.data?.message || "Login failed. Please try again.";
+        this.errorMessage = error.message || "Login failed. Please try again.";
       }
     },
   },
 };
 </script>
+
 <style>
 .error {
   color: red;

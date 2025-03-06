@@ -12,6 +12,7 @@
 </template>
 
 <script>
+import { logout as authLogout } from "@/api/authService";
 import { useConfigStore } from "@/store/config";
 
 export default {
@@ -26,18 +27,20 @@ export default {
     },
   },
   methods: {
-    logout() {
-      // Clear local storage
-      localStorage.removeItem("token");
-      localStorage.removeItem("token_exp");
-      
-      // Redirect to login page
-      this.$router.push("/");
+    async logout() {
+      try {
+        // Call the auth service for logout
+        await authLogout();
+        // Redirect to login page
+        this.$router.push("/");
+      } catch (error) {
+        console.error("Logout error:", error);
+        this.$router.push("/");
+      }
     },
   },
 };
 </script>
-
 
 <style>
 header {

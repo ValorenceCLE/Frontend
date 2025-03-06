@@ -7,7 +7,12 @@
       >
         <div class="flex flex-col items-center justify-center w-full h-14">
           <!-- Main title dynamically passed from the config's general.system_name -->
-          <h1 class="text-FormHeader text-textColor mb-1">{{ displayed_system_name }}</h1>
+          <div class="flex items-center">
+            <h1 class="text-FormHeader text-textColor mb-1">
+              {{ displayed_system_name }}
+            </h1>
+            <!-- Refresh button to manually update the configuration -->
+          </div>
           <p class="text-Body text-textColor">{{ formattedDateTime }}</p>
         </div>
       </div>
@@ -26,10 +31,6 @@
               Controller
             </h1>
             <div class="space-y-1 text-Form font-semibold text-textColor text-left w-full px-2 py-1">
-              <!-- <div class="flex justify-between">
-                Serial Number:
-                <span>100000001d546663</span>
-              </div> -->
               <div class="flex justify-between">
                 CPU Load
                 <span>17%</span>
@@ -63,10 +64,6 @@
               Router
             </h1>
             <div class="space-y-1 text-Form font-semibold text-textColor text-left w-full px-2 py-1">
-              <!-- <div class="flex justify-between">
-                Serial Number:
-                <span>192F-52EB-C0F2</span>
-              </div> -->
               <div class="flex justify-between">
                 Status:
                 <span>Online</span>
@@ -100,10 +97,6 @@
               Camera
             </h1>
             <div class="space-y-1 text-Form font-semibold text-textColor text-left w-full px-2 py-1">
-              <!-- <div class="flex justify-between">
-                Serial Number:
-                <span>192F52EBC0F2</span>
-              </div> -->
               <div class="flex justify-between">
                 Status:
                 <span>Online</span>
@@ -146,16 +139,19 @@ export default {
   data() {
     return {
       currentTime: new Date(), // Store the current date object
-      pingTarget: "",
     };
   },
   computed: {
+    // Access the global configuration store
+    configStore() {
+      return useConfigStore();
+    },
     // Dynamically display system name from global config general object
     displayed_system_name() {
-      const config = useConfigStore().configData;
-      return config && config.general && config.general.name
-        ? config.general.name
-        : "DPM #1";
+      const config = this.configStore.configData;
+      return config && config.general && config.general.system_name
+        ? config.general.system_name
+        : "Unknown System";
     },
     formattedDateTime() {
       const date = this.currentTime;
@@ -169,14 +165,9 @@ export default {
     },
   },
   methods: {
-    formatDateTime(date) {
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, "0");
-      const day = String(date.getDate()).padStart(2, "0");
-      const hours = String(date.getHours()).padStart(2, "0");
-      const minutes = String(date.getMinutes()).padStart(2, "0");
-      const seconds = String(date.getSeconds()).padStart(2, "0");
-      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    refreshConfig() {
+      // Trigger a manual refresh of the configuration without reloading the page
+      this.configStore.refreshConfig();
     },
   },
   mounted() {

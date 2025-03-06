@@ -223,15 +223,10 @@ export default {
       this.emailSettings.emails.splice(index, 1);
     },
     submitSettings() {
-      // Merge the updated email settings into the full configuration
-      const updatedConfig = {
-        ...this.configStore.configData,
-        email: { ...this.emailSettings }
-      };
-      // Use the store action to update the configuration via the API
-      this.configStore.updateConfig(updatedConfig)
+      // Use the store action to update just the email section.
+      this.configStore.updateConfigSection('email', this.emailSettings)
         .then(() => {
-          // On success, update the backup copy
+          // On success, update the backup copy with the latest confirmed settings
           this.backupSettings = JSON.parse(JSON.stringify(this.emailSettings));
         })
         .catch((error) => {

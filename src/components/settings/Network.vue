@@ -193,15 +193,10 @@ export default {
       }
     },
     submitSettings() {
-      // Merge the updated network settings into the full configuration
-      const updatedConfig = { 
-        ...this.configStore.configData, 
-        network: { ...this.networkSettings } 
-      };
-      // Use the store action to update the configuration (which posts to the API)
-      this.configStore.updateConfig(updatedConfig)
+      // Use the store action to update just the network section.
+      this.configStore.updateConfigSection('network', this.networkSettings)
         .then(() => {
-          // On success, update the backup copy
+          // On success, update the backup copy with the confirmed settings
           this.backupSettings = { ...this.networkSettings };
         })
         .catch((error) => {
@@ -214,8 +209,7 @@ export default {
     }
   },
   mounted() {
-    // If the global config is loaded, initialize local network settings.
-    // Otherwise, watch for when it becomes available.
+    // Initialize local network settings from the global config store.
     if (this.configStore.configData) {
       this.loadNetworkSettings();
     } else {
@@ -236,8 +230,8 @@ export default {
 <style scoped>
 /* Customize the focus ring color */
 input:focus {
-  outline: 0.75px solid #333; /* Change to your desired color */
-  border-color: #333; /* Match the border color if desired */
+  outline: 0.75px solid #333;
+  border-color: #333;
 }
 select:focus {
   outline: 0.75px solid #333;

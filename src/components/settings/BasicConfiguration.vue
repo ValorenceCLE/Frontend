@@ -1,6 +1,6 @@
 <template>
   <!-- Parent wrapper for everything -->
-  <div class="flex flex-col h-full ">
+  <div class="flex flex-col h-full">
     <!-- Main Container (Fields, Configuration, Submit/Cancel) -->
     <div class="bg-gray-200 rounded border border-gray-500 shadow flex flex-col space-y-2">
       <!-- Header -->
@@ -17,7 +17,7 @@
           v-model="system_name"
           type="text"
           class="w-[40%] p-1 border border-gray-400 rounded"
-          placeholder="Enter system name"
+          :placeholder="displayed_system_name"
         />
       </div>
 
@@ -123,9 +123,7 @@
     </div>
 
     <!-- ========== REBOOT BUTTONS ROW ========== -->
-    <div
-      class="bg-gray-200 p-2 rounded border border-gray-500 shadow-md flex flex-col mt-1"
-    >
+    <div class="bg-gray-200 p-2 rounded border border-gray-500 shadow-md flex flex-col mt-1">
       <div class="flex justify-between space-x-2">
         <button
           class="w-[90%] bg-textColor hover:bg-red-800 text-white text-FormButton px-2 py-2 rounded-md shadow"
@@ -159,22 +157,22 @@ export default {
   setup() {
     const configStore = useConfigStore();
 
-    // Local editable state (using snake case) for the general configuration
+    // Local editable state for the "general" configuration fields.
     const system_name = ref("");
     const reboot_time = ref("");
     const ping_target = ref("");
 
-    // File names for upload/download
+    // File upload state.
     const current_config_file_name = ref("Config.json");
     const new_config_file_name = ref(null);
-    // Temporary storage for the uploaded configuration object
     const uploaded_config = ref(null);
+    const configFile = ref(null);
 
-    // Current time for display
+    // Current time for display.
     const currentTime = ref(new Date());
     let timer = null;
 
-    // Load the general configuration from the store into local state
+    // Load the "general" config from the store.
     const loadConfig = () => {
       if (configStore.configData && configStore.configData.general) {
         system_name.value = configStore.configData.general.system_name || "";
@@ -182,7 +180,18 @@ export default {
       }
     };
 
-    // Watch for the configStore to become available if not already loaded
+    // Watch for changes in the global config for system name.
+    watch(
+      () => configStore.configData?.general?.system_name,
+      (newName) => {
+        if (newName) {
+          system_name.value = newName;
+        }
+      },
+      { immediate: true }
+    );
+
+    // If configStore is not yet loaded, watch for it.
     if (!configStore.configData) {
       const stopWatch = watch(
         () => configStore.configData,
@@ -197,15 +206,12 @@ export default {
       loadConfig();
     }
 
-    // Open the hidden file input
+    // Open the hidden file input.
     const openFilePicker = () => {
       configFile.value.click();
     };
 
-    // Reference for the file input element
-    const configFile = ref(null);
-
-    // Handle file selection: store file name and parsed config without calling API
+    // Handle file selection: store file name and parse config.
     const handleFileSelection = (event) => {
       const file = event.target.files[0];
       if (file) {
@@ -214,7 +220,6 @@ export default {
         reader.onload = (e) => {
           try {
             const parsedConfig = JSON.parse(e.target.result);
-            // Just store the parsed config in a temporary variable
             uploaded_config.value = parsedConfig;
             console.log("Configuration file selected:", file.name);
           } catch (err) {
@@ -225,7 +230,7 @@ export default {
       }
     };
 
-    // Download the current full configuration as a JSON file
+    // Export the current full configuration as a JSON file.
     const exportConfiguration = () => {
       if (configStore.configData) {
         const data = JSON.stringify(configStore.configData, null, 2);
@@ -233,24 +238,22 @@ export default {
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.href = url;
-        // Always use the official (current) file name
         link.download = current_config_file_name.value;
         link.click();
         URL.revokeObjectURL(url);
       }
     };
 
-    // Submit local changes (system_name and reboot_time) and/or uploaded config file to update the global configuration
+    // Submit local changes.
     const handleSubmit = () => {
+      // If a new file was uploaded, update the full configuration.
       if (new_config_file_name.value && uploaded_config.value) {
-        // If a new file has been selected, update the configuration with the uploaded file content
         configStore.updateConfig(uploaded_config.value)
           .then(() => {
             if (uploaded_config.value.general) {
               system_name.value = uploaded_config.value.general.system_name || "";
               reboot_time.value = uploaded_config.value.general.reboot_time || "";
             }
-            // Finalize the new file name only after submission
             current_config_file_name.value = new_config_file_name.value;
             new_config_file_name.value = null;
             uploaded_config.value = null;
@@ -260,17 +263,13 @@ export default {
             console.error("Failed to update configuration via file upload:", error);
           });
       } else {
-        // Otherwise, update only the general fields from local state
+        // Otherwise, update only the "general" section.
         const updatedGeneral = {
           ...configStore.configData.general,
           system_name: system_name.value,
           reboot_time: reboot_time.value,
         };
-        const updatedConfig = {
-          ...configStore.configData,
-          general: updatedGeneral,
-        };
-        configStore.updateConfig(updatedConfig)
+        configStore.updateConfigSection("general", updatedGeneral)
           .then(() => {
             console.log("Basic configuration updated successfully.");
           })
@@ -280,7 +279,7 @@ export default {
       }
     };
 
-    // Cancel local changes: reload from store and clear any pending file upload
+    // Cancel local changes: reload from store and clear any pending file upload.
     const handleCancel = () => {
       loadConfig();
       new_config_file_name.value = null;
@@ -288,13 +287,13 @@ export default {
       console.log("Changes have been canceled.");
     };
 
-    // Ping test method
+    // Ping test.
     const runPingTest = () => {
       alert(`Pinging ${ping_target.value}...`);
-      // Real ping logic would go here
+      // Real ping logic would be implemented here.
     };
 
-    // Confirmation helper for reboot actions
+    // Confirmation helper for reboot actions.
     const confirmAction = (actionName, callback) => {
       const confirmMessage = `You are about to ${actionName}.\n\nAre you sure you want to continue?`;
       if (window.confirm(confirmMessage)) {
@@ -317,7 +316,7 @@ export default {
       alert("Factory reset initiated! This will restore all settings to default.");
     };
 
-    // Computed property for formatted current time
+    // Computed for formatted current time.
     const formattedDateTime = computed(() => {
       const date = currentTime.value;
       const year = date.getFullYear();
@@ -329,26 +328,35 @@ export default {
       return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
     });
 
-    // Timer to update currentTime every second
+    // Computed for displayed system name.
+    const displayed_system_name = computed(() => {
+      return configStore.configData && configStore.configData.general && configStore.configData.general.system_name
+        ? configStore.configData.general.system_name
+        : "Unknown System";
+    });
+
+    // Start timer to update current time.
     onMounted(() => {
       timer = setInterval(() => {
         currentTime.value = new Date();
       }, 1000);
       if (configStore.configData && configStore.configData.general) {
         system_name.value = configStore.configData.general.system_name || '';
-      };
+      }
     });
+
     onBeforeUnmount(() => {
       clearInterval(timer);
     });
 
     return {
-      // Local state
+      // Local state and references
       system_name,
       reboot_time,
       ping_target,
       current_config_file_name,
       new_config_file_name,
+      configFile,
       currentTime,
       formattedDateTime,
       // Methods
@@ -362,21 +370,11 @@ export default {
       rebootDevice,
       rebootSystem,
       factoryReset,
-      // File input reference
-      configFile,
-      // Expose the configStore if needed in template
+      // Expose configStore and computed values
       configStore,
+      displayed_system_name,
     };
   },
-  computed: {
-    // Dynamically display system name from global config general object
-    displayed_system_name() {
-      const config = this.configStore.configData;
-      return config && config.general && config.general.system_name
-        ? config.general.system_name
-        : "DPM #1";
-    },
-  }
 };
 </script>
 

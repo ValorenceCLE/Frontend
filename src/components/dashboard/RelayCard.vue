@@ -39,6 +39,7 @@
 <script setup>
 import { reactive, computed } from "vue";
 import { useConfigStore } from "@/store/config";
+import { getRelayState, updateRelayState, pulseRelay } from "@/api/relayService";
 
 const props = defineProps({
   relay: {
@@ -121,34 +122,35 @@ const update_relay_in_store = () => {
 };
 
 // Button action methods
-const turn_on = () => {
-  relay_state.state = "on";
-  update_relay_in_store();
-};
-
-const turn_off = () => {
-  relay_state.state = "off";
-  update_relay_in_store();
-};
-
-const pulse_relay = () => {
-  const original = relay_state.state;
-  if (original === "on") {
-    relay_state.state = "off";
-    update_relay_in_store();
-    setTimeout(() => {
-      relay_state.state = "on";
-      update_relay_in_store();
-    }, relay_state.pulse_time * 1000);
-  } else if (original === "off") {
+const turn_on = async () => {
+  try {
+    const result = await updateRelayState(relay_state.id, "on");
+    console.log(result.message);
     relay_state.state = "on";
     update_relay_in_store();
-    setTimeout(() => {
-      relay_state.state = "off";
-      update_relay_in_store();
-    }, relay_state.pulse_time * 1000);
-  } else {
-    console.warn("Pulse action is not defined for current state:", original);
+  } catch (error) {
+    console.error("Error turning relay on:", error);
+  }
+};
+
+const turn_off = async () => {
+  try {
+    const result = await updateRelayState(relay_state.id, "off");
+    console.log(result.message);
+    relay_state.state = "off";
+    update_relay_in_store();
+  } catch (error) {
+    console.error("Error turning relay off:", error);
+  }
+};
+
+const pulse_relay = async () => {
+  try {
+    const result = await pulseRelay(relay_state.id);
+    console.log(result.message);
+    // Optionally update the relay state based on pulse result.
+  } catch (error) {
+    console.error("Error pulsing relay:", error);
   }
 };
 </script>

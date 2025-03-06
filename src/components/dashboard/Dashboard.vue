@@ -128,8 +128,8 @@ const configStore = useConfigStore();
 
 // System name derived from the global config's general object
 const system_name = computed(() => {
-  return configStore.configData && configStore.configData.general && configStore.configData.general.name
-    ? configStore.configData.general.name
+  return configStore.configData && configStore.configData.general && configStore.configData.general.system_name
+    ? configStore.configData.general.system_name
     : "Unnamed System";
 });
 

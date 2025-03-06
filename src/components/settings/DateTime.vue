@@ -191,7 +191,7 @@ export default {
       }
     },
     submitSettings() {
-      // Map local fields back to the global configuration structure
+      // Map local fields back to the global configuration structure for date_time.
       const updatedDateTime = {
         primary_ntp: this.timezoneSettings.primary_ntp_server,
         secondary_ntp: this.timezoneSettings.secondary_ntp_server,
@@ -199,15 +199,10 @@ export default {
         timezone: this.timezoneSettings.time_zone,
         utc_offset: parseInt(this.timezoneSettings.utc_offset, 10)
       };
-      // Merge the updated date/time settings into the global configuration
-      const updatedConfig = {
-        ...this.configStore.configData,
-        date_time: updatedDateTime
-      };
-      // Call the store action to post the updated configuration to the API
-      this.configStore.updateConfig(updatedConfig)
+      // Use the store action to update just the "date_time" section.
+      this.configStore.updateConfigSection('date_time', updatedDateTime)
         .then(() => {
-          // On success, update the backup copy
+          // On success, update the backup copy with the latest confirmed settings.
           this.backupSettings = { ...this.timezoneSettings };
         })
         .catch((error) => {
@@ -215,11 +210,11 @@ export default {
         });
     },
     clearSettings() {
-      // Revert local changes from the backup copy
+      // Revert local changes using the backup copy.
       this.timezoneSettings = { ...this.backupSettings };
     },
     updateUTCOffset() {
-      // Update the UTC offset based on the selected time zone
+      // Update the UTC offset based on the selected time zone.
       const selectedZone = this.timezoneSettings.time_zone;
       this.timezoneSettings.utc_offset = this.VALID_TIME_ZONES[selectedZone]?.toString() || "";
     }
@@ -228,13 +223,13 @@ export default {
     if (this.configStore.configData) {
       this.loadTimezoneSettings();
     } else {
-      // Watch for when the global config becomes available
+      // Watch for when the global config becomes available.
       const unwatch = this.$watch(
         () => this.configStore.configData,
         (newVal) => {
           if (newVal) {
             this.loadTimezoneSettings();
-            unwatch(); // Remove watcher once loaded
+            unwatch(); // Remove watcher once loaded.
           }
         }
       );
@@ -244,7 +239,7 @@ export default {
 </script>
 
 <style scoped>
-/* Match the focus ring color & border style from the Network component */
+/* Match the focus ring color & border style from other components */
 input:focus {
   outline: 0.75px solid #333;
   border-color: #333;
