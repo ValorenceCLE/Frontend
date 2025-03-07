@@ -1,27 +1,13 @@
 import axios from '@/axios';
 
 /**
- * Retrieve the relay configuration.
- * @param {string} relayId - The ID of the relay.
- * @returns {Promise<Object>} Relay configuration.
- */
-export async function getRelayConfig(relayId) {
-  try {
-    const response = await axios.get(`/relay/${relayId}`);
-    return response.data;
-  } catch (error) {
-    throw new Error(error.response?.data?.detail || error.message);
-  }
-}
-
-/**
- * Retrieve the current state of a relay.
- * @param {string} relayId - The ID of the relay.
- * @returns {Promise<Object>} The relay state.
+ * Get the state of a specific relay.
+ * @param {string} relayId - The relay's ID.
+ * @returns {Promise<Object>} { relayId: string, state: string }
  */
 export async function getRelayState(relayId) {
   try {
-    const response = await axios.get(`/relay/${relayId}/state`);
+    const response = await axios.get(`/relays/${relayId}`);
     return response.data;
   } catch (error) {
     throw new Error(error.response?.data?.detail || error.message);
@@ -29,14 +15,12 @@ export async function getRelayState(relayId) {
 }
 
 /**
- * Update the state of a relay.
- * @param {string} relayId - The ID of the relay.
- * @param {string} state - New state ("on" or "off").
- * @returns {Promise<Object>} Response message.
+ * Get the state of all relays.
+ * @returns {Promise<Object>} An object mapping relay IDs to states.
  */
-export async function updateRelayState(relayId, state) {
+export async function getAllRelays() {
   try {
-    const response = await axios.post(`/relay/${relayId}/state`, { state });
+    const response = await axios.get('/relays/');
     return response.data;
   } catch (error) {
     throw new Error(error.response?.data?.detail || error.message);
@@ -44,13 +28,89 @@ export async function updateRelayState(relayId, state) {
 }
 
 /**
- * Pulse a relay.
- * @param {string} relayId - The ID of the relay.
- * @returns {Promise<Object>} Response message.
+ * Turn on a group of relays.
+ * @param {Array<string>} relayIds - List of relay IDs.
+ * @returns {Promise<Object>} Response object mapping relay IDs to new states.
+ */
+export async function turnRelaysOn(relayIds) {
+  try {
+    const response = await axios.post('/relays/on', relayIds, {
+      headers: { "Content-Type": "application/json" }
+    });
+    return response.data;
+  } catch (error) {
+    throw new Error(error.response?.data?.detail || error.message);
+  }
+}
+
+/**
+ * Turn off a group of relays.
+ * @param {Array<string>} relayIds - List of relay IDs.
+ * @returns {Promise<Object>} Response object mapping relay IDs to new states.
+ */
+export async function turnRelaysOff(relayIds) {
+  try {
+    const response = await axios.post('/relays/off', relayIds, {
+      headers: { "Content-Type": "application/json" }
+    });
+    return response.data;
+  } catch (error) {
+    throw new Error(error.response?.data?.detail || error.message);
+  }
+}
+
+/**
+ * Pulse a group of relays.
+ * @param {Array<string>} relayIds - List of relay IDs.
+ * @returns {Promise<Object>} Response object mapping relay IDs to new states.
+ */
+export async function pulseRelays(relayIds) {
+  try {
+    const response = await axios.post('/relays/pulse', relayIds, {
+      headers: { "Content-Type": "application/json" }
+    });
+    return response.data;
+  } catch (error) {
+    throw new Error(error.response?.data?.detail || error.message);
+  }
+}
+
+/**
+ * Turn on a single relay.
+ * @param {string} relayId - The relay's ID.
+ * @returns {Promise<Object>} Response from the API.
+ */
+export async function turnRelayOn(relayId) {
+  try {
+    const response = await axios.post(`/relays/${relayId}/on`);
+    return response.data;
+  } catch (error) {
+    throw new Error(error.response?.data?.detail || error.message);
+  }
+}
+
+/**
+ * Turn off a single relay.
+ * @param {string} relayId - The relay's ID.
+ * @returns {Promise<Object>} Response from the API.
+ */
+export async function turnRelayOff(relayId) {
+  try {
+    const response = await axios.post(`/relays/${relayId}/off`);
+    return response.data;
+  } catch (error) {
+    throw new Error(error.response?.data?.detail || error.message);
+  }
+}
+
+/**
+ * Pulse a single relay.
+ * @param {string} relayId - The relay's ID.
+ * @returns {Promise<Object>} Response from the API.
  */
 export async function pulseRelay(relayId) {
   try {
-    const response = await axios.post(`/relay/${relayId}/pulse`);
+    const response = await axios.post(`/relays/${relayId}/pulse`);
     return response.data;
   } catch (error) {
     throw new Error(error.response?.data?.detail || error.message);

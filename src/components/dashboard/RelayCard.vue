@@ -39,26 +39,19 @@
 <script setup>
 import { reactive, computed } from "vue";
 import { useConfigStore } from "@/store/config";
-import { getRelayState, updateRelayState, pulseRelay } from "@/api/relayService";
+import { getRelayState, turnRelayOn, turnRelayOff, pulseRelay } from "@/api/relayService";
 
 const props = defineProps({
   relay: {
     type: Object,
     required: true,
   },
-  pulse_text: {
-    type: String,
-    default: "Restarting...",
-  },
 });
-
-// Access the global configuration store
-const configStore = useConfigStore();
 
 // Create a reactive copy of the relay object for local manipulation
 const relay_state = reactive({ ...props.relay });
 
-// Compute button labels dynamically based on the dashboard's "show" property.
+// Compute button labels dynamically based on the relay dashboard configuration
 const buttons = computed(() => {
   if (relay_state.dashboard) {
     return {
@@ -70,11 +63,11 @@ const buttons = computed(() => {
   return {
     on: "Turn On",
     off: "Turn Off",
-    pulse: "Pulse 5s",
+    pulse: "Pulse",
   };
 });
 
-// Compute inline style for status badge background color based on the dashboard's status_color value.
+// Compute inline style for status badge background color based on dashboard status_color values.
 const statusStyle = computed(() => {
   let colorKey = "gray";
   const state = relay_state.state.toLowerCase();
@@ -87,45 +80,44 @@ const statusStyle = computed(() => {
       colorKey = relay_state.dashboard.pulse_button.status_color.toLowerCase();
     }
   }
+  // Map color keys to actual CSS color names (or use your CSS classes)
   const mapping = {
-    green: "relayStatusgreen",
-    yellow: "relayStatusyellow",
-    red: "relayStatusred",
-    gray: "relayStatusgray",
-    blue: "relayStatusblue",
+    green: "green",
+    yellow: "yellow",
+    red: "red",
+    gray: "gray",
+    blue: "blue",
   };
   return { backgroundColor: mapping[colorKey] || mapping.gray };
 });
 
-// Computed display text for relay status (capitalized)
+// Compute display text for relay status (capitalized)
 const display_status = computed(() => {
   const s = relay_state.state;
   return s ? s.charAt(0).toUpperCase() + s.slice(1) : "";
 });
 
-// Helper to update this relay in the global configuration store
+// Updated helper: Update relay in global config using the relay's own id as key.
 const update_relay_in_store = () => {
+  const configStore = useConfigStore();
   if (!configStore.configData || !configStore.configData.relays) return;
-  const relayKeys = Object.keys(configStore.configData.relays);
-  let keyToUpdate = null;
-  for (const key of relayKeys) {
-    if (configStore.configData.relays[key].id === relay_state.id) {
-      keyToUpdate = key;
-      break;
-    }
-  }
-  if (!keyToUpdate) keyToUpdate = relay_state.id;
-  const updated_relays = { ...configStore.configData.relays };
-  updated_relays[keyToUpdate] = { ...relay_state };
-  const updated_config = { ...configStore.configData, relays: updated_relays };
-  configStore.updateConfig(updated_config);
+  // Ensure the relays object is keyed by relay ID.
+  // For simplicity, rebuild the relays object with relay.id as key.
+  const updated_relays = {};
+  // Iterate over current relays and re-key by relay.id
+  Object.values(configStore.configData.relays).forEach((relay) => {
+    updated_relays[relay.id] = relay;
+  });
+  // Update the specific relay with new state
+  updated_relays[relay_state.id] = { ...relay_state };
+  configStore.updateConfig({ ...configStore.configData, relays: updated_relays });
 };
 
 // Button action methods
 const turn_on = async () => {
   try {
-    const result = await updateRelayState(relay_state.id, "on");
-    console.log(result.message);
+    const result = await turnRelayOn(relay_state.id);
+    console.log("Turn on result:", result);
     relay_state.state = "on";
     update_relay_in_store();
   } catch (error) {
@@ -135,8 +127,8 @@ const turn_on = async () => {
 
 const turn_off = async () => {
   try {
-    const result = await updateRelayState(relay_state.id, "off");
-    console.log(result.message);
+    const result = await turnRelayOff(relay_state.id);
+    console.log("Turn off result:", result);
     relay_state.state = "off";
     update_relay_in_store();
   } catch (error) {
@@ -147,8 +139,11 @@ const turn_off = async () => {
 const pulse_relay = async () => {
   try {
     const result = await pulseRelay(relay_state.id);
-    console.log(result.message);
-    // Optionally update the relay state based on pulse result.
+    console.log("Pulse result:", result);
+    // Update the relay state based on the backend response
+    const current = await getRelayState(relay_state.id);
+    relay_state.state = current.state;
+    update_relay_in_store();
   } catch (error) {
     console.error("Error pulsing relay:", error);
   }
