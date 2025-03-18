@@ -7,7 +7,7 @@ import axios from '@/axios';
  */
 export async function getRelayState(relayId) {
   try {
-    const response = await axios.get(`/relays/${relayId}`);
+    const response = await axios.get(`/io/${relayId}`);
     return response.data;
   } catch (error) {
     throw new Error(error.response?.data?.detail || error.message);
@@ -82,7 +82,7 @@ export async function pulseRelays(relayIds) {
  */
 export async function turnRelayOn(relayId) {
   try {
-    const response = await axios.post(`/relays/${relayId}/on`);
+    const response = await axios.post(`/io/${relayId}/state/on`);
     return response.data;
   } catch (error) {
     throw new Error(error.response?.data?.detail || error.message);
@@ -96,7 +96,7 @@ export async function turnRelayOn(relayId) {
  */
 export async function turnRelayOff(relayId) {
   try {
-    const response = await axios.post(`/relays/${relayId}/off`);
+    const response = await axios.post(`/io/${relayId}/state//off`);
     return response.data;
   } catch (error) {
     throw new Error(error.response?.data?.detail || error.message);
@@ -110,7 +110,7 @@ export async function turnRelayOff(relayId) {
  */
 export async function pulseRelay(relayId) {
   try {
-    const response = await axios.post(`/relays/${relayId}/pulse`);
+    const response = await axios.post(`/io/${relayId}/state/pulse`);
     return response.data;
   } catch (error) {
     throw new Error(error.response?.data?.detail || error.message);
