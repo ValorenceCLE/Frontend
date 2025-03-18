@@ -2,11 +2,12 @@
   <div class="w-full flex items-center bg-white border border-gray-500 rounded-lg shadow-lg">
     <!-- Left section: Name & Status -->
     <div class="flex-[1] flex items-center justify-between px-3 py-1.5">
-      <h3 class="text-Subheader text-textColor">{{ relay_state.name }}</h3>
+      <h3 class="text-Subheader text-textColor">{{ relay.name }}</h3>
       <span :style="statusStyle" class="text-white font-semibold w-fit px-3 py-1 rounded-md">
         {{ display_status }}
       </span>
     </div>
+
     <!-- Right section: Buttons -->
     <div class="flex-[2] p-2 border-l border-gray-400 rounded-r-md shadow-md">
       <div class="flex h-full space-x-2 items-center justify-center">
@@ -37,10 +38,10 @@
 </template>
 
 <script setup>
-import { reactive, computed } from "vue";
-import { useConfigStore } from "@/store/config";
-import { getRelayState, turnRelayOn, turnRelayOff, pulseRelay } from "@/api/relayService";
+import { ref, computed, defineEmits, defineProps } from "vue";
+import { turnRelayOn, turnRelayOff, pulseRelay } from "@/api/relayService";
 
+// The parent (Dashboard.vue) passes a relay object with { id, name, state, dashboard, etc. }
 const props = defineProps({
   relay: {
     type: Object,
@@ -48,104 +49,98 @@ const props = defineProps({
   },
 });
 
-// Create a reactive copy of the relay object for local manipulation
-const relay_state = reactive({ ...props.relay });
+// We emit an event when the relay state changes so the parent can update its local data.
+const emit = defineEmits(["update-state"]);
 
-// Compute button labels dynamically based on the relay dashboard configuration
+// Local flag to track if the relay is pulsing (temporary UI feedback)
+const isPulsing = ref(false);
+
+// Computed property for the numeric state (0 = Off, 1 = On)
+const currentState = computed(() => props.relay.state);
+
+// Display text for the relay status
+const display_status = computed(() => {
+  if (isPulsing.value) {
+    return props.relay.dashboard?.pulse_button?.status_text || "Pulsing...";
+  }
+  return currentState.value === 1 ? "On" : "Off";
+});
+
+// Style for the status badge (background color)
+const statusStyle = computed(() => {
+  let color = "gray";
+  if (isPulsing.value) {
+    color = props.relay.dashboard?.pulse_button?.status_color || "gray";
+  } else if (currentState.value === 1) {
+    color = props.relay.dashboard?.on_button?.status_color || "green";
+  } else {
+    color = props.relay.dashboard?.off_button?.status_color || "red";
+  }
+  return { backgroundColor: color.toLowerCase() };
+});
+
+// Button labels from the relay dashboard config
 const buttons = computed(() => {
-  if (relay_state.dashboard) {
+  if (props.relay.dashboard) {
     return {
-      on: relay_state.dashboard.on_button.show ? relay_state.dashboard.on_button.button_label : null,
-      off: relay_state.dashboard.off_button.show ? relay_state.dashboard.off_button.button_label : null,
-      pulse: relay_state.dashboard.pulse_button.show ? relay_state.dashboard.pulse_button.button_label : null,
+      on: props.relay.dashboard.on_button.show ? props.relay.dashboard.on_button.button_label : null,
+      off: props.relay.dashboard.off_button.show ? props.relay.dashboard.off_button.button_label : null,
+      pulse: props.relay.dashboard.pulse_button.show ? props.relay.dashboard.pulse_button.button_label : null,
     };
   }
-  return {
-    on: "Turn On",
-    off: "Turn Off",
-    pulse: "Pulse",
-  };
+  return { on: "On", off: "Off", pulse: "Pulse" };
 });
 
-// Compute inline style for status badge background color based on dashboard status_color values.
-const statusStyle = computed(() => {
-  let colorKey = "gray";
-  const state = relay_state.state.toLowerCase();
-  if (relay_state.dashboard) {
-    if (state === "on" && relay_state.dashboard.on_button?.status_color) {
-      colorKey = relay_state.dashboard.on_button.status_color.toLowerCase();
-    } else if (state === "off" && relay_state.dashboard.off_button?.status_color) {
-      colorKey = relay_state.dashboard.off_button.status_color.toLowerCase();
-    } else if (relay_state.dashboard.pulse_button?.status_color) {
-      colorKey = relay_state.dashboard.pulse_button.status_color.toLowerCase();
-    }
-  }
-  // Map color keys to actual CSS color names (or use your CSS classes)
-  const mapping = {
-    green: "green",
-    yellow: "yellow",
-    red: "red",
-    gray: "gray",
-    blue: "blue",
-  };
-  return { backgroundColor: mapping[colorKey] || mapping.gray };
-});
+// --- Action methods ---
 
-// Compute display text for relay status (capitalized)
-const display_status = computed(() => {
-  const s = relay_state.state;
-  return s ? s.charAt(0).toUpperCase() + s.slice(1) : "";
-});
-
-// Updated helper: Update relay in global config using the relay's own id as key.
-const update_relay_in_store = () => {
-  const configStore = useConfigStore();
-  if (!configStore.configData || !configStore.configData.relays) return;
-  // Ensure the relays object is keyed by relay ID.
-  // For simplicity, rebuild the relays object with relay.id as key.
-  const updated_relays = {};
-  // Iterate over current relays and re-key by relay.id
-  Object.values(configStore.configData.relays).forEach((relay) => {
-    updated_relays[relay.id] = relay;
-  });
-  // Update the specific relay with new state
-  updated_relays[relay_state.id] = { ...relay_state };
-  configStore.updateConfig({ ...configStore.configData, relays: updated_relays });
-};
-
-// Button action methods
+// Turn Relay On
 const turn_on = async () => {
   try {
-    const result = await turnRelayOn(relay_state.id);
+    const result = await turnRelayOn(props.relay.id);
     console.log("Turn on result:", result);
-    relay_state.state = "on";
-    update_relay_in_store();
+    // Emit the new state so the parent can update immediately
+    emit("update-state", { id: props.relay.id, state: result.state });
   } catch (error) {
     console.error("Error turning relay on:", error);
   }
 };
 
+// Turn Relay Off
 const turn_off = async () => {
   try {
-    const result = await turnRelayOff(relay_state.id);
+    const result = await turnRelayOff(props.relay.id);
     console.log("Turn off result:", result);
-    relay_state.state = "off";
-    update_relay_in_store();
+    emit("update-state", { id: props.relay.id, state: result.state });
   } catch (error) {
     console.error("Error turning relay off:", error);
   }
 };
 
+// Pulse Relay
 const pulse_relay = async () => {
   try {
-    const result = await pulseRelay(relay_state.id);
+    isPulsing.value = true;
+    const result = await pulseRelay(props.relay.id);
     console.log("Pulse result:", result);
-    // Update the relay state based on the backend response
-    const current = await getRelayState(relay_state.id);
-    relay_state.state = current.state;
-    update_relay_in_store();
+    // The API returns { status: "success", duration, initial_state }
+    // We can retrieve the new state from the API or assume the hardware is toggling.
+    // Let's do a quick GET to confirm the new state if you want to be certain:
+    //   const newState = await getRelayState(props.relay.id);
+    //   emit("update-state", { id: props.relay.id, state: newState.state });
+
+    // If the API returned a "state" property, use it:
+    if (result.state !== undefined) {
+      emit("update-state", { id: props.relay.id, state: result.state });
+    }
+
+    // Show "Pulsing" for the specified duration
+    const duration = result.duration || 5;
+    setTimeout(() => {
+      isPulsing.value = false;
+    }, duration * 1000);
   } catch (error) {
     console.error("Error pulsing relay:", error);
+    isPulsing.value = false;
   }
 };
 </script>

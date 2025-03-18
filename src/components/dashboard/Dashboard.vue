@@ -4,16 +4,15 @@
     <div
       class="bg-gray-200 px-3 py-1.5 rounded-md shadow border border-gray-500 max-w-xl flex justify-center items-center mx-auto"
     >
-      <!-- Dynamic system_name header from the config store -->
       <h1 class="text-Header text-textColor">{{ system_name }}</h1>
     </div>
 
-    <!-- The container we measure for a unified scale -->
+    <!-- Gauge Section -->
     <div
       ref="scalingContainer"
       class="w-full my-2 flex text-center space-x-2 overflow-auto break-words items-stretch"
     >
-      <!-- Left Column (Control Panel) -->
+      <!-- Left Column (Status Panel) -->
       <div class="flex-[2] bg-gray-200 rounded border border-gray-500">
         <h1 :style="leftTitleStyle" class="text-center">Status</h1>
         <div class="border-solid border border-gray-700"></div>
@@ -37,7 +36,7 @@
         </div>
       </div>
 
-      <!-- Middle Column: "Main Power" -->
+      <!-- Middle Column: Main Power Gauge -->
       <div class="flex-[1.5] bg-gray-200 p-1 rounded h-44 border border-gray-500">
         <Gauge
           title="Main Power"
@@ -50,7 +49,7 @@
         />
       </div>
 
-      <!-- Right Column: "Temperature" -->
+      <!-- Right Column: Temperature Gauge -->
       <div class="flex-[1.5] bg-gray-200 p-1 rounded h-44 border border-gray-500">
         <Gauge
           title="Temperature"
@@ -70,18 +69,20 @@
         v-for="relay in enabled_relays"
         :key="relay.id"
         :relay="relay"
+        @update-state="updateRelayState"
       />
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount, nextTick, computed } from "vue";
+import { ref, computed, onMounted, onBeforeUnmount, nextTick } from "vue";
 import Gauge from "@/components/dashboard/Gauge.vue";
 import RelayCard from "@/components/dashboard/RelayCard.vue";
 import { useConfigStore } from "@/store/config";
+import { getEnabledRelayStates } from "@/api/relayService";
 
-// Reference to the scaling container element
+// 1. Gauge scaling logic
 const scalingContainer = ref(null);
 const containerWidth = ref(0);
 const containerHeight = ref(0);
@@ -103,19 +104,16 @@ onBeforeUnmount(() => {
   window.removeEventListener("resize", measureScalingContainer);
 });
 
-// Shared scale computed from container dimensions
 const sharedScale = computed(() => {
   const w = containerWidth.value;
   const h = containerHeight.value;
   if (!w || !h) return 1;
   const dimension = Math.min(w, h);
   let s = dimension / 400;
-  if (s < 1.0) s = 1.0;
-  if (s > 2.0) s = 2.0;
+  s = Math.max(1.0, Math.min(s, 2.0));
   return s;
 });
 
-// Dynamically style the left column heading
 const leftTitleStyle = computed(() => ({
   fontSize: `${Math.round(22 * sharedScale.value)}px`,
   fontWeight: "bolder",
@@ -123,44 +121,69 @@ const leftTitleStyle = computed(() => ({
   textAlign: "center",
 }));
 
-// Global configuration store
+// 2. Config store and system name
 const configStore = useConfigStore();
-
-// System name derived from the global config's general object
 const system_name = computed(() => {
-  return configStore.configData && configStore.configData.general && configStore.configData.general.system_name
-    ? configStore.configData.general.system_name
-    : "Unnamed System";
+  return configStore.configData?.general?.system_name || "Unnamed System";
 });
 
-// Compute enabled relays from the global configuration (relays object using snake_case keys)
+// 3. Polling states from the backend
+const polledRelayStates = ref({});
+
+async function pollRelayStates() {
+  try {
+    const states = await getEnabledRelayStates();
+    polledRelayStates.value = states;
+  } catch (error) {
+    console.error("Error polling relay states:", error);
+  }
+}
+
+onMounted(async () => {
+  // Immediate poll so states are available on load
+  await pollRelayStates();
+  // Poll every 2 seconds
+  const pollInterval = setInterval(pollRelayStates, 2000);
+  onBeforeUnmount(() => clearInterval(pollInterval));
+});
+
+// 4. Merge polled states with the config data for each enabled relay
 const enabled_relays = computed(() => {
-  if (!configStore.configData || !configStore.configData.relays) return [];
-  return Object.values(configStore.configData.relays).filter(relay => relay.enabled);
+  if (!configStore.configData?.relays) return [];
+  return Object.values(configStore.configData.relays)
+    .filter(relay => relay.enabled)
+    .map(relay => {
+      // Convert config "on"/"off" to numeric 1/0 if needed
+      let configState = relay.state;
+      if (typeof configState === "string") {
+        configState = configState.toLowerCase() === "on" ? 1 : 0;
+      }
+      // Use polled state if available
+      const polled = polledRelayStates.value[relay.id];
+      const state = polled !== undefined ? polled : configState;
+      return { ...relay, state };
+    });
 });
 
-// Demo gauge values
+// 5. When a RelayCard emits "update-state", update polledRelayStates so the UI refreshes immediately
+function updateRelayState({ id, state }) {
+  polledRelayStates.value = {
+    ...polledRelayStates.value,
+    [id]: state,
+  };
+}
+
+// 6. Demo gauge values
 const temperature = ref(20);
 const volts = ref(0);
-let intervalId = null;
-
+let gaugeInterval = null;
 onMounted(() => {
-  intervalId = setInterval(() => {
-    temperature.value = Math.floor(Math.random() * 121); // 0–120°F
-    volts.value = Math.floor(Math.random() * 25);         // 0–24V
+  gaugeInterval = setInterval(() => {
+    temperature.value = Math.floor(Math.random() * 121);
+    volts.value = Math.floor(Math.random() * 25);
   }, 3000);
 });
 onBeforeUnmount(() => {
-  if (intervalId) clearInterval(intervalId);
+  if (gaugeInterval) clearInterval(gaugeInterval);
 });
-</script>
-
-<script>
-export default {
-  name: "Dashboard",
-  components: {
-    Gauge,
-    RelayCard,
-  },
-};
 </script>
