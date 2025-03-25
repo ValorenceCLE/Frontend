@@ -83,3 +83,16 @@ export async function getNetworkStatus(host, { retries = 2, timeout = 1, port = 
         throw new Error(error.response?.data?.detail || error.message);
     }
 }
+
+/**
+ * Perform a speed test.
+ * @returns {Promise<Object>} Speed test results including download, upload, and ping.
+ */
+export async function performSpeedTest() {
+    try {
+        const response = await axios.get('/network/speedtest');
+        return response.data; // Return the speed test results
+    } catch (error) {
+        throw new Error(error.response?.data?.detail || error.message);
+    }
+}

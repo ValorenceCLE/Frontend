@@ -29,13 +29,29 @@
               {{ networkLoading ? "Loading..." : (cameraResults.online ? "Online" : "Offline") }}
             </span>
           </div>
+
+          <!-- Upload/Download Speeds from the Store -->
           <div class="flex justify-between">
-            <strong>Internet Speed:</strong>
-            <span>100 Mbps</span>
+            <strong>Upload Speed:</strong>
+            <span>
+              <template v-if="speedTestStore.speedTestResults === null">
+                Loading...
+              </template>
+              <template v-else>
+                {{ (speedTestStore.speedTestResults.upload / 1_000_000).toFixed(2) }} Mbps
+              </template>
+            </span>
           </div>
           <div class="flex justify-between">
-            <strong>Cellular Signal:</strong>
-            <span>Strong</span>
+            <strong>Download Speed:</strong>
+            <span>
+              <template v-if="speedTestStore.speedTestResults === null">
+                Loading...
+              </template>
+              <template v-else>
+                {{ (speedTestStore.speedTestResults.download / 1_000_000).toFixed(2) }} Mbps
+              </template>
+            </span>
           </div>
         </div>
       </div>
@@ -81,13 +97,17 @@
 
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, nextTick } from "vue";
+import { storeToRefs } from "pinia";
 import Gauge from "@/components/dashboard/Gauge.vue";
 import RelayCard from "@/components/dashboard/RelayCard.vue";
 import { useConfigStore } from "@/store/config";
 import { getEnabledRelayStates } from "@/api/relayService";
 import { getAllNetworkStatuses } from "@/api/networkService";
+import { useSpeedTestStore } from "@/store/speedTest";  // <-- Import the speedTest store
 
-// 1. Gauge scaling logic
+/*********************
+ * 1) Gauge Scaling  *
+ *********************/
 const scalingContainer = ref(null);
 const containerWidth = ref(0);
 const containerHeight = ref(0);
@@ -126,20 +146,23 @@ const leftTitleStyle = computed(() => ({
   textAlign: "center",
 }));
 
-// 2. Config store and system name
+/***************************************
+ * 2) Config Store & System Name      *
+ **************************************/
 const configStore = useConfigStore();
 const system_name = computed(
   () => configStore.configData?.general?.system_name || "Unnamed System"
 );
 
-// 3. Reactive state for network statuses and relay states
-// Default values so the template does not error.
+/****************************************************
+ * 3) Network Status & Relay State Polling         *
+ ***************************************************/
 const routerResults = ref({ online: false });
 const cameraResults = ref({ online: false });
 const networkLoading = ref(true);
 const polledRelayStates = ref({});
 
-// Function to poll relay states
+// 3a) Poll Relay States
 async function pollRelayStates() {
   try {
     const states = await getEnabledRelayStates();
@@ -149,7 +172,7 @@ async function pollRelayStates() {
   }
 }
 
-// 4. Fetch network statuses using getAllNetworkStatuses without blocking the DOM
+// 3b) Fetch Network Statuses
 async function fetchNetworkStatuses() {
   try {
     const networkResponse = await getAllNetworkStatuses();
@@ -168,19 +191,21 @@ async function fetchNetworkStatuses() {
   }
 }
 
-// Call fetchNetworkStatuses without awaiting to let the DOM load immediately.
 onMounted(() => {
+  // Non-blocking network fetch
   fetchNetworkStatuses().catch((error) =>
-    console.error("Non-blocking network fetch error:", error)
+    console.error("Network fetch error:", error)
   );
 
-  // Poll relay states immediately and then every 2 seconds.
+  // Poll relay states immediately and then every 2 seconds
   pollRelayStates();
   const pollInterval = setInterval(pollRelayStates, 2000);
   onBeforeUnmount(() => clearInterval(pollInterval));
 });
 
-// 5. Merge polled relay states with config data for enabled relays
+/*****************************************************
+ * 4) Merge polled relay states with config store    *
+ *****************************************************/
 const enabled_relays = computed(() => {
   if (!configStore.configData?.relays) return [];
   return Object.values(configStore.configData.relays)
@@ -196,7 +221,7 @@ const enabled_relays = computed(() => {
     });
 });
 
-// 6. Update relay state on immediate UI feedback
+// 4b) Update Relay State on immediate UI feedback
 function updateRelayState({ id, state }) {
   polledRelayStates.value = {
     ...polledRelayStates.value,
@@ -204,9 +229,12 @@ function updateRelayState({ id, state }) {
   };
 }
 
-// 7. Demo gauge values
+/**********************************************
+ * 5) Demo Gauges (Random Values)            *
+ *********************************************/
 const temperature = ref(20);
 const volts = ref(0);
+
 let gaugeInterval = null;
 onMounted(() => {
   gaugeInterval = setInterval(() => {
@@ -217,4 +245,16 @@ onMounted(() => {
 onBeforeUnmount(() => {
   if (gaugeInterval) clearInterval(gaugeInterval);
 });
+
+/****************************************************
+ * 6) Speed Test Store Integration                 *
+ ****************************************************/
+// Instead of local speed test logic, we just read from the store
+const speedTestStore = useSpeedTestStore();
+// We can destructure toRefs if we like:
+const { speedTestResults, speedTestLoading } = storeToRefs(speedTestStore);
+
+// The UI will show "Loading..." if speedTestResults.value is null.
+// speedTestLoading.value is also available if you want to show a spinner 
+// or "Testing..." message while a new test is running.
 </script>
