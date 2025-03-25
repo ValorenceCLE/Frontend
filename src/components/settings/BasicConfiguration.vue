@@ -151,6 +151,7 @@
 <script>
 import { ref, onMounted, onBeforeUnmount, computed, watch } from 'vue';
 import { useConfigStore } from '@/store/config';
+import { rebootDevice } from '@/api/deviceService';
 
 export default {
   name: "BasicConfiguration",
@@ -304,6 +305,7 @@ export default {
     const rebootDevice = () => {
       console.log("Rebooting device...");
       alert("Device is restarting now...");
+      rebootDevice();
     };
 
     const rebootSystem = () => {
