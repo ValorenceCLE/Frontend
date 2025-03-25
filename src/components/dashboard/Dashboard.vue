@@ -19,11 +19,15 @@
         <div class="mt-1 space-y-1.5 text-Body text-textColor text-left px-3 py-1.5">
           <div class="flex justify-between">
             <strong>Router:</strong>
-            <span>Online</span>
+            <span>
+              {{ networkLoading ? "Loading..." : (routerResults.online ? "Online" : "Offline") }}
+            </span>
           </div>
           <div class="flex justify-between">
             <strong>Camera:</strong>
-            <span>Offline</span>
+            <span>
+              {{ networkLoading ? "Loading..." : (cameraResults.online ? "Online" : "Offline") }}
+            </span>
           </div>
           <div class="flex justify-between">
             <strong>Internet Speed:</strong>
@@ -81,6 +85,7 @@ import Gauge from "@/components/dashboard/Gauge.vue";
 import RelayCard from "@/components/dashboard/RelayCard.vue";
 import { useConfigStore } from "@/store/config";
 import { getEnabledRelayStates } from "@/api/relayService";
+import { getAllNetworkStatuses } from "@/api/networkService";
 
 // 1. Gauge scaling logic
 const scalingContainer = ref(null);
@@ -123,13 +128,18 @@ const leftTitleStyle = computed(() => ({
 
 // 2. Config store and system name
 const configStore = useConfigStore();
-const system_name = computed(() => {
-  return configStore.configData?.general?.system_name || "Unnamed System";
-});
+const system_name = computed(
+  () => configStore.configData?.general?.system_name || "Unnamed System"
+);
 
-// 3. Polling states from the backend
+// 3. Reactive state for network statuses and relay states
+// Default values so the template does not error.
+const routerResults = ref({ online: false });
+const cameraResults = ref({ online: false });
+const networkLoading = ref(true);
 const polledRelayStates = ref({});
 
+// Function to poll relay states
 async function pollRelayStates() {
   try {
     const states = await getEnabledRelayStates();
@@ -139,33 +149,54 @@ async function pollRelayStates() {
   }
 }
 
-onMounted(async () => {
-  // Immediate poll so states are available on load
-  await pollRelayStates();
-  // Poll every 2 seconds
+// 4. Fetch network statuses using getAllNetworkStatuses without blocking the DOM
+async function fetchNetworkStatuses() {
+  try {
+    const networkResponse = await getAllNetworkStatuses();
+    const networkResults = networkResponse.results;
+    if (networkResults && networkResults.length >= 2) {
+      routerResults.value = networkResults[0];
+      cameraResults.value = networkResults[1];
+    } else if (networkResults && networkResults.length === 1) {
+      routerResults.value = networkResults[0];
+    }
+    networkLoading.value = false;
+    console.log("Network statuses fetched:", networkResponse);
+  } catch (error) {
+    console.error("Error fetching network statuses:", error);
+    networkLoading.value = false;
+  }
+}
+
+// Call fetchNetworkStatuses without awaiting to let the DOM load immediately.
+onMounted(() => {
+  fetchNetworkStatuses().catch((error) =>
+    console.error("Non-blocking network fetch error:", error)
+  );
+
+  // Poll relay states immediately and then every 2 seconds.
+  pollRelayStates();
   const pollInterval = setInterval(pollRelayStates, 2000);
   onBeforeUnmount(() => clearInterval(pollInterval));
 });
 
-// 4. Merge polled states with the config data for each enabled relay
+// 5. Merge polled relay states with config data for enabled relays
 const enabled_relays = computed(() => {
   if (!configStore.configData?.relays) return [];
   return Object.values(configStore.configData.relays)
-    .filter(relay => relay.enabled)
-    .map(relay => {
-      // Convert config "on"/"off" to numeric 1/0 if needed
+    .filter((relay) => relay.enabled)
+    .map((relay) => {
       let configState = relay.state;
       if (typeof configState === "string") {
         configState = configState.toLowerCase() === "on" ? 1 : 0;
       }
-      // Use polled state if available
       const polled = polledRelayStates.value[relay.id];
       const state = polled !== undefined ? polled : configState;
       return { ...relay, state };
     });
 });
 
-// 5. When a RelayCard emits "update-state", update polledRelayStates so the UI refreshes immediately
+// 6. Update relay state on immediate UI feedback
 function updateRelayState({ id, state }) {
   polledRelayStates.value = {
     ...polledRelayStates.value,
@@ -173,7 +204,7 @@ function updateRelayState({ id, state }) {
   };
 }
 
-// 6. Demo gauge values
+// 7. Demo gauge values
 const temperature = ref(20);
 const volts = ref(0);
 let gaugeInterval = null;

@@ -32,7 +32,7 @@
       </div>
 
       <!-- Ping Test -->
-      <div class="flex items-center justify-between px-4">
+      <!-- <div class="flex items-center justify-between px-4">
         <label class="text-Settings text-textColor">Ping Test:</label>
         <div class="flex items-center space-x-1 w-[40%]">
           <input
@@ -48,7 +48,7 @@
             <img src="@/assets/icons/play.svg" alt="Play Icon" class="w-5 h-5" />
           </button>
         </div>
-      </div>
+      </div> -->
 
       <!-- ========== CONFIGURATION SECTION ========== -->
 
