@@ -59,7 +59,7 @@
               </div>
               <div class="flex justify-between">
                 Vin:
-                <span>12v</span>
+                <span>{{ router_volts }}</span>
               </div>
               <div class="flex justify-between">
                 Logs:
@@ -96,7 +96,7 @@
               </div>
               <div class="flex justify-between">
                 Vin:
-                <span>18v</span>
+                <span>{{ camera_volts }}</span>
               </div>
               <div class="flex justify-between">
                 Logs:
@@ -130,7 +130,12 @@
 import BasicConfiguration from "./BasicConfiguration.vue";
 import { useConfigStore } from "@/store/config";
 import { getAllNetworkStatuses } from "@/api/networkService";
-import { subscribeToUsageMetrics, closeWebSocket } from "@/api/websocketService";
+import {
+  subscribeToUsageMetrics,
+  subscribeToCameraVoltsMetrics,
+  subscribeToRouterVoltsMetrics,
+  closeWebSocket,
+} from "@/api/websocketService";
 import { downloadRouterLogs, downloadCameraLogs } from "@/api/logsService";
 
 export default {
@@ -138,22 +143,26 @@ export default {
   components: { BasicConfiguration },
   data() {
     return {
-      currentTime: new Date(), // Store the current date object
-      // Reactive network statuses with default values.
+      currentTime: new Date(),
+      // Network statuses
       routerResults: { online: false },
       cameraResults: { online: false },
-      networkLoading: true, // Flag for loading state.
-      // Reactive usage metrics for Controller section.
+      networkLoading: true,
+      // Usage metrics for Controller section
       usage: { cpu: 0, memory: 0, disk: 0 },
-      socket: null, // To store the WebSocket instance.
+      // WebSocket instances
+      socket: null, // For usage metrics
+      cameraVoltsSocket: null, // For main volts metrics
+      routerVoltsSocket: null, // For router volts metrics
+      // Reactive volts values
+      camera_volts: 0,
+      router_volts: 0,
     };
   },
   computed: {
-    // Access the global configuration store.
     configStore() {
       return useConfigStore();
     },
-    // Dynamically display system name from global config general object.
     displayed_system_name() {
       const config = this.configStore.configData;
       return config && config.general && config.general.system_name
@@ -172,7 +181,6 @@ export default {
   },
   methods: {
     refreshConfig() {
-      // Trigger a manual refresh of the configuration without reloading the page.
       this.configStore.refreshConfig();
     },
     async fetchNetworkStatuses() {
@@ -192,7 +200,6 @@ export default {
       }
     },
     setupUsageWebSocket() {
-      // Use the dedicated function for subscribing to usage metrics.
       this.socket = subscribeToUsageMetrics({
         onOpen: (event) => {
           console.log("Usage WebSocket connected.", event);
@@ -210,6 +217,49 @@ export default {
         },
         onClose: (event) => {
           console.log("Usage WebSocket closed:", event);
+        },
+      });
+    },
+    setupCameraVoltsWebSocket() {
+      this.cameraVoltsSocket = subscribeToCameraVoltsMetrics({
+        onOpen: (event) => {
+          console.log("Camera Volts WebSocket connected.", event);
+        },
+        onMessage: (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            // Expecting either a number or an object with a 'voltage' property.
+            this.camera_volts = typeof data === "number" ? data : data.voltage;
+          } catch (err) {
+            console.error("Error parsing main volts message:", err);
+          }
+        },
+        onError: (event) => {
+          console.error("Main Volts WebSocket error:", event);
+        },
+        onClose: (event) => {
+          console.log("Main Volts WebSocket closed:", event);
+        },
+      });
+    },
+    setupRouterVoltsWebSocket() {
+      this.routerVoltsSocket = subscribeToRouterVoltsMetrics({
+        onOpen: (event) => {
+          console.log("Router Volts WebSocket connected.", event);
+        },
+        onMessage: (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            this.router_volts = typeof data === "number" ? data : data.voltage;
+          } catch (err) {
+            console.error("Error parsing router volts message:", err);
+          }
+        },
+        onError: (event) => {
+          console.error("Router Volts WebSocket error:", event);
+        },
+        onClose: (event) => {
+          console.log("Router Volts WebSocket closed:", event);
         },
       });
     },
@@ -245,18 +295,24 @@ export default {
     },
   },
   mounted() {
-    // Update currentTime every second so displayed time is live.
+    // Update current time every second.
     this.timer = setInterval(() => {
       this.currentTime = new Date();
     }, 1000);
-    // Fire-and-forget network status fetch.
+    // Fetch network statuses.
     this.fetchNetworkStatuses();
-    // Set up the WebSocket subscription for usage metrics.
+    // Set up WebSocket subscriptions.
     this.setupUsageWebSocket();
+    this.setupCameraVoltsWebSocket();
+    this.setupRouterVoltsWebSocket();
   },
   beforeUnmount() {
     clearInterval(this.timer);
     closeWebSocket(this.socket);
+    closeWebSocket(this.cameraVoltsSocket);
+    closeWebSocket(this.routerVoltsSocket);
   },
 };
 </script>
+
+

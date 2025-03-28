@@ -26,7 +26,7 @@ export const useSpeedTestStore = defineStore("speedTest", () => {
   function startSpeedTestPolling() {
     // Immediately fetch once on startup
     fetchSpeedTest();
-    // Then fetch every 30 seconds
+    // Then fetch every 15 seconds
     setInterval(fetchSpeedTest, 10000);
   }
 

@@ -116,21 +116,6 @@
                 </div>
               </td>
             </tr>
-
-            <!-- HTTPS Port -->
-            <tr class="text-center">
-              <td class="text-Body font-bold py-1">HTTPS Port:</td>
-              <td>
-                <div class="flex justify-center">
-                  <input
-                    v-model.number="networkSettings.https_port"
-                    class="border-gray-500 border rounded text-Form text-center w-48"
-                    type="number"
-                  />
-                </div>
-              </td>
-            </tr>
-
             <!-- Submit and Clear Buttons -->
             <tr>
               <td class="pt-2 pb-1.5 text-center" colspan="2">
@@ -172,7 +157,6 @@ export default {
         dhcp: false,
         primary_dns: "",
         secondary_dns: "",
-        https_port: 443,
       },
       // Backup copy for "Clear" functionality
       backupSettings: {}

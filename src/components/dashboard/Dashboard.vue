@@ -73,7 +73,7 @@
       <div class="flex-[1.5] bg-gray-200 p-1 rounded h-44 border border-gray-500">
         <Gauge
           title="Temperature"
-          :min="0"
+          :min="-32" 
           :max="120"
           unit="°F"
           :value="temperature"
@@ -103,7 +103,12 @@ import RelayCard from "@/components/dashboard/RelayCard.vue";
 import { useConfigStore } from "@/store/config";
 import { getEnabledRelayStates } from "@/api/relayService";
 import { getAllNetworkStatuses } from "@/api/networkService";
-import { useSpeedTestStore } from "@/store/speedTest";  // <-- Import the speedTest store
+import { useSpeedTestStore } from "@/store/speedTest";
+import {
+  subscribeToMainVoltsMetrics,
+  subscribeToEnvironmentalMetrics,
+  closeWebSocket,
+} from "@/api/websocketService";
 
 /*********************
  * 1) Gauge Scaling  *
@@ -148,7 +153,7 @@ const leftTitleStyle = computed(() => ({
 
 /***************************************
  * 2) Config Store & System Name      *
- **************************************/
+ ***************************************/
 const configStore = useConfigStore();
 const system_name = computed(
   () => configStore.configData?.general?.system_name || "Unnamed System"
@@ -156,7 +161,7 @@ const system_name = computed(
 
 /****************************************************
  * 3) Network Status & Relay State Polling         *
- ***************************************************/
+ ****************************************************/
 const routerResults = ref({ online: false });
 const cameraResults = ref({ online: false });
 const networkLoading = ref(true);
@@ -192,7 +197,6 @@ async function fetchNetworkStatuses() {
 }
 
 onMounted(() => {
-  // Non-blocking network fetch
   fetchNetworkStatuses().catch((error) =>
     console.error("Network fetch error:", error)
   );
@@ -230,20 +234,49 @@ function updateRelayState({ id, state }) {
 }
 
 /**********************************************
- * 5) Demo Gauges (Random Values)            *
- *********************************************/
+ * 5) Demo Gauges (WebSocket Integration)     *
+ **********************************************/
 const temperature = ref(20);
 const volts = ref(0);
 
-let gaugeInterval = null;
+let voltsSocket = null;
+let environmentalSocket = null;
+
 onMounted(() => {
-  gaugeInterval = setInterval(() => {
-    temperature.value = Math.floor(Math.random() * 121);
-    volts.value = Math.floor(Math.random() * 25);
-  }, 3000);
+  // Subscribe to Volts WebSocket
+  voltsSocket = subscribeToMainVoltsMetrics({
+    onMessage: (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        volts.value = typeof data === "number" ? parseFloat(data.toFixed(2)) : parseFloat(data.voltage.toFixed(2));
+      } catch (error) {
+        console.error("Error parsing volts websocket data:", error);
+      }
+    },
+    onError: (event) => {
+      console.error("Error in volts websocket:", event);
+    },
+  });
+
+  // Subscribe to Temperature WebSocket
+  environmentalSocket = subscribeToEnvironmentalMetrics({
+    onMessage: (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        temperature.value = typeof data === "number" ? parseFloat(data.toFixed(2)) : parseFloat(data.temperature.toFixed(2));
+      } catch (error) {
+        console.error("Error parsing temperature websocket data:", error);
+      }
+    },
+    onError: (event) => {
+      console.error("Error in temperature websocket:", event);
+    },
+  });
 });
+
 onBeforeUnmount(() => {
-  if (gaugeInterval) clearInterval(gaugeInterval);
+  if (voltsSocket) closeWebSocket(voltsSocket);
+  if (environmentalSocket) closeWebSocket(environmentalSocket);
 });
 
 /****************************************************
@@ -251,10 +284,6 @@ onBeforeUnmount(() => {
  ****************************************************/
 // Instead of local speed test logic, we just read from the store
 const speedTestStore = useSpeedTestStore();
-// We can destructure toRefs if we like:
 const { speedTestResults, speedTestLoading } = storeToRefs(speedTestStore);
-
-// The UI will show "Loading..." if speedTestResults.value is null.
-// speedTestLoading.value is also available if you want to show a spinner 
-// or "Testing..." message while a new test is running.
 </script>
+

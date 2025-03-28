@@ -10,7 +10,7 @@
       </span>
     </div>
 
-    <!-- Actual chart container -->
+    <!-- Chart Container -->
     <div v-else ref="chartContainer" class="w-full h-full" />
   </div>
 </template>
@@ -18,8 +18,14 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount, nextTick, watch } from "vue";
 import * as echarts from "echarts";
+import {
+  subscribeToMainVoltsMetrics,
+  subscribeToEnvironmentalMetrics,
+  subscribeToIna260Metrics,
+  closeWebSocket,
+} from "@/api/websocketService";
 
-/** PROPS **/
+// Define component props.
 const props = defineProps({
   source: String,
   fields: {
@@ -30,127 +36,50 @@ const props = defineProps({
   isPaused: { type: Boolean, default: false },
 });
 
-/** ECharts instance & interval reference **/
+// Local references.
 let chartInstance = null;
 const chartContainer = ref(null);
-let intervalId = null;
+let socket = null;
 
-/**
- * For each field, we have a time-series array:
- * seriesDataMap[field] = [[time, value], ...].
- */
-const seriesDataMap = {};
-
-/** We'll track "current time" for generating data. */
-let now = new Date(2025, 0, 31, 19, 0, 0);
-const oneMinute = 60 * 1000;
-
-/**
- * Baseline/delta config for each possible field.
- */
-const fieldConfig = {
-  Temperature: { baseline: 80, stepRange: [-1, 1] },
-  Humidity: { baseline: 20, stepRange: [-1, 1] },
-  "Packet Loss": { baseline: 0, stepRange: [-0.5, 1] },
-  Latency: { baseline: 50, stepRange: [-10, 10] },
-  RSRP: { baseline: -90, stepRange: [-5, 5] },
-  RSRQ: { baseline: -10, stepRange: [-5, 5] },
-  SINR: { baseline: 5, stepRange: [-10, 10] },
-  Volts: { baseline: 12, stepRange: [-0.2, 0.2] },
-  Watts: { baseline: 3, stepRange: [-0.3, 0.3] },
-  Amps: { baseline: 0.5, stepRange: [-0.1, 0.1] },
+// Mapping display field names to sensor data keys.
+const fieldMapping = {
+  Volts: "voltage",
+  Amps: "current",
+  Watts: "power",
+  Temperature: "temperature",
+  Humidity: "humidity",
 };
 
-/**
- * initializeSeriesData - create new arrays for each field
- * and fill them with some initial data (e.g. 50 points).
- */
+// Object to store time-series data for each field.
+const seriesDataMap = {};
+
+// Initialize series data storage for each selected field.
 function initializeSeriesData() {
-  // Reset the time
-  now = new Date(2025, 0, 31, 19, 0, 0);
-
-  // Clear the old data
-  for (const key in seriesDataMap) {
-    delete seriesDataMap[key];
-  }
-
-  // Prepare arrays for each field
-  for (const f of props.fields) {
-    seriesDataMap[f] = [];
-  }
-
-  // Generate initial points
-  for (let i = 0; i < 120; i++) {
-    createNextDataPoint();
-  }
-}
-
-/**
- * createNextDataPoint - increments time by one minute
- * and for each field, appends a new random value.
- */
-function createNextDataPoint() {
-  now = new Date(+now + oneMinute);
-
   for (const field of props.fields) {
-    const cfg = fieldConfig[field];
-    if (!cfg) continue;
-
-    let lastVal = cfg.baseline;
-    const arr = seriesDataMap[field];
-
-    if (arr.length > 0) {
-      lastVal = arr[arr.length - 1][1];
-    }
-
-    const [minD, maxD] = cfg.stepRange;
-    const delta = Math.random() * (maxD - minD) + minD;
-    const newVal = parseFloat((lastVal + delta).toFixed(2));
-
-    arr.push([now, newVal]);
+    seriesDataMap[field] = [];
   }
 }
 
-/**
- * pushNewData - shift oldest data, add a new data point,
- * update chart series, but only if not paused.
- */
-function pushNewData() {
-  // If paused, do nothing.
-  if (props.isPaused) return;
-
-  // Shift out the oldest sample
-  for (const f of props.fields) {
-    seriesDataMap[f].shift();
-  }
-  // Generate one new sample
-  createNextDataPoint();
-
-  // Update chart data
-  chartInstance?.setOption({
-    series: props.fields.map((f) => ({
-      name: f,
-      data: seriesDataMap[f],
-    })),
-  });
-}
-
-/**
- * getChartOption - builds ECharts config from seriesDataMap.
- */
+// Build and return the ECharts option using seriesDataMap.
 function getChartOption() {
-  let globalMax = -999999,
-    globalMin = 999999;
-
-  for (const f of props.fields) {
-    for (const [, val] of seriesDataMap[f]) {
-      if (val > globalMax) globalMax = val;
-      if (val < globalMin) globalMin = val;
-    }
-  }
-
-  if (globalMax < -9000) globalMax = 1;
-  if (globalMin > 9000) globalMin = 0;
+  let globalMax = -Infinity,
+    globalMin = Infinity;
+  const series = props.fields.map((field) => {
+    const data = seriesDataMap[field] || [];
+    data.forEach(([time, value]) => {
+      if (value > globalMax) globalMax = value;
+      if (value < globalMin) globalMin = value;
+    });
+    return {
+      name: field,
+      type: "line",
+      data: data,
+      smooth: true,
+      showSymbol: false,
+    };
+  });
+  if (globalMax === -Infinity) globalMax = 1;
+  if (globalMin === Infinity) globalMin = 0;
   const maxY = Math.ceil(globalMax + 2);
   const minY = Math.floor(globalMin - 2);
 
@@ -193,37 +122,11 @@ function getChartOption() {
       min: minY,
       max: maxY,
     },
-    series: props.fields.map((f) => ({
-      name: f,
-      type: "line",
-      data: seriesDataMap[f],
-      smooth: true,
-      showSymbol: false,
-    })),
+    series: series,
   };
 }
 
-/** startInterval - create a new 1s timer to generate updates */
-function startInterval() {
-  stopInterval();
-  intervalId = setInterval(() => {
-    pushNewData();
-    // Also update the axis scaling if new data changed range
-    if (!props.isPaused) {
-      chartInstance?.setOption(getChartOption());
-    }
-  }, 1000);
-}
-
-/** stopInterval - clear the timer if it exists */
-function stopInterval() {
-  if (intervalId) {
-    clearInterval(intervalId);
-    intervalId = null;
-  }
-}
-
-/** initChart - create ECharts instance and set initial option */
+// Initialize the ECharts instance.
 function initChart() {
   nextTick(() => {
     if (!chartContainer.value) return;
@@ -233,7 +136,7 @@ function initChart() {
   });
 }
 
-/** disposeChart - properly dispose ECharts instance */
+// Dispose of the chart instance.
 function disposeChart() {
   if (chartInstance) {
     chartInstance.dispose();
@@ -241,39 +144,95 @@ function disposeChart() {
   }
 }
 
-/**
- * Watch for changes in isRunning, fields, and source.
- * But do NOT re-init if user just toggled isPaused.
- */
+// Handle incoming websocket messages.
+function handleMessage(event) {
+  if (props.isPaused) return; // Do nothing if paused.
+  let data;
+  try {
+    data = JSON.parse(event.data);
+  } catch (e) {
+    console.error("Error parsing websocket data:", e);
+    return;
+  }
+  const timestamp = new Date();
+  // For each selected field, add the new data point if available.
+  for (const field of props.fields) {
+    const sensorKey = fieldMapping[field];
+    if (sensorKey && sensorKey in data) {
+      if (!seriesDataMap[field]) {
+        seriesDataMap[field] = [];
+      }
+      seriesDataMap[field].push([timestamp, data[sensorKey]]);
+      // Keep only the latest 120 points.
+      if (seriesDataMap[field].length > 120) {
+        seriesDataMap[field].shift();
+      }
+    }
+  }
+  // Update the chart.
+  if (chartInstance) {
+    chartInstance.setOption(getChartOption());
+  }
+}
+
+// Handle websocket errors.
+function handleError(event) {
+  console.error("WebSocket error:", event);
+}
+
+// Subscribe to the appropriate websocket endpoint based on the source.
+function subscribeWebSocket() {
+  if (socket) {
+    closeWebSocket(socket);
+    socket = null;
+  }
+  if (props.source === "environmental") {
+    socket = subscribeToEnvironmentalMetrics({
+      onMessage: handleMessage,
+      onError: handleError,
+    });
+  } else if (props.source === "main") {
+    socket = subscribeToMainVoltsMetrics({
+      onMessage: handleMessage,
+      onError: handleError,
+    });
+  } else {
+    // For any relay, use the INA260 endpoint.
+    socket = subscribeToIna260Metrics(props.source, {
+      onMessage: handleMessage,
+      onError: handleError,
+    });
+  }
+}
+
+// Unsubscribe from the websocket.
+function unsubscribeWebSocket() {
+  if (socket) {
+    closeWebSocket(socket);
+    socket = null;
+  }
+}
+
+// Watch for changes in isRunning, source, or fields.
 watch(
-  () => [props.isRunning, props.fields],
-  ([running, fields]) => {
-    if (running && fields.length) {
-      // If we just started or changed fields/source, re-init data
+  () => [props.isRunning, props.source, props.fields],
+  ([running, source, fields]) => {
+    if (running && source && fields.length > 0) {
       initializeSeriesData();
       initChart();
-      startInterval();
+      subscribeWebSocket();
     } else {
-      // If not running, stop
-      stopInterval();
+      unsubscribeWebSocket();
       disposeChart();
     }
   },
   { immediate: true }
 );
 
-/**
- * We also watch isPaused, but we do NOT re-init data or re-dispose
- * the chart. We just allow pushNewData to skip if paused.
- */
-watch(
-  () => props.isPaused,
-  (paused) => {
-    // If user unpauses, data generation simply continues from the next pushNewData call.
-    // No re-initialization means no "reload" animation.
-    // So we don't do anything here except avoid re-initialization.
-  }
-);
+// Resize chart on window resize.
+function resizeChart() {
+  chartInstance?.resize();
+}
 
 onMounted(() => {
   window.addEventListener("resize", resizeChart, { passive: true });
@@ -281,13 +240,9 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   window.removeEventListener("resize", resizeChart);
-  stopInterval();
+  unsubscribeWebSocket();
   disposeChart();
 });
-
-function resizeChart() {
-  chartInstance?.resize();
-}
 </script>
 
 <style scoped>
