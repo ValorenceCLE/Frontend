@@ -2,8 +2,10 @@
 
 // Utility to build a WebSocket URL based on the current window location.
 function getWsUrl(path) {
-  const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-  return `${protocol}://${window.location.host}${path}`;
+  const protocol = "ws"; // Always use ws since the backend is running locally
+  const host = "localhost"; // Backend is running locally
+  const port = "8000"; // Replace with the actual port your backend WebSocket server is running on
+  return `${protocol}://${host}:${port}${path}`;
 }
 
 /**
