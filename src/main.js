@@ -14,4 +14,3 @@ app.component('v-chart', VChart);
 app.mount('#app');
 
 const speedTestStore = useSpeedTestStore();
-speedTestStore.startSpeedTestPolling();

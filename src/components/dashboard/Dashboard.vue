@@ -283,7 +283,9 @@ onBeforeUnmount(() => {
  * 6) Speed Test Store Integration                 *
  ****************************************************/
 // Instead of local speed test logic, we just read from the store
+
 const speedTestStore = useSpeedTestStore();
+speedTestStore.startSpeedTestPolling();
 const { speedTestResults, speedTestLoading } = storeToRefs(speedTestStore);
 </script>
 
