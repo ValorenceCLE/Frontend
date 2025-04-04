@@ -32,9 +32,7 @@
           >
             <option disabled value="">Select an Action</option>
             <option value="reboot">Reboot</option>
-            <option value="email">Email</option>
             <option value="log">Log</option>
-            <option value="awsLog">AWS Log</option>
             <optgroup label="Relay Actions">
               <option v-for="relay in enabledRelays" :key="relay.id" :value="relay.id">
                 {{ relay.name }}
