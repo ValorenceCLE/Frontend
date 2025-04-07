@@ -45,25 +45,6 @@
           </div>
         </div>
 
-        <!-- Power Up State -->
-        <div>
-          <div class="grid grid-cols-2 items-center">
-            <div class="flex items-center justify-start">
-              <label class="text-ModalLabel text-textColor">Power Up State:</label>
-            </div>
-            <div>
-              <select
-                v-model="localRelay.boot_state"
-                class="w-full border border-gray-500 rounded py-0.5 text-xs bg-white"
-                @change="emitChanges"
-              >
-                <option value="on">On</option>
-                <option value="off">Off</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
         <!-- Pulse Time -->
         <div>
           <div class="grid grid-cols-2 items-center">

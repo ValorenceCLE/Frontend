@@ -136,7 +136,7 @@ export default {
         return;
       }
       this.currentTask = { ...task, id: taskId };
-      this.modalTitle = "Edit Conditional Task";
+      this.modalTitle = "Edit Custom Logic";
       this.showModal = true;
     },
   },

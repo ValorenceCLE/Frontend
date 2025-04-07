@@ -24,12 +24,12 @@
               </li>
             </ul>
           </td>
-            <td class=" flex justify-center items-center space-x-1" style="transform: translateY(0.75rem);"  >
+            <td class=" flex justify-center items-center space-x-1">
             <button
               @click="$emit('editTask', task)"
               class="bg-primaryMed hover:bg-primaryLight text-white p-1.5 rounded flex items-center justify-center"
             >
-              <img src="@/assets/icons/edit.svg" alt="Edit" class="w-4 h-4 invert" style="transform: translateY(1px); transform: translateX(1px)" />
+              <img src="@/assets/icons/edit.svg" alt="Edit" class="w-4 h-4 invert" />
             </button>
             <button
               @click="$emit('deleteTask', id)"

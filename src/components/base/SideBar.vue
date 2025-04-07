@@ -5,61 +5,47 @@
   >
     <ul class="divide-y divide-gray-700">
       <li v-for="(menu, index) in menus" :key="index" class="relative">
-        <!-- Direct link: if the menu item has a defined 'route' property -->
-        <div v-if="menu.hasOwnProperty('route')">
-          <router-link
-            :to="menu.title === 'Dashboard' ? basePath : `${basePath}/${menu.route}`"
-            class="p-3 flex items-center gap-2 hover:bg-gray-500 transition-colors"
-          >
+        <!-- All menu items have clickable headers that navigate to default routes -->
+        <div 
+          class="p-2 flex justify-between items-center cursor-pointer hover:bg-gray-500 transition-colors"
+          @click="navigateToSection(menu, index)"
+        >
+          <div class="flex items-center gap-2">
             <img
               :src="menu.icon"
               :alt="menu.title + ' Icon'"
               class="w-5 h-5 text-gray-200"
             />
             <span>{{ menu.title }}</span>
-          </router-link>
-        </div>
-
-        <!-- Otherwise, render a dropdown for menus with items -->
-        <div v-else>
-          <div
-            class="p-3 cursor-pointer flex justify-between items-center"
-            @click="toggleDropdown(index)"
-          >
-            <div class="flex items-center gap-2">
-              <img
-                :src="menu.icon"
-                :alt="menu.title + ' Icon'"
-                class="w-5 h-5 text-gray-200"
-              />
-              <span>{{ menu.title }}</span>
-            </div>
-            <img
-              :src="chevronDown"
-              alt="Chevron Down"
-              class="w-6 h-6 transform transition-transform duration-200"
-              :class="{ 'rotate-180': dropdownStates[index] }"
-            />
           </div>
-
-          <!-- Dropdown Items -->
-          <transition name="slide-dropdown" :key="dropdownStates[index]">
-            <ul v-if="dropdownStates[index]" class="bg-gray-600">
-              <li
-                v-for="(item, subIndex) in menu.items"
-                :key="subIndex"
-                class="pl-8 py-0.5 hover:bg-gray-500 transition-colors"
-              >
-                <router-link
-                  :to="generateRoute(menu.title, item)"
-                  class="text-white no-underline"
-                >
-                  {{ item }}
-                </router-link>
-              </li>
-            </ul>
-          </transition>
+          <!-- Only show dropdown icon for menu items with subitems -->
+          <img
+            v-if="menu.items"
+            :src="chevronDown"
+            alt="Chevron Down"
+            class="w-6 h-6 transform transition-transform duration-200"
+            :class="{ 'rotate-180': dropdownStates[index] }"
+            @click.stop="toggleDropdown(index)"
+          />
         </div>
+
+        <!-- Dropdown Items (only for menus with items) -->
+        <transition name="slide-dropdown" :key="dropdownStates[index]">
+          <ul v-if="menu.items && dropdownStates[index]" class="bg-gray-600">
+            <li
+              v-for="(item, subIndex) in menu.items"
+              :key="subIndex"
+              class="pl-8 py-0.5 hover:bg-gray-500 transition-colors"
+            >
+              <router-link
+                :to="generateRoute(menu.title, item)"
+                class="text-white no-underline block py-1.5"
+              >
+                {{ item }}
+              </router-link>
+            </li>
+          </ul>
+        </transition>
       </li>
     </ul>
   </div>
@@ -81,16 +67,22 @@ export default {
         {
           title: "Settings",
           icon: settingsIcon,
+          route: "settings",
+          defaultSubRoute: "general",
           items: ["General", "Network", "Date/Time", "Emails"],
         },
         {
           title: "Relays",
           icon: relaysIcon,
+          route: "relays",
+          defaultSubRoute: "settings",
           items: ["Settings", "Logic"],
         },
         {
           title: "Monitor",
           icon: monitorIcon,
+          route: "monitor",
+          defaultSubRoute: "real-time",
           items: ["Real Time", "Historical"],
         },
         {
@@ -108,6 +100,15 @@ export default {
     },
   },
   methods: {
+    navigateToSection(menu, index) {
+      // If this menu has sub-items, navigate to the default sub-route
+      if (menu.items && menu.defaultSubRoute) {
+        this.$router.push(`${this.basePath}/${menu.route}/${menu.defaultSubRoute}`);
+      } else {
+        // For items like Dashboard with no sub-items
+        this.$router.push(menu.title === "Dashboard" ? this.basePath : `${this.basePath}/${menu.route}`);
+      }
+    },
     toggleDropdown(index) {
       this.dropdownStates = this.dropdownStates.map((state, i) => i === index ? !state : false);
     },

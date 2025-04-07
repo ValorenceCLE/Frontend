@@ -12,11 +12,20 @@
 
     <!-- Chart Container -->
     <div v-else ref="chartContainer" class="w-full h-full" />
+    
+    <!-- Connection Status Indicator -->
+    <div 
+      v-if="isRunning && connectionStatus !== 'connected'" 
+      class="absolute bottom-2 right-2 px-2 py-1 rounded text-white text-xs"
+      :class="connectionStatusClass"
+    >
+      {{ connectionStatusText }}
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount, nextTick, watch } from "vue";
+import { ref, onMounted, onBeforeUnmount, nextTick, watch, computed } from "vue";
 import * as echarts from "echarts";
 import {
   subscribeToMainVoltsMetrics,
@@ -40,6 +49,38 @@ const props = defineProps({
 let chartInstance = null;
 const chartContainer = ref(null);
 let socket = null;
+
+// Connection status tracking
+const connectionStatus = ref('disconnected'); // 'connecting', 'connected', 'disconnected', 'error'
+const reconnectAttempts = ref(0);
+const maxReconnectAttempts = 5;
+
+// Connection status UI elements
+const connectionStatusClass = computed(() => {
+  switch (connectionStatus.value) {
+    case 'connecting':
+      return 'bg-yellow-500';
+    case 'connected':
+      return 'bg-green-500';
+    case 'error':
+      return 'bg-red-500';
+    default: // disconnected
+      return 'bg-gray-500';
+  }
+});
+
+const connectionStatusText = computed(() => {
+  switch (connectionStatus.value) {
+    case 'connecting':
+      return 'Connecting...';
+    case 'connected':
+      return 'Connected';
+    case 'error':
+      return `Connection Error (Attempt ${reconnectAttempts.value}/${maxReconnectAttempts})`;
+    default: // disconnected
+      return 'Disconnected';
+  }
+});
 
 // Mapping display field names to sensor data keys.
 const fieldMapping = {
@@ -71,11 +112,28 @@ function getChartOption() {
       if (value < globalMin) globalMin = value;
     });
     return {
-      name: field,
+      name: field.toUpperCase(),
       type: "line",
       data: data,
-      smooth: true,
+      smooth: false,
       showSymbol: false,
+      lineStyle: {
+        width: 2,
+        color: field === "Volts" ? "#FF0000" : field === "Amps" ? "#00FF00" : "#0000FF",
+      },
+      areaStyle: {
+        opacity: 0.3,
+        color: field === "Volts" ? "#FF0000" : field === "Amps" ? "#00FF00" : "#0000FF",
+      },
+      itemStyle: {
+        color: field === "Volts" ? "#FF0000" : field === "Amps" ? "#00FF00" : "#0000FF",
+      },
+      tooltip: {
+        formatter: (params) => {
+          const dateStr = new Date(params.value[0]).toLocaleString();
+          return `${params.seriesName}: ${params.value[1]}<br/>${dateStr}`;
+        },
+      },
     };
   });
   if (globalMax === -Infinity) globalMax = 1;
@@ -144,6 +202,13 @@ function disposeChart() {
   }
 }
 
+// Handle WebSocket open event
+function handleOpen(event) {
+  connectionStatus.value = 'connected';
+  reconnectAttempts.value = 0;
+  console.log('WebSocket connected:', props.source);
+}
+
 // Handle incoming websocket messages.
 function handleMessage(event) {
   if (props.isPaused) return; // Do nothing if paused.
@@ -169,82 +234,9 @@ function handleMessage(event) {
       }
     }
   }
-  // Update the chart.
+// Update the chart.
   if (chartInstance) {
     chartInstance.setOption(getChartOption());
   }
 }
-
-// Handle websocket errors.
-function handleError(event) {
-  console.error("WebSocket error:", event);
-}
-
-// Subscribe to the appropriate websocket endpoint based on the source.
-function subscribeWebSocket() {
-  if (socket) {
-    closeWebSocket(socket);
-    socket = null;
-  }
-  if (props.source === "environmental") {
-    socket = subscribeToEnvironmentalMetrics({
-      onMessage: handleMessage,
-      onError: handleError,
-    });
-  } else if (props.source === "main") {
-    socket = subscribeToMainVoltsMetrics({
-      onMessage: handleMessage,
-      onError: handleError,
-    });
-  } else {
-    // For any relay, use the INA260 endpoint.
-    socket = subscribeToIna260Metrics(props.source, {
-      onMessage: handleMessage,
-      onError: handleError,
-    });
-  }
-}
-
-// Unsubscribe from the websocket.
-function unsubscribeWebSocket() {
-  if (socket) {
-    closeWebSocket(socket);
-    socket = null;
-  }
-}
-
-// Watch for changes in isRunning, source, or fields.
-watch(
-  () => [props.isRunning, props.source, props.fields],
-  ([running, source, fields]) => {
-    if (running && source && fields.length > 0) {
-      initializeSeriesData();
-      initChart();
-      subscribeWebSocket();
-    } else {
-      unsubscribeWebSocket();
-      disposeChart();
-    }
-  },
-  { immediate: true }
-);
-
-// Resize chart on window resize.
-function resizeChart() {
-  chartInstance?.resize();
-}
-
-onMounted(() => {
-  window.addEventListener("resize", resizeChart, { passive: true });
-});
-
-onBeforeUnmount(() => {
-  window.removeEventListener("resize", resizeChart);
-  unsubscribeWebSocket();
-  disposeChart();
-});
 </script>
-
-<style scoped>
-/* Basic styling */
-</style>

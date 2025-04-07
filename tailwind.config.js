@@ -92,9 +92,6 @@ module.exports = {
         ModalPreviewLabel: ['1.2rem', { lineHeight: '1.2rem', fontWeight: '700' }],
         ModalPreviewButton: ['0.9rem', { lineHeight: '0.9rem', fontWeight: '600' }],
         AddTask: ['1.15rem', { lineHeight: '1.25rem', fontWeight: '600' }],
-
-
-        // New cleaned up and reduced font sizes for more consistent usage
         Input: ['1.15rem', { lineHeight: '1.15rem', fontWeight: '500' }],
         InputLabel: ['1.15rem', { lineHeight: '1.15rem', fontWeight: '600' }],
       },

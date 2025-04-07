@@ -2,7 +2,7 @@
   <div>
     <!-- Section Header -->
     <div class="border-b border-gray-500">
-      <h3 class="text-ModalInfo text-textColor px-2 py-1">Triggers</h3>
+      <h3 class="text-ModalInfo text-textColor px-2 py-1">Trigger</h3>
     </div>
 
     <!-- Two Columns: Left (Source, Operator), Right (Field, Value) -->
