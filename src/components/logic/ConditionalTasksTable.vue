@@ -24,16 +24,16 @@
               </li>
             </ul>
           </td>
-            <td class=" flex justify-center items-center space-x-1">
+            <td class=" flex justify-center items-center space-x-1 m-1">
             <button
               @click="$emit('editTask', task)"
-              class="bg-primaryMed hover:bg-primaryLight text-white p-1.5 rounded flex items-center justify-center"
+              class="bg-primaryMed hover:bg-primaryLight text-white p-2 rounded flex items-center justify-center"
             >
               <img src="@/assets/icons/edit.svg" alt="Edit" class="w-4 h-4 invert" />
             </button>
             <button
               @click="$emit('deleteTask', id)"
-              class="bg-relayStatusred hover:bg-red-700 text-white p-1.5 rounded flex items-center justify-center"
+              class="bg-relayStatusred hover:bg-red-700 text-white p-2 rounded flex items-center justify-center"
             >
               <img src="@/assets/icons/trash.svg" alt="Delete" class="w-4 h-4 invert" />
             </button>
@@ -41,7 +41,7 @@
         </tr>
       </tbody>
     </table>
-    <div class="flex justify-center items-center border-t border-gray-500 py-1.5 mt-1">
+    <div class="flex justify-center items-center border-t border-gray-500 py-1.5">
       <button
         class="bg-primaryMed hover:bg-primaryLight text-white py-1.5 px-3 w-fit rounded flex items-center text-AddTask"
         @click="$emit('openAddTask')"

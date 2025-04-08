@@ -3,14 +3,14 @@
     <!-- TASK NAME -->
     <div class="bg-gray-100 border border-gray-500 rounded">
       <div class="border-b border-gray-500">
-        <h3 class="text-ModalInfo text-textColor px-2 py-1">Logic Information</h3>
+        <h3 class="text-ModalInfo text-textColor px-2 py-1">Information</h3>
       </div>
       <div class="grid grid-cols-2 items-center px-2 py-1">
-        <label class="text-ModalLabel text-textColor text-left ">Name:</label>
+        <label class="text-ModalLabel text-textColor text-left ml-2">Name:</label>
         <input
           v-model="task.name"
           type="text"
-          class="w-full border border-gray-500 rounded p-0.5 text-sm bg-white pl-1 mr-2"
+          class="w-full border border-gray-500 rounded p-0.5 text-sm bg-white pl-1"
           required
         />
       </div>
