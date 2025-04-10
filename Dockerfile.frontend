@@ -14,14 +14,20 @@ RUN npm run build
 FROM nginx:alpine
 WORKDIR /usr/share/nginx/html
 
+# Create a directory for certificates
+RUN mkdir -p /app/certs
+
+# Install openssl for potential certificate conversion
+RUN apk add --no-cache openssl
+
 # Remove any default files from NGINX
 RUN rm -rf ./*
 
 # Copy built static files from build stage into NGINX html folder
 COPY --from=build-stage /app/dist ./
 
-# Copy custom NGINX configuration (located in the same folder as this Dockerfile)
+# Copy custom NGINX configuration
 COPY nginx.conf /etc/nginx/nginx.conf
 
-EXPOSE 80
+EXPOSE 80 443
 CMD ["nginx", "-g", "daemon off;"]

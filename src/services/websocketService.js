@@ -2,19 +2,26 @@
 
 class WebSocketManager {
     constructor() {
-      this.sockets = new Map(); // Store active connections
-      this.subscribers = new Map(); // Store subscribers per endpoint
-      
-      // Auto-detect protocol based on the current page protocol
-      this.protocol = this._detectProtocol();
-      this.baseUrl = this._buildBaseUrl();
-      
-      console.log(`WebSocket initialized with base URL: ${this.baseUrl}`);
-      
-      this.reconnectAttempts = 0;
-      this.maxReconnectAttempts = 5;
-      this.reconnectDelay = 1000; // Start with 1s delay, will increase exponentially
+        this.sockets = new Map(); // Store active connections
+        this.subscribers = new Map(); // Store subscribers per endpoint
+        
+        // Auto-detect protocol based on the current page protocol
+        this.protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        
+        // Production environment should always use wss
+        if (window.location.hostname !== 'localhost' && 
+            window.location.hostname !== '127.0.0.1') {
+          this.protocol = 'wss:';
+        }
+        
+        this.baseUrl = this._buildBaseUrl();
+        console.log(`WebSocket initialized with base URL: ${this.baseUrl}`);
+        
+        this.reconnectAttempts = 0;
+        this.maxReconnectAttempts = 5;
+        this.reconnectDelay = 1000;
     }
+      
   
     /**
      * Detects the appropriate WebSocket protocol to use
@@ -29,7 +36,12 @@ class WebSocketManager {
      * Build the base URL for WebSocket connections
      */
     _buildBaseUrl() {
-      return `${this.protocol}//${window.location.host}/api`;
+        const hostname = window.location.hostname;
+        const standardPorts = {'http:': '80', 'https:': '443'};
+        const port = window.location.port || standardPorts[window.location.protocol] || '';
+        
+        // For production, we want to use the same hostname
+        return `${this.protocol}//${hostname}${port ? ':' + port : ''}/api`;
     }
   
     /**
