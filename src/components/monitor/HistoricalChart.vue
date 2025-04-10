@@ -377,11 +377,11 @@ function getChartOption() {
       {
         type: 'inside',
         start: 0,
-        end: 10
+        end: 20
       },
       {
-        start: 0,
-        end: 100,
+        start: 10,
+        end: 90,
         bottom: 10  // Position above the legend
       }
     ],
