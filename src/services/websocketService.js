@@ -36,12 +36,26 @@ class WebSocketManager {
    * Build the base URL for WebSocket connections
    */
   _buildBaseUrl() {
-    // Always use localhost for the backend
-    const backendHost = 'localhost';
-    const backendPort = '8000'; // Assuming backend runs on port 8000, adjust as needed
+    const hostname = window.location.hostname;
+    const standardPorts = {'http:': '80', 'https:': '443'};
+    const port = window.location.port || standardPorts[window.location.protocol] || '';
     
-    // Use the detected protocol (ws/wss) with localhost
-    return `${this.protocol}//${backendHost}:${backendPort}/api`;
+    // Handle special case for Peplink router URLs
+    if (hostname.includes('.rwa11.peplink.com')) {
+      // For Peplink access, we need to use the same URL structure
+      // but ensure we're targeting the API endpoint
+      return `${this.protocol}//${hostname}${port ? ':' + port : ''}/api`;
+    }
+    
+    // Check if localhost (match axios configuration)
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return `${this.protocol}//localhost:8000/api`;
+    }
+    
+    // Default case - use the current hostname but make sure to use the correct path
+    // The nginx config is set up to proxy /api/ to the backend service
+    // For non-localhost environments, just use /api as the base URL regardless of port
+    return `${this.protocol}//${hostname}${port ? ':' + port : ''}/api`;
   }
 
   /**
