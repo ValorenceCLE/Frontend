@@ -18,12 +18,7 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount, nextTick, watch } from "vue";
 import * as echarts from "echarts";
-import {
-  subscribeToMainVoltsMetrics,
-  subscribeToEnvironmentalMetrics,
-  subscribeToIna260Metrics,
-  closeWebSocket,
-} from "@/api/websocketService";
+import { websocketService } from "@/services/websocketService";
 
 // Define component props.
 const props = defineProps({
@@ -39,7 +34,7 @@ const props = defineProps({
 // Local references.
 let chartInstance = null;
 const chartContainer = ref(null);
-let socket = null;
+let unsubscribe = null; // To store the unsubscribe function
 
 // Mapping display field names to sensor data keys.
 const fieldMapping = {
@@ -175,41 +170,28 @@ function handleMessage(event) {
   }
 }
 
-// Handle websocket errors.
-function handleError(event) {
-  console.error("WebSocket error:", event);
-}
-
 // Subscribe to the appropriate websocket endpoint based on the source.
 function subscribeWebSocket() {
-  if (socket) {
-    closeWebSocket(socket);
-    socket = null;
+  if (unsubscribe) {
+    unsubscribe();
+    unsubscribe = null;
   }
+  
   if (props.source === "environmental") {
-    socket = subscribeToEnvironmentalMetrics({
-      onMessage: handleMessage,
-      onError: handleError,
-    });
+    unsubscribe = websocketService.subscribeToEnvironmental(handleMessage);
   } else if (props.source === "main") {
-    socket = subscribeToMainVoltsMetrics({
-      onMessage: handleMessage,
-      onError: handleError,
-    });
+    unsubscribe = websocketService.subscribeToMainVolts(handleMessage);
   } else {
-    // For any relay, use the INA260 endpoint.
-    socket = subscribeToIna260Metrics(props.source, {
-      onMessage: handleMessage,
-      onError: handleError,
-    });
+    // For any relay, use the relay endpoint
+    unsubscribe = websocketService.subscribeToRelay(props.source, handleMessage);
   }
 }
 
 // Unsubscribe from the websocket.
 function unsubscribeWebSocket() {
-  if (socket) {
-    closeWebSocket(socket);
-    socket = null;
+  if (unsubscribe) {
+    unsubscribe();
+    unsubscribe = null;
   }
 }
 
@@ -244,7 +226,3 @@ onBeforeUnmount(() => {
   disposeChart();
 });
 </script>
-
-<style scoped>
-/* Basic styling */
-</style>

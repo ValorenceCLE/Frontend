@@ -130,12 +130,7 @@
 import BasicConfiguration from "./BasicConfiguration.vue";
 import { useConfigStore } from "@/store/config";
 import { getAllNetworkStatuses } from "@/api/networkService";
-import {
-  subscribeToUsageMetrics,
-  subscribeToCameraVoltsMetrics,
-  subscribeToRouterVoltsMetrics,
-  closeWebSocket,
-} from "@/api/websocketService";
+import { websocketService } from "@/services/websocketService";
 import { downloadRouterLogs, downloadCameraLogs } from "@/api/logsService";
 
 export default {
@@ -200,67 +195,33 @@ export default {
       }
     },
     setupUsageWebSocket() {
-      this.socket = subscribeToUsageMetrics({
-        onOpen: (event) => {
-          console.log("Usage WebSocket connected.", event);
-        },
-        onMessage: (event) => {
-          try {
-            const data = JSON.parse(event.data);
-            this.usage = data;
-          } catch (err) {
-            console.error("Error parsing usage WebSocket message:", err);
-          }
-        },
-        onError: (event) => {
-          console.error("Usage WebSocket error:", event);
-        },
-        onClose: (event) => {
-          console.log("Usage WebSocket closed:", event);
-        },
+      this.unsubscribeUsage = websocketService.subscribeToUsageMetrics((event) => {
+        try {
+          const data = JSON.parse(event.data);
+          this.usage = data;
+        } catch (err) {
+          console.error("Error parsing usage WebSocket message:", err);
+        }
       });
     },
     setupCameraVoltsWebSocket() {
-      this.cameraVoltsSocket = subscribeToCameraVoltsMetrics({
-        onOpen: (event) => {
-          console.log("Camera Volts WebSocket connected.", event);
-        },
-        onMessage: (event) => {
-          try {
-            const data = JSON.parse(event.data);
-            // Expecting either a number or an object with a 'voltage' property.
-            this.camera_volts = typeof data === "number" ? data : data.voltage;
-          } catch (err) {
-            console.error("Error parsing main volts message:", err);
-          }
-        },
-        onError: (event) => {
-          console.error("Main Volts WebSocket error:", event);
-        },
-        onClose: (event) => {
-          console.log("Main Volts WebSocket closed:", event);
-        },
+      this.unsubscribeCameraVolts = websocketService.subscribeToCameraVolts((event) => {
+        try {
+          const data = JSON.parse(event.data);
+          this.camera_volts = typeof data === "number" ? data : data.voltage;
+        } catch (err) {
+          console.error("Error parsing camera volts message:", err);
+        }
       });
     },
     setupRouterVoltsWebSocket() {
-      this.routerVoltsSocket = subscribeToRouterVoltsMetrics({
-        onOpen: (event) => {
-          console.log("Router Volts WebSocket connected.", event);
-        },
-        onMessage: (event) => {
-          try {
-            const data = JSON.parse(event.data);
-            this.router_volts = typeof data === "number" ? data : data.voltage;
-          } catch (err) {
-            console.error("Error parsing router volts message:", err);
-          }
-        },
-        onError: (event) => {
-          console.error("Router Volts WebSocket error:", event);
-        },
-        onClose: (event) => {
-          console.log("Router Volts WebSocket closed:", event);
-        },
+      this.unsubscribeRouterVolts = websocketService.subscribeToRouterVolts((event) => {
+        try {
+          const data = JSON.parse(event.data);
+          this.router_volts = typeof data === "number" ? data : data.voltage;
+        } catch (err) {
+          console.error("Error parsing router volts message:", err);
+        }
       });
     },
     async handleDownloadRouterLogs() {
@@ -308,10 +269,10 @@ export default {
   },
   beforeUnmount() {
     clearInterval(this.timer);
-    closeWebSocket(this.socket);
-    closeWebSocket(this.cameraVoltsSocket);
-    closeWebSocket(this.routerVoltsSocket);
-  },
+    if (this.unsubscribeUsage) this.unsubscribeUsage();
+    if (this.unsubscribeCameraVolts) this.unsubscribeCameraVolts();
+    if (this.unsubscribeRouterVolts) this.unsubscribeRouterVolts();
+  }
 };
 </script>
 

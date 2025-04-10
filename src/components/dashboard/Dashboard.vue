@@ -104,11 +104,7 @@ import { useConfigStore } from "@/store/config";
 import { getEnabledRelayStates } from "@/api/relayService";
 import { getAllNetworkStatuses } from "@/api/networkService";
 import { useSpeedTestStore } from "@/store/speedTest";
-import {
-  subscribeToMainVoltsMetrics,
-  subscribeToEnvironmentalMetrics,
-  closeWebSocket,
-} from "@/api/websocketService";
+import { websocketService } from "@/services/websocketService";
 
 /*********************
  * 1) Gauge Scaling  *
@@ -236,47 +232,41 @@ function updateRelayState({ id, state }) {
 /**********************************************
  * 5) Demo Gauges (WebSocket Integration)     *
  **********************************************/
-const temperature = ref(20);
+ const temperature = ref(20);
 const volts = ref(0);
 
-let voltsSocket = null;
-let environmentalSocket = null;
+let unsubscribeVolts = null;
+let unsubscribeEnvironmental = null;
 
 onMounted(() => {
   // Subscribe to Volts WebSocket
-  voltsSocket = subscribeToMainVoltsMetrics({
-    onMessage: (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        volts.value = typeof data === "number" ? parseFloat(data.toFixed(2)) : parseFloat(data.voltage.toFixed(2));
-      } catch (error) {
-        console.error("Error parsing volts websocket data:", error);
-      }
-    },
-    onError: (event) => {
-      console.error("Error in volts websocket:", event);
-    },
+  unsubscribeVolts = websocketService.subscribeToMainVolts((event) => {
+    try {
+      const data = JSON.parse(event.data);
+      volts.value = typeof data === "number" 
+        ? parseFloat(data.toFixed(2)) 
+        : parseFloat(data.voltage.toFixed(2));
+    } catch (error) {
+      console.error("Error parsing volts websocket data:", error);
+    }
   });
 
   // Subscribe to Temperature WebSocket
-  environmentalSocket = subscribeToEnvironmentalMetrics({
-    onMessage: (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        temperature.value = typeof data === "number" ? parseFloat(data.toFixed(2)) : parseFloat(data.temperature.toFixed(2));
-      } catch (error) {
-        console.error("Error parsing temperature websocket data:", error);
-      }
-    },
-    onError: (event) => {
-      console.error("Error in temperature websocket:", event);
-    },
+  unsubscribeEnvironmental = websocketService.subscribeToEnvironmental((event) => {
+    try {
+      const data = JSON.parse(event.data);
+      temperature.value = typeof data === "number" 
+        ? parseFloat(data.toFixed(2)) 
+        : parseFloat(data.temperature.toFixed(2));
+    } catch (error) {
+      console.error("Error parsing temperature websocket data:", error);
+    }
   });
 });
 
 onBeforeUnmount(() => {
-  if (voltsSocket) closeWebSocket(voltsSocket);
-  if (environmentalSocket) closeWebSocket(environmentalSocket);
+  if (unsubscribeVolts) unsubscribeVolts();
+  if (unsubscribeEnvironmental) unsubscribeEnvironmental();
 });
 
 /****************************************************
