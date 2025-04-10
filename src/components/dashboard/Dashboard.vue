@@ -30,12 +30,15 @@
             </span>
           </div>
 
-          <!-- Upload/Download Speeds from the Store -->
+          <!-- Upload/Download Speeds from the Store - UPDATED SECTION -->
           <div class="flex justify-between">
             <strong>Upload Speed:</strong>
             <span>
-              <template v-if="speedTestStore.speedTestResults === null">
+              <template v-if="speedTestStore.speedTestLoading">
                 Loading...
+              </template>
+              <template v-else-if="!speedTestStore.speedTestResults">
+                Pending...
               </template>
               <template v-else>
                 {{ (speedTestStore.speedTestResults.upload / 1_000_000).toFixed(2) }} Mbps
@@ -45,8 +48,11 @@
           <div class="flex justify-between">
             <strong>Download Speed:</strong>
             <span>
-              <template v-if="speedTestStore.speedTestResults === null">
+              <template v-if="speedTestStore.speedTestLoading">
                 Loading...
+              </template>
+              <template v-else-if="!speedTestStore.speedTestResults">
+                Pending...
               </template>
               <template v-else>
                 {{ (speedTestStore.speedTestResults.download / 1_000_000).toFixed(2) }} Mbps
@@ -232,7 +238,7 @@ function updateRelayState({ id, state }) {
 /**********************************************
  * 5) Demo Gauges (WebSocket Integration)     *
  **********************************************/
- const temperature = ref(20);
+const temperature = ref(20);
 const volts = ref(0);
 
 let unsubscribeVolts = null;
@@ -270,12 +276,16 @@ onBeforeUnmount(() => {
 });
 
 /****************************************************
- * 6) Speed Test Store Integration                 *
+ * 6) Speed Test Store Integration - UPDATED SECTION *
  ****************************************************/
-// Instead of local speed test logic, we just read from the store
-
 const speedTestStore = useSpeedTestStore();
-speedTestStore.startSpeedTestPolling();
-const { speedTestResults, speedTestLoading } = storeToRefs(speedTestStore);
-</script>
 
+// Start polling with a 30-second interval instead of the original 10-second interval
+// to avoid hitting rate limits (especially since your API has a 5-minute cache)
+speedTestStore.startSpeedTestPolling(30000);
+
+// Clean up on component unmount
+onBeforeUnmount(() => {
+  speedTestStore.stopPolling();
+});
+</script>

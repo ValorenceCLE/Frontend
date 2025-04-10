@@ -86,13 +86,29 @@ export async function getNetworkStatus(host, { retries = 2, timeout = 1, port = 
 
 /**
  * Perform a speed test.
- * @returns {Promise<Object>} Speed test results including download, upload, and ping.
+ * @param {boolean} forceUpdate - Whether to force a new test instead of using cached results.
+ * @returns {Promise<Object>} Speed test results including download and upload speeds.
  */
-export async function performSpeedTest() {
+export async function performSpeedTest(forceUpdate = false) {
     try {
-        const response = await axios.get('/network/speedtest');
-        return response.data; // Return the speed test results
+        const response = await axios.get('/network/speedtest', {
+            params: { force: forceUpdate }
+        });
+        
+        // Extract just the results part
+        if (response.data.results) {
+            return response.data.results;
+        } else if (response.data.status) {
+            console.log("Speedtest status:", response.data.status);
+            return null;
+        } else if (response.data.error) {
+            console.error("Speedtest error:", response.data.error);
+            return null;
+        } else {
+            return response.data; // If somehow the structure is different
+        }
     } catch (error) {
+        console.error("Speedtest request failed:", error);
         throw new Error(error.response?.data?.detail || error.message);
     }
 }
