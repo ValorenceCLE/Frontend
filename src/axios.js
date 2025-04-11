@@ -1,7 +1,8 @@
-// src/axios.js - Production-ready version
+// src/axios.js - Production-ready version with enhanced security
 
 import axios from 'axios';
 import { errorService } from '@/services/errorService';
+
 // Determine base URL based on current hostname
 const baseURL = '/api'; // In production, always use relative path
 
@@ -22,6 +23,61 @@ const processQueue = (error, token = null) => {
   failedQueue = [];
 };
 
+// Helper function to securely store token with expiry
+const securelyStoreToken = (token, expiryTime) => {
+  if (!token || !expiryTime) return;
+  
+  try {
+    // Store token with expiry info
+    const tokenData = {
+      value: token,
+      expiry: expiryTime,
+      created: Date.now()
+    };
+    localStorage.setItem("token", JSON.stringify(tokenData));
+  } catch (error) {
+    console.error('Error storing token:', error);
+  }
+};
+
+// Helper function to get token, checking expiry
+const getStoredToken = () => {
+  try {
+    // Try to get the token data from storage
+    const tokenStr = localStorage.getItem("token");
+    
+    // Handle legacy format (direct token string)
+    if (tokenStr && tokenStr.startsWith('ey')) {
+      return tokenStr;
+    }
+    
+    // Parse the JSON token data
+    const tokenData = JSON.parse(tokenStr);
+    if (!tokenData) return null;
+    
+    // Check if token is expired or about to expire (within 5 minutes)
+    const now = Date.now();
+    const expiryTime = tokenData.expiry * 1000; // Convert to milliseconds
+    const fiveMinutes = 5 * 60 * 1000;
+    
+    if (expiryTime - now < fiveMinutes) {
+      // Token is expired or about to expire
+      return null;
+    }
+    
+    return tokenData.value;
+  } catch (error) {
+    // If there's an error parsing (e.g., not JSON), try the raw value
+    const rawToken = localStorage.getItem("token");
+    if (rawToken && typeof rawToken === 'string') {
+      return rawToken;
+    }
+    
+    console.error('Error retrieving token:', error);
+    return null;
+  }
+};
+
 const instance = axios.create({
   baseURL,
   withCredentials: true,
@@ -29,7 +85,7 @@ const instance = axios.create({
 });
 
 instance.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
+  const token = getStoredToken();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -79,9 +135,12 @@ instance.interceptors.response.use(
         // Try to refresh the token
         const response = await instance.post('/auth/refresh');
         const newToken = response.data.access_token;
+        const decodedToken = response.data.decoded || {}; 
+        const exp = decodedToken.exp || (Math.floor(Date.now() / 1000) + 3600); // Default 1hr expiry
         
         if (newToken) {
-          localStorage.setItem("token", newToken);
+          // Store token securely with expiry
+          securelyStoreToken(newToken, exp);
           
           // Update auth header for the original request
           originalRequest.headers.Authorization = `Bearer ${newToken}`;
@@ -111,6 +170,7 @@ instance.interceptors.response.use(
     
     // For 403 errors (Forbidden)
     if (error.response.status === 403) {
+      errorService.addError('Access denied: You do not have permission to perform this action');
       // User is authenticated but doesn't have permission
       return Promise.reject(
         new Error('Access denied: You do not have permission to perform this action')
@@ -119,14 +179,18 @@ instance.interceptors.response.use(
     
     // Handle 500 errors more gracefully
     if (error.response.status >= 500) {
+      errorService.addError('Server error: The server encountered an unexpected condition');
       return Promise.reject(
         new Error('Server error: The server encountered an unexpected condition')
       );
     }
+    
     errorService.addError(error);
     // For all other errors, just reject with the error
     return Promise.reject(error);
   }
 );
 
+// Export secure token functions for use in auth service
+export { securelyStoreToken, getStoredToken };
 export default instance;

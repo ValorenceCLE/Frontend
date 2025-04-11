@@ -39,37 +39,76 @@
 </template>
 
 <script>
+import { ref } from 'vue';
 import { login as authLogin } from "@/api/authService";
 import { jwtDecode } from "jwt-decode";
 import { useConfigStore } from "@/store/config";
+import { useRouter } from 'vue-router'; // Added this import
+import { validateInput } from '@/utils/validation';
+import { securelyStoreToken } from '@/axios';
 
 export default {
   name: "Login",
-  data() {
-    return {
-      username: "",
-      password: "",
-      errorMessage: "",
+  setup() {
+    const username = ref("");
+    const password = ref("");
+    const errorMessage = ref("");
+    const isLoading = ref(false);
+    const configStore = useConfigStore();
+    const router = useRouter(); // Added this line to define router
+    
+    // Add validation states
+    const usernameError = ref("");
+    const passwordError = ref("");
+    
+    const validateForm = () => {
+      let isValid = true;
+      
+      // Validate username
+      const usernameResult = validateInput.string(username.value, { required: true, min: 3 });
+      if (!usernameResult.valid) {
+        usernameError.value = usernameResult.message;
+        isValid = false;
+      } else {
+        usernameError.value = "";
+        username.value = usernameResult.value;
+      }
+      
+      // Validate password
+      const passwordResult = validateInput.string(password.value, { required: true, min: 6 });
+      if (!passwordResult.valid) {
+        passwordError.value = passwordResult.message;
+        isValid = false;
+      } else {
+        passwordError.value = "";
+      }
+      
+      return isValid;
     };
-  },
-  methods: {
-    async login() {
+    
+    const login = async () => {
       try {
-        // Call the auth service for login
-        const tokenData = await authLogin(this.username, this.password);
-        const token = tokenData.access_token;
+        isLoading.value = true;
+        errorMessage.value = "";
         
-        // Fetch configuration after login
-        const configStore = useConfigStore();
-        configStore.fetchConfig();
+        // Call the auth service for login
+        const tokenData = await authLogin(username.value, password.value);
+        const token = tokenData.access_token;
         
         // Decode token for role and expiration details
         const decoded = jwtDecode(token);
         const exp = decoded.exp; // expiration time in seconds
+        
+        // Store token securely with expiry
+        securelyStoreToken(token, exp);
+        
+        // Fetch configuration after login
+        configStore.fetchConfig();
+        
+        // Set up a warning for session expiration
         const currentTime = Math.floor(Date.now() / 1000);
         const ttl = exp - currentTime;
         
-        // Set up a warning for session expiration
         if (ttl > 60) {
           setTimeout(() => {
             alert("Your session is about to expire. Please log in again.");
@@ -80,12 +119,24 @@ export default {
         
         // Route based on the user role
         const userRole = decoded.role;
-        this.$router.push(userRole === "admin" ? "/admin" : "/user");
+        router.push(userRole === "admin" ? "/admin" : "/user");
       } catch (error) {
-        this.errorMessage = error.message || "Login failed. Please try again.";
+        errorMessage.value = error.message || "Login failed. Please try again.";
+      } finally {
+        isLoading.value = false;
       }
-    },
-  },
+    };
+    
+    return {
+      username,
+      password,
+      errorMessage,
+      isLoading,
+      usernameError,
+      passwordError,
+      login
+    };
+  }
 };
 </script>
 
