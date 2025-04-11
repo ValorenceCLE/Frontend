@@ -1,68 +1,39 @@
-// src/services/websocketService.js
+// src/services/websocketService.js - Improved for production
 
 class WebSocketManager {
   constructor() {
-      this.sockets = new Map(); // Store active connections
-      this.subscribers = new Map(); // Store subscribers per endpoint
-      
-      // Auto-detect protocol based on the current page protocol
-      this.protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      
-      // Production environment should always use wss
-      if (window.location.hostname !== 'localhost' && 
-          window.location.hostname !== '127.0.0.1') {
-        this.protocol = 'wss:';
-      }
-      
-      this.baseUrl = this._buildBaseUrl();
-      console.log(`WebSocket initialized with base URL: ${this.baseUrl}`);
-      
-      this.reconnectAttempts = 0;
-      this.maxReconnectAttempts = 5;
-      this.reconnectDelay = 1000;
-  }
+    this.sockets = new Map(); // Store active connections
+    this.subscribers = new Map(); // Store subscribers per endpoint
     
-
-  /**
-   * Detects the appropriate WebSocket protocol to use
-   * Tries wss:// first if page is loaded over https://
-   * Falls back to ws:// if secure connection fails or page is http://
-   */
-  _detectProtocol() {
-    return window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    // Always use secure WebSockets in production
+    this.protocol = 'wss:';
+    
+    this.baseUrl = this._buildBaseUrl();
+    
+    this.reconnectAttempts = new Map(); // Track attempts per URL
+    this.maxReconnectAttempts = 5;
+    this.reconnectDelay = 1000;
+    this.connectionTimeouts = new Map(); // Track connection timeouts
   }
   
   /**
    * Build the base URL for WebSocket connections
+   * Creates a consistent URL that works with the FastAPI backend
    */
   _buildBaseUrl() {
     const hostname = window.location.hostname;
-    const standardPorts = {'http:': '80', 'https:': '443'};
-    const port = window.location.port || standardPorts[window.location.protocol] || '';
     
-    // Handle special case for Peplink router URLs
-    if (hostname.includes('.rwa11.peplink.com')) {
-      // For Peplink access, we need to use the same URL structure
-      // but ensure we're targeting the API endpoint
-      return `${this.protocol}//${hostname}${port ? ':' + port : ''}/api`;
+    // Determine the appropriate port
+    let port = window.location.port;
+    if (!port) {
+      // If no port is specified in URL, use default ports
+      port = window.location.protocol === 'https:' ? '443' : '80';
     }
     
-    // Check if localhost (match axios configuration)
-    if (hostname === 'localhost' || hostname === '127.0.0.1') {
-      return `${this.protocol}//localhost:8000/api`;
-    }
-    
-    // Default case - use the current hostname but make sure to use the correct path
-    // The nginx config is set up to proxy /api/ to the backend service
-    // For non-localhost environments, just use /api as the base URL regardless of port
-    return `${this.protocol}//${hostname}${port ? ':' + port : ''}/api`;
-  }
-
-  /**
-   * Determine the fallback protocol if the primary fails
-   */
-  _getFallbackProtocol() {
-    return this.protocol === 'wss:' ? 'ws:' : null;
+    // Construct the WebSocket URL
+    // This approach ensures the WebSocket connects to the same domain as the page
+    // which works well with FastAPI's WebSocket routing
+    return `${this.protocol}//${hostname}:${port}/api`;
   }
 
   /**
@@ -71,7 +42,9 @@ class WebSocketManager {
    * @returns {string} Complete WebSocket URL
    */
   getWsUrl(endpoint) {
-    return `${this.baseUrl}${endpoint}`;
+    // Ensure endpoint starts with a slash
+    const formattedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+    return `${this.baseUrl}${formattedEndpoint}`;
   }
 
   /**
@@ -86,6 +59,7 @@ class WebSocketManager {
     // Initialize subscribers array for this endpoint if it doesn't exist
     if (!this.subscribers.has(url)) {
       this.subscribers.set(url, []);
+      this.reconnectAttempts.set(url, 0);
     }
     
     // Add this subscriber
@@ -119,13 +93,13 @@ class WebSocketManager {
     // If no more subscribers, close and remove the socket
     if (subscribers.length === 0) {
       this.closeSocket(url);
+      this.subscribers.delete(url);
+      this.reconnectAttempts.delete(url);
     }
   }
 
   /**
-   * Create a new WebSocket connection
-   * Will attempt to use the primary protocol first, then fall back
-   * if necessary and possible.
+   * Create a new WebSocket connection with proper error handling and timeouts
    * @param {string} url - The WebSocket URL
    */
   createSocket(url) {
@@ -134,9 +108,23 @@ class WebSocketManager {
     try {
       const socket = new WebSocket(url);
       
+      // Set connection timeout (10 seconds)
+      const timeoutId = setTimeout(() => {
+        if (socket.readyState !== WebSocket.OPEN) {
+          socket.close();
+          this.handleConnectionFailure(url, new Error('Connection timeout'));
+        }
+      }, 10000);
+      
+      this.connectionTimeouts.set(url, timeoutId);
+      
       socket.onopen = () => {
-        console.log(`WebSocket connected: ${url}`);
-        this.reconnectAttempts = 0; // Reset reconnect attempts on successful connection
+        // Clear the connection timeout
+        clearTimeout(this.connectionTimeouts.get(url));
+        this.connectionTimeouts.delete(url);
+        
+        // Reset reconnect attempts on successful connection
+        this.reconnectAttempts.set(url, 0);
       };
       
       socket.onmessage = (event) => {
@@ -146,61 +134,84 @@ class WebSocketManager {
           try {
             callback(event);
           } catch (err) {
-            console.error('Error in subscriber callback:', err);
+            // Log subscriber errors but don't break the WebSocket
+            this._logError(`Subscriber callback error for ${url}:`, err);
           }
         });
       };
       
       socket.onerror = (error) => {
-        console.error(`WebSocket error for ${url}:`, error);
-        
-        // If we're using wss:// and it failed, try ws:// as a fallback
-        const fallbackProtocol = this._getFallbackProtocol();
-        if (fallbackProtocol && this.protocol === 'wss:' && this.reconnectAttempts === 0) {
-          console.log(`Attempting fallback to ${fallbackProtocol} protocol...`);
-          this.protocol = fallbackProtocol;
-          const fallbackUrl = url.replace('wss:', 'ws:');
-          setTimeout(() => {
-            this.createSocket(fallbackUrl);
-          }, 500);
-        }
+        this._logError(`WebSocket error for ${url}:`, error);
       };
       
       socket.onclose = (event) => {
-        console.log(`WebSocket closed: ${url}`, event);
+        // Clean up timeout if it exists
+        if (this.connectionTimeouts.has(url)) {
+          clearTimeout(this.connectionTimeouts.get(url));
+          this.connectionTimeouts.delete(url);
+        }
         
         // Remove from active sockets
         this.sockets.delete(url);
         
         // Attempt to reconnect if we have subscribers
         const subscribers = this.subscribers.get(url) || [];
-        if (subscribers.length > 0 && this.reconnectAttempts < this.maxReconnectAttempts) {
-          this.scheduleReconnect(url);
+        if (subscribers.length > 0) {
+          this.handleConnectionFailure(url, new Error(`WebSocket closed with code: ${event.code}`));
         }
       };
       
       this.sockets.set(url, socket);
     } catch (error) {
-      console.error(`Failed to create WebSocket for ${url}:`, error);
-      this.scheduleReconnect(url);
+      this.handleConnectionFailure(url, error);
     }
   }
 
   /**
-   * Schedule a reconnection attempt with exponential backoff
+   * Handle connection failures and reconnection logic
    * @param {string} url - The WebSocket URL
+   * @param {Error} error - The error that caused the failure
    */
-  scheduleReconnect(url) {
-    this.reconnectAttempts++;
-    const delay = Math.min(30000, this.reconnectDelay * Math.pow(1.5, this.reconnectAttempts - 1));
+  handleConnectionFailure(url, error) {
+    this._logError(`WebSocket connection failure for ${url}:`, error);
     
-    console.log(`Scheduling reconnect for ${url} in ${delay}ms (attempt ${this.reconnectAttempts})`);
+    // Get current attempt count
+    const currentAttempts = this.reconnectAttempts.get(url) || 0;
     
-    setTimeout(() => {
-      if (this.subscribers.has(url) && this.subscribers.get(url).length > 0) {
-        this.createSocket(url);
-      }
-    }, delay);
+    // Check if we should retry
+    if (currentAttempts < this.maxReconnectAttempts) {
+      // Update attempt count
+      this.reconnectAttempts.set(url, currentAttempts + 1);
+      
+      // Calculate backoff delay (exponential with jitter)
+      const baseDelay = this.reconnectDelay * Math.pow(1.5, currentAttempts);
+      const jitter = Math.random() * 0.3 * baseDelay; // Add up to 30% jitter
+      const delay = Math.min(30000, baseDelay + jitter); // Cap at 30 seconds
+      
+      // Schedule reconnection
+      setTimeout(() => {
+        if (this.subscribers.has(url) && this.subscribers.get(url).length > 0) {
+          this.createSocket(url);
+        }
+      }, delay);
+    } else {
+      // Max attempts reached - notify subscribers
+      const subscribers = this.subscribers.get(url) || [];
+      subscribers.forEach(callback => {
+        try {
+          // Send a custom error event to subscribers
+          callback({
+            type: 'error',
+            data: JSON.stringify({
+              error: 'Connection failed after maximum retry attempts'
+            })
+          });
+        } catch (err) {
+          // Just log errors with callbacks
+          this._logError(`Error notifying subscriber about connection failure for ${url}:`, err);
+        }
+      });
+    }
   }
 
   /**
@@ -208,22 +219,59 @@ class WebSocketManager {
    * @param {string} url - The WebSocket URL
    */
   closeSocket(url) {
+    // Clear any pending timeouts
+    if (this.connectionTimeouts.has(url)) {
+      clearTimeout(this.connectionTimeouts.get(url));
+      this.connectionTimeouts.delete(url);
+    }
+    
+    // Close the socket if it exists
     const socket = this.sockets.get(url);
     if (socket) {
       if (socket.readyState === WebSocket.OPEN) {
-        socket.close();
+        socket.close(1000, 'Client disconnecting normally');
       }
       this.sockets.delete(url);
     }
-    this.subscribers.delete(url);
   }
 
   /**
    * Close all WebSocket connections
    */
   closeAll() {
+    // Clear all timeouts
+    this.connectionTimeouts.forEach((timeoutId) => {
+      clearTimeout(timeoutId);
+    });
+    this.connectionTimeouts.clear();
+    
+    // Close all sockets
     for (const url of this.sockets.keys()) {
       this.closeSocket(url);
+    }
+    
+    // Clear all data structures
+    this.sockets.clear();
+    this.subscribers.clear();
+    this.reconnectAttempts.clear();
+  }
+  
+  /**
+   * Log errors in a production-friendly way
+   * @param {string} message - Error message
+   * @param {Error} error - Error object
+   */
+  _logError(message, error) {
+    // Production-grade logging
+    // In a real production app, you might want to send these to a 
+    // monitoring service like Sentry, LogRocket, etc.
+    console.error(message, error);
+    
+    // If an error monitoring service exists, use it
+    if (window.errorReportingService) {
+      window.errorReportingService.captureException(error, {
+        extra: { message }
+      });
     }
   }
 }
@@ -267,7 +315,7 @@ export const websocketService = {
   }
 };
 
-// Add a cleanup function on window unload/beforeunload
+// Add a cleanup function on window unload
 window.addEventListener('beforeunload', () => {
   websocketService.closeAll();
 });

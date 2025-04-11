@@ -1,3 +1,5 @@
+# Dockerfile.frontend for production
+
 # Stage 1: Build the Vue App
 FROM node:20-alpine AS build-stage
 WORKDIR /app
@@ -17,9 +19,6 @@ WORKDIR /usr/share/nginx/html
 # Create a directory for certificates
 RUN mkdir -p /app/certs
 
-# Install openssl for potential certificate conversion
-RUN apk add --no-cache openssl
-
 # Remove any default files from NGINX
 RUN rm -rf ./*
 
@@ -29,5 +28,9 @@ COPY --from=build-stage /app/dist ./
 # Copy custom NGINX configuration
 COPY nginx.conf /etc/nginx/nginx.conf
 
+# Add health check
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 CMD wget -q --spider http://localhost/ || exit 1
+
+# Default command
 EXPOSE 80 443
 CMD ["nginx", "-g", "daemon off;"]
