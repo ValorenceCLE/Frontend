@@ -1,5 +1,5 @@
 <template>
-    <div class="flex flex-col items-center justify-center w-full h-full">
+    <div class="flex flex-col items-center justify-start w-full overflow-hidden">
         <!-- Header -->
         <div class="w-full max-w-lg p-2 bg-gray-200 border border-gray-500 rounded-md shadow-md">
             <h1 class="text-Header text-textColor text-center py-1">Application Monitoring</h1>
@@ -36,7 +36,7 @@
         </div>
 
         <!-- Tab Content -->
-        <div class="w-full max-w-4xl bg-gray-200 rounded border border-gray-500 p-4">
+        <div class="w-full max-w-4xl bg-gray-200 rounded border border-gray-500 p-4 overflow-y-auto max-h-[calc(100vh-20rem)]">
             <!-- Errors Tab -->
             <div v-if="activeTab === 'errors'">
                 <div v-if="errors.length === 0" class="text-center py-6 text-gray-500">
