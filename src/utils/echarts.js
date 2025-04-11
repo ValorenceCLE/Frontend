@@ -1,18 +1,16 @@
+// src/utils/echarts.js
 import { use } from 'echarts/core';
 import { CanvasRenderer } from 'echarts/renderers';
-import { SVGRenderer } from 'echarts/renderers';
-import { LineChart, BarChart, GaugeChart } from 'echarts/charts';
-import { GridComponent, TooltipComponent, AxisPointerComponent, TitleComponent, LegendComponent } from "echarts/components";
+import { LineChart, GaugeChart } from 'echarts/charts';
+import { GridComponent, TooltipComponent, TitleComponent, LegendComponent } from "echarts/components";
 
+// Only load the components we actually use
 use([
-    CanvasRenderer,
-    SVGRenderer,
-    LineChart,
-    BarChart,
-    GaugeChart,
-    GridComponent,
-    TooltipComponent,
-    AxisPointerComponent,
-    TitleComponent,
-    LegendComponent
-])
+  CanvasRenderer,
+  LineChart,
+  GaugeChart, 
+  GridComponent,
+  TooltipComponent,
+  TitleComponent,
+  LegendComponent
+]);
