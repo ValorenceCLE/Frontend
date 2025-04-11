@@ -1,7 +1,7 @@
 // src/axios.js - Production-ready version
 
 import axios from 'axios';
-
+import { errorService } from '@/services/errorService';
 // Determine base URL based on current hostname
 const baseURL = '/api'; // In production, always use relative path
 
@@ -46,7 +46,13 @@ instance.interceptors.response.use(
     // If we can't reach the server at all, handle it gracefully
     if (!error.response) {
       // Network error or server not reachable
-      // In a real app, you'd want to handle offline status here
+      errorService.addError(error);
+      
+      // If this is a POST/PUT/DELETE operation, save for later retry
+      if (['post', 'put', 'delete'].includes(originalRequest.method.toLowerCase())) {
+        errorService.addPendingOperation(() => instance(originalRequest));
+      }
+      
       return Promise.reject(
         new Error('Network error: Unable to reach the server. Please check your connection.')
       );
@@ -117,7 +123,7 @@ instance.interceptors.response.use(
         new Error('Server error: The server encountered an unexpected condition')
       );
     }
-    
+    errorService.addError(error);
     // For all other errors, just reject with the error
     return Promise.reject(error);
   }

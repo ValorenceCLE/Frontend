@@ -3,11 +3,8 @@
     <!-- Loading overlay: shown while config is being fetched -->
     <Loading :isLoading="configStore.loading" />
 
-    <!-- Toast notification: shown when an error exists -->
-    <ToastNotification 
-      :visible="Boolean(configStore.error)" 
-      :message="configStore.error || ''" 
-    />
+    <!-- Global error display -->
+    <GlobalErrorDisplay />
 
     <!-- The main content of your app -->
     <router-view />
@@ -24,7 +21,7 @@ export default {
 import { onMounted } from "vue";
 import { useConfigStore } from "./store/config.js";
 import Loading from "./components/etc/Loading.vue";
-import ToastNotification from "./components/etc/ToastNotification.vue";
+import GlobalErrorDisplay from "./components/etc/GlobalErrorDisplay.vue";
 
 const configStore = useConfigStore();
 
@@ -37,7 +34,3 @@ onMounted(() => {
   }
 });
 </script>
-
-<style>
-/* Add any global styles here if needed */
-</style>
