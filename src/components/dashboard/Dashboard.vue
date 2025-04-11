@@ -103,7 +103,6 @@
 
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, nextTick } from "vue";
-import { storeToRefs } from "pinia";
 import Gauge from "@/components/dashboard/Gauge.vue";
 import RelayCard from "@/components/dashboard/RelayCard.vue";
 import { useConfigStore } from "@/store/config";
@@ -111,6 +110,7 @@ import { getEnabledRelayStates } from "@/api/relayService";
 import { getAllNetworkStatuses } from "@/api/networkService";
 import { useSpeedTestStore } from "@/store/speedTest";
 import { websocketService } from "@/services/websocketService";
+import { monitoringService } from '@/services/monitoringService';
 
 /*********************
  * 1) Gauge Scaling  *
@@ -131,6 +131,10 @@ function measureScalingContainer() {
 onMounted(() => {
   measureScalingContainer();
   window.addEventListener("resize", measureScalingContainer, { passive: true });
+  monitoringService.trackEvent('component', 'view', 'Dashboard');
+  
+  // Mark the performance
+  monitoringService.markPerformance('dashboard:mounted');
 });
 onBeforeUnmount(() => {
   window.removeEventListener("resize", measureScalingContainer);

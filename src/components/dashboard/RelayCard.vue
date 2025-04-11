@@ -38,9 +38,18 @@
 </template>
 
 <script setup>
-import { ref, computed, defineEmits, defineProps } from "vue";
+import { ref, computed, defineEmits, defineProps, onMounted } from "vue";
 import { turnRelayOn, turnRelayOff, pulseRelay } from "@/api/relayService";
+import { monitoringService } from '@/services/monitoringService';
 
+
+onMounted(() => {
+  // Track that this component was viewed
+  monitoringService.trackEvent('component', 'view', 'Dashboard');
+  
+  // Mark the performance
+  monitoringService.markPerformance('dashboard:mounted');
+});
 // The parent (Dashboard.vue) passes a relay object with { id, name, state, dashboard, etc. }
 const props = defineProps({
   relay: {
@@ -95,6 +104,7 @@ const buttons = computed(() => {
 
 // Turn Relay On
 const turn_on = async () => {
+  monitoringService.trackEvent('button', 'click', 'TurnRelayOn');
   try {
     const result = await turnRelayOn(props.relay.id);
     console.log("Turn on result:", result);
@@ -107,6 +117,7 @@ const turn_on = async () => {
 
 // Turn Relay Off
 const turn_off = async () => {
+  monitoringService.trackEvent('button', 'click', 'TurnRelayOff');
   try {
     const result = await turnRelayOff(props.relay.id);
     console.log("Turn off result:", result);
@@ -118,6 +129,7 @@ const turn_off = async () => {
 
 // Pulse Relay
 const pulse_relay = async () => {
+  monitoringService.trackEvent('button', 'click', 'PulseRelay');
   try {
     isPulsing.value = true;
     const result = await pulseRelay(props.relay.id);

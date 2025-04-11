@@ -83,7 +83,7 @@ export default {
           icon: monitorIcon,
           route: "monitor",
           defaultSubRoute: "real-time",
-          items: ["Real Time", "Historical"],
+          items: ["Real Time", "Historical", "Application"],
         },
         {
           title: "Dashboard",
