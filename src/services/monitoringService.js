@@ -150,7 +150,7 @@ class MonitoringService {
           session: this.getSessionInfo()
         });
         
-        navigator.sendBeacon('/api/logs/client', errorData);
+        //navigator.sendBeacon('/api/logs/client', errorData);
       } catch (e) {
         // Silent fail for beacon - it's just for reporting
       }
@@ -219,7 +219,7 @@ class MonitoringService {
           session: this.getSessionInfo()
         });
         
-        navigator.sendBeacon('/api/analytics/events', eventData);
+        //navigator.sendBeacon('/api/analytics/events', eventData);
       } catch (e) {
         // Silent fail for beacon - it's just for reporting
       }
