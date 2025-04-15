@@ -308,6 +308,9 @@ export const websocketService = {
   subscribeToRelay(relayName, callback) {
     return wsManager.subscribe(`/sensor/ina260/${relayName}`, callback);
   },
+  subscribeToGeneralSettings(callback) {
+    return wsManager.subscribe('/settings/general', callback);
+  },
   
   // Close all connections (useful when unmounting app)
   closeAll() {
