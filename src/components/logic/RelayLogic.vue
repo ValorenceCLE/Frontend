@@ -9,7 +9,7 @@
     </div>
 
     <!-- Tasks Table Card -->
-    <div v-if="Object.keys(conditionalTasks).length" 
+    <div v-if="conditionalTasks.length" 
          class="bg-gray-200 rounded my-3 border-gray-500 border relative w-full max-w-3xl">
       <ConditionalTasksTable
         :tasks="conditionalTasks"
@@ -54,15 +54,13 @@ export default {
   data() {
     return {
       relays: {},
-      conditionalTasks: {},
+      conditionalTasks: [],
       currentTask: null,
       showModal: false,
       modalTitle: "Add Conditional Logic",
       globalFieldMapping: {
-        environment: ["Temperature", "Humidity"],
-        network: ["Packet Loss (%)", "Latency"],
-        cellular: ["SINR", "RSRP", "RSRQ"],
-        mainPower: ["Volts", "Watts", "Amps"],
+        environment: ["temperature", "humidity"],
+        mainPower: ["volts", "watts", "amps"],
       },
     };
   },
@@ -72,17 +70,35 @@ export default {
     },
   },
   methods: {
+    // Simple UUID generator function
+    generateUUID() {
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        const r = Math.random() * 16 | 0;
+        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+      });
+    },
+    
     async fetchData() {
       try {
         if (!this.configStore.configData) {
           await this.configStore.fetchConfig();
         }
         this.relays = this.configStore.configData?.relays || {};
-        this.conditionalTasks = this.configStore.configData?.tasks || {};
+        this.conditionalTasks = this.configStore.configData?.tasks || [];
+        
+        // Ensure all tasks have an ID
+        this.conditionalTasks = this.conditionalTasks.map(task => {
+          if (!task.id) {
+            return { ...task, id: this.generateUUID() };
+          }
+          return task;
+        });
       } catch (error) {
         console.error("Error fetching config store data:", error);
       }
     },
+    
     openAddTaskModal() {
       this.currentTask = {
         name: "",
@@ -95,47 +111,52 @@ export default {
       this.modalTitle = "Add Conditional Task";
       this.showModal = true;
     },
+    
     closeModal() {
       this.showModal = false;
     },
+    
     async handleTaskSubmit(task) {
       try {
         if (this.currentTask && this.currentTask.id !== undefined) {
-          this.conditionalTasks[this.currentTask.id] = task;
+          // Update existing task - find index and replace
+          const index = this.conditionalTasks.findIndex(t => t.id === this.currentTask.id);
+          if (index !== -1) {
+            // Create new array with updated task
+            const updatedTasks = [...this.conditionalTasks];
+            updatedTasks[index] = { ...task, id: this.currentTask.id };
+            this.conditionalTasks = updatedTasks;
+          }
         } else {
-          const newId =
-            Math.max(0, ...Object.keys(this.conditionalTasks).map(Number)) + 1;
-          this.conditionalTasks[newId] = { ...task };
+          // New task - generate a UUID
+          const taskWithId = { ...task, id: this.generateUUID() };
+          this.conditionalTasks = [...this.conditionalTasks, taskWithId];
         }
-        this.configStore.configData.tasks = { ...this.conditionalTasks };
+        this.configStore.configData.tasks = [...this.conditionalTasks];
         await this.configStore.updateConfig({ ...this.configStore.configData });
         this.closeModal();
       } catch (error) {
         console.error("Error saving task:", error);
       }
     },
+    
     async deleteTask(taskId) {
       try {
-        if (!this.conditionalTasks[taskId]) {
-          console.error("Task not found:", taskId);
-          return;
-        }
-        delete this.conditionalTasks[taskId];
-        this.configStore.configData.tasks = { ...this.conditionalTasks };
+        // Filter out the task with the given ID
+        this.conditionalTasks = this.conditionalTasks.filter(task => task.id !== taskId);
+        this.configStore.configData.tasks = [...this.conditionalTasks];
         await this.configStore.updateConfig({ ...this.configStore.configData });
       } catch (error) {
         console.error("Error deleting task:", error);
       }
     },
+    
     editTask(task) {
-      const taskId = Object.keys(this.conditionalTasks).find(
-        (k) => this.conditionalTasks[k] === task
-      );
-      if (!taskId) {
+      if (!task.id) {
         console.error("Task ID not found for editing.");
         return;
       }
-      this.currentTask = { ...task, id: taskId };
+      this.currentTask = { ...task };
       this.modalTitle = "Edit Custom Logic";
       this.showModal = true;
     },
@@ -148,9 +169,3 @@ export default {
   },
 };
 </script>
-
-<style scoped>
-/* We replicate the margin/padding from reference. 
-   The main difference from your prior code is that 
-   we rely on the same .bg-gray-200 .border approach. */
-</style>

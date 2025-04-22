@@ -23,9 +23,7 @@
           >
             <option disabled value="">Select Source</option>
             <optgroup label="General">
-              <option value="environment">Environment</option>
-              <option value="network">Network</option>
-              <option value="cellular">Cellular</option>
+              <option value="environmental">Environment</option>
               <option value="mainPower">Main Power</option>
             </optgroup>
             <optgroup label="Relay Power">
@@ -144,13 +142,17 @@ export default {
         this.availableFields = [];
         return;
       }
-      // If user picked a relay, then show Volts/Watts/Amps
+      // If user picked a relay or main power, then show Volts/Watts/Amps
       const isRelay = this.enabledRelays.some(
         (relay) => relay.id === this.trigger.source
       );
-      this.availableFields = isRelay
-        ? ["volts", "watts", "amps"]
-        : this.fieldOptions[this.trigger.source] || [];
+      const isMainPower = this.trigger.source === "main";
+      
+      if (isRelay || isMainPower) {
+        this.availableFields = ["volts", "watts", "amps"];
+      } else {
+        this.availableFields = this.fieldOptions[this.trigger.source] || [];
+      }
 
       // Reset field if it is no longer in the list
       if (!this.availableFields.includes(this.trigger.field)) {

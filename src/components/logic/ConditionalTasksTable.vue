@@ -14,7 +14,7 @@
         </tr>
       </thead>
       <tbody class="text-textColor">
-        <tr v-for="(task, id) in tasks" :key="id" class="hover:bg-gray-100 border-t border-gray-300">
+        <tr v-for="task in tasks" :key="task.id" class="hover:bg-gray-100 border-t border-gray-300">
           <td class="py-0.5 text-Body">{{ task.name }}</td>
           <td class="py-0.5 text-Body">{{ getFormattedTrigger(task) }}</td>
           <td class="py-0.5 text-Body">
@@ -32,7 +32,7 @@
               <img src="@/assets/icons/edit.svg" alt="Edit" class="w-4 h-4 invert" />
             </button>
             <button
-              @click="$emit('deleteTask', id)"
+              @click="$emit('deleteTask', task.id)"
               class="bg-relayStatusred hover:bg-red-700 text-white p-2 rounded flex items-center justify-center"
             >
               <img src="@/assets/icons/trash.svg" alt="Delete" class="w-4 h-4 invert" />
@@ -59,7 +59,7 @@ import { formatTrigger, formatActions } from "@/utils/formatters";
 export default {
   name: "ConditionalTasksTable",
   props: {
-    tasks: { type: Object, required: true },
+    tasks: { type: Array, required: true },  // Changed from Object to Array
     relays: { type: Object, required: true },
   },
   methods: {
