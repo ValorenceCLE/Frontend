@@ -1,133 +1,141 @@
 <template>
   <div class="flex flex-col items-center justify-center w-full h-full mx-auto max-w-4xl">
-    <!-- Header Section -->
-    <div class="w-full max-w-xl p-2 bg-gray-100 border border-gray-500 rounded-md shadow-md">
-      <h1 class="text-Header text-textColor text-center py-1">Historical Graph</h1>
+    <!-- Header Section - Redesigned for better layout -->
+    <div class="w-full max-w-2xl p-3 bg-gray-100 border border-gray-500 rounded-md shadow-md">
+      <h1 class="text-Header text-textColor text-center py-1 mb-2">Historical Data</h1>
 
-      <!-- Sub-header row -->
-      <div class="flex flex-wrap items-center justify-center space-x-2 mt-2 text-textColor text-Form">
-        <!-- Source Selector -->
-        <div class="relative">
-          <label class="font-bold mr-2">Source:</label>
-          <select
-            v-model="selectedSource"
-            class="border border-gray-500 rounded p-1 text-textColor text-Form"
-          >
-            <option disabled value="">Select Source</option>
-            <!-- Static Sources -->
-            <option
-              v-for="source in staticSources"
-              :key="source.key"
-              :value="source.key"
+      <!-- Two-column layout for controls -->
+      <div class="grid grid-cols-2 gap-3">
+        <!-- Left column: Source and Fields -->
+        <div class="space-y-2">
+          <!-- Source Selector -->
+          <div class="flex items-center">
+            <label class="font-bold text-sm w-14">Source:</label>
+            <select
+              v-model="selectedSource"
+              class="border border-gray-500 rounded p-1 text-sm flex-grow"
             >
-              {{ source.label }}
-            </option>
-            <!-- Dynamic Relay Sources under a divider -->
-            <optgroup label="Relays">
-              <option
-                v-for="source in relaySources"
-                :key="source.key"
-                :value="source.key"
-              >
+              <option disabled value="">Select Source</option>
+              <option v-for="source in staticSources" :key="source.key" :value="source.key">
                 {{ source.label }}
               </option>
-            </optgroup>
-          </select>
+              <optgroup label="Relays">
+                <option v-for="source in relaySources" :key="source.key" :value="source.key">
+                  {{ source.label }}
+                </option>
+              </optgroup>
+            </select>
+          </div>
+
+          <!-- Fields Dropdown -->
+          <div class="flex items-center">
+            <label class="font-bold text-sm w-14">Fields:</label>
+            <div ref="fieldsDropdownContainer" class="relative flex-grow">
+              <button
+                class="inline-flex items-center border border-gray-500 rounded bg-white px-2 py-1 w-full justify-between"
+                @click="toggleFieldsDropdown"
+                :disabled="!selectedSource"
+              >
+                <span class="truncate" v-if="selectedFields.length === 0">Select Fields</span>
+                <span class="truncate" v-else>{{ fieldsButtonLabel }}</span>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-4 w-4 text-gray-600 flex-shrink-0 ml-1"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              <!-- Fields dropdown positioned better -->
+              <div
+                v-if="fieldsDropdownOpen"
+                class="absolute mt-1 bg-white border border-gray-500 rounded shadow-md p-1 z-10 w-full"
+              >
+                <div
+                  v-for="field in availableFields"
+                  :key="field"
+                  class="flex items-center space-x-2 mb-1 py-1 px-2 hover:bg-gray-100 cursor-pointer"
+                  @click="toggleField(field)"
+                >
+                  <input
+                    type="checkbox"
+                    :value="field"
+                    v-model="selectedFields"
+                    class="w-4 h-4"
+                    @click.stop
+                  />
+                  <label>{{ field }}</label>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <!-- Fields Dropdown -->
-        <div ref="fieldsDropdownContainer" class="relative">
-          <label class="font-bold mr-2">Fields:</label>
-          <button
-            class="inline-flex items-center border border-gray-500 rounded bg-white px-2 py-1 relative select-button"
-            @click="toggleFieldsDropdown"
-            :disabled="!selectedSource"
-          >
-            <span class="mr-2" v-if="selectedFields.length === 0">Select Fields</span>
-            <span class="mr-2" v-else>{{ fieldsButtonLabel }}</span>
+        <!-- Right column: Date Range -->
+        <div class="space-y-2">
+          <!-- Start Date -->
+          <div class="flex items-center">
+            <label class="font-bold text-sm w-14">Start:</label>
+            <input
+              type="datetime-local"
+              v-model="startDate"
+              class="border border-gray-500 rounded p-1 text-sm flex-grow"
+            />
+          </div>
 
-            <!-- Down Arrow -->
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-4 w-4 text-gray-600"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
-
-          <!-- Dropdown list of checkboxes -->
-          <div
-            v-if="fieldsDropdownOpen"
-            class="absolute left-1/4 mt-1 w-3/4 bg-white border border-gray-500 rounded shadow-md p-1 z-10"
-          >
-            <div
-              v-for="field in availableFields"
-              :key="field"
-              class="flex items-center space-x-2 mb-1"
-            >
-              <input
-                type="checkbox"
-                :value="field"
-                v-model="selectedFields"
-                class="w-4 h-4"
-              />
-              <label>{{ field }}</label>
-            </div>
+          <!-- End Date -->
+          <div class="flex items-center">
+            <label class="font-bold text-sm w-14">End:</label>
+            <input
+              type="datetime-local"
+              v-model="endDate"
+              class="border border-gray-500 rounded p-1 text-sm flex-grow"
+            />
           </div>
         </div>
       </div>
 
-      <!-- Time Range Controls -->
-      <div class="flex items-center justify-center mt-2">
-        <div class="flex items-center">
-          <label class="font-bold text-sm mr-1">Start:</label>
-          <input
-            type="datetime-local"
-            v-model="startDate"
-            class="border border-gray-500 rounded p-0.5 text-sm w-3/4"
-          />
+      <!-- Action Button Row - centered with data points info -->
+      <div class="flex flex-col items-center mt-3">
+        <div class="flex space-x-3">
+          <button
+            @click="handleGraph"
+            :disabled="!canGraph"
+            class="bg-textColor hover:bg-blue-600 text-white py-1 px-4 rounded text-sm font-medium border border-gray-400 w-24"
+            :class="{'opacity-50': !canGraph || shouldFetch}"
+          >
+            <span v-if="shouldFetch" class="mr-1">●</span>
+            {{ shouldFetch ? 'Loading...' : 'Graph' }}
+          </button>
+          <button
+            @click="handleReset"
+            class="bg-textColor hover:bg-red-700 text-white py-1 px-4 rounded text-sm font-medium border border-gray-400 w-24"
+          >
+            Reset
+          </button>
+          <button
+            @click="handleExport"
+            :disabled="!hasData"
+            class="bg-textColor hover:bg-yellow-600 text-white py-1 px-4 rounded text-sm font-medium border border-gray-400 w-24"
+            :class="{'opacity-50': !hasData}"
+          >
+            Export
+          </button>
         </div>
-        <div class="flex items-center">
-          <label class="font-bold text-sm mr-1">End:</label>
-          <input
-            type="datetime-local"
-            v-model="endDate"
-            class="border border-gray-500 rounded p-0.5 text-sm w-3/4"
-          />
+        
+        <!-- Status information -->
+        <div v-if="dataPointCount > 0" class="text-xs text-gray-500 mt-2">
+          {{ dataPointCount.toLocaleString() }} data points
         </div>
-      </div>
-
-      <!-- New Buttons Row -->
-      <div class="flex items-center justify-center space-x-2 mt-2 w-full text-Body">
-        <button
-          @click="handleGraph"
-          :disabled="!canGraph"
-          class="bg-textColor hover:bg-blue-600 text-white py-0.5 rounded text-center border border-gray-400 w-24"
-        >
-          Graph
-        </button>
-        <button
-          @click="handleReset"
-          class="bg-textColor hover:bg-red-700 text-white py-0.5 rounded text-center border border-gray-400 w-24"
-        >
-          Reset
-        </button>
-        <button
-          @click="handleExport"
-          :disabled="!hasData"
-          class="bg-textColor hover:bg-yellow-600 text-white py-0.5 rounded text-center border border-gray-400 w-24"
-        >
-          Export
-        </button>
       </div>
     </div>
 
     <!-- Chart Container -->
-    <div class="w-full h-3/5 mt-3 bg-gray-100 rounded-md shadow-md border border-gray-500">
+    <div class="w-full h-3/5 mt-4 bg-gray-100 rounded-md shadow-md border border-gray-500">
       <HistoricalChart
         ref="chartRef"
         class="w-full h-full"
@@ -140,6 +148,7 @@
         :shouldReset="shouldReset"
         @fetched="handleFetched"
         @resetComplete="handleResetComplete"
+        @dataPointCount="updateDataPointCount"
       />
     </div>
   </div>
@@ -166,6 +175,8 @@ const shouldFetch = ref(false);
 const shouldReset = ref(false);
 const hasData = ref(false);
 const chartRef = ref(null);
+const dataPointCount = ref(0);
+const dataInterval = ref('');
 
 // Define static sources
 const staticSources = [
@@ -226,6 +237,16 @@ function toggleFieldsDropdown() {
   fieldsDropdownOpen.value = !fieldsDropdownOpen.value;
 }
 
+// Toggle a specific field selection
+function toggleField(field) {
+  const index = selectedFields.value.indexOf(field);
+  if (index === -1) {
+    selectedFields.value.push(field);
+  } else {
+    selectedFields.value.splice(index, 1);
+  }
+}
+
 // Handle graph button click - this will trigger data fetching in the child component
 function handleGraph() {
   if (canGraph.value) {
@@ -238,12 +259,21 @@ function handleGraph() {
 function handleReset() {
   selectedSource.value = '';
   selectedFields.value = [];
-  startDate.value = '';
-  endDate.value = '';
+  
+  // Set default date range (last 24 hours)
+  const end = new Date();
+  const start = new Date(end);
+  start.setDate(start.getDate() - 1);
+  
+  endDate.value = formatDateForInput(end);
+  startDate.value = formatDateForInput(start);
+  
   fieldsDropdownOpen.value = false;
   shouldFetch.value = false;
   shouldReset.value = true;
   hasData.value = false;
+  dataPointCount.value = 0;
+  dataInterval.value = '';
 }
 
 // Handle data export
@@ -251,6 +281,12 @@ function handleExport() {
   if (chartRef.value && hasData.value) {
     chartRef.value.exportData();
   }
+}
+
+// Update data information from child component
+function updateDataPointCount(data) {
+  dataPointCount.value = data.pointCount;
+  dataInterval.value = data.interval;
 }
 
 // Called after data is fetched in the child component
@@ -264,6 +300,12 @@ function handleResetComplete() {
   shouldReset.value = false;
 }
 
+// Format interval for display - shorter version
+function formatIntervalShort(interval) {
+  if (!interval) return '';
+  return interval;
+}
+
 // Close the fields dropdown if a click occurs outside of it
 function onClickOutside(e) {
   if (!fieldsDropdownOpen.value) return;
@@ -272,7 +314,12 @@ function onClickOutside(e) {
   fieldsDropdownOpen.value = false;
 }
 
-// Set default date range when component is mounted
+// Helper to format dates for datetime-local input
+function formatDateForInput(date) {
+  return date.toISOString().slice(0, 16);
+}
+
+// Set up event listeners and default date range
 onMounted(() => {
   document.addEventListener("click", onClickOutside);
   
@@ -285,19 +332,23 @@ onMounted(() => {
   startDate.value = formatDateForInput(start);
 });
 
-// Helper to format dates for datetime-local input
-function formatDateForInput(date) {
-  return date.toISOString().slice(0, 16);
-}
-
 onBeforeUnmount(() => {
   document.removeEventListener("click", onClickOutside);
 });
 </script>
 
 <style scoped>
-.select-button {
-  min-width: 8rem;
-  justify-content: space-between;
+@keyframes pulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}
+
+button:focus, select:focus, input:focus {
+  outline: none;
+}
+
+button span {
+  animation: pulse 1.5s infinite;
 }
 </style>

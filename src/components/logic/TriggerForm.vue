@@ -24,7 +24,7 @@
             <option disabled value="">Select Source</option>
             <optgroup label="General">
               <option value="environmental">Environment</option>
-              <option value="mainPower">Main Power</option>
+              <option value="main">Main Power</option>
             </optgroup>
             <optgroup label="Relay Power">
               <option
