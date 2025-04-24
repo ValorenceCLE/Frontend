@@ -59,7 +59,7 @@ export default {
       showModal: false,
       modalTitle: "Add Conditional Logic",
       globalFieldMapping: {
-        environment: ["temperature", "humidity"],
+        environmental: ["temperature", "humidity"],
         mainPower: ["volts", "watts", "amps"],
       },
     };

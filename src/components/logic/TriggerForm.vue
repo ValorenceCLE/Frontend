@@ -23,7 +23,7 @@
           >
             <option disabled value="">Select Source</option>
             <optgroup label="General">
-              <option value="environmental">Environment</option>
+              <option value="environmental">Environmental</option>
               <option value="main">Main Power</option>
             </optgroup>
             <optgroup label="Relay Power">
@@ -79,7 +79,7 @@
               :key="field"
               :value="field"
             >
-              {{ field }}
+                {{ field.toUpperCase() }}
             </option>
           </select>
         </div>
