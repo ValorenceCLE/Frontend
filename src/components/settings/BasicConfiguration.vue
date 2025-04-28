@@ -31,25 +31,6 @@
         />
       </div>
 
-      <!-- Ping Test -->
-      <!-- <div class="flex items-center justify-between px-4">
-        <label class="text-Settings text-textColor">Ping Test:</label>
-        <div class="flex items-center space-x-1 w-[40%]">
-          <input
-            v-model="ping_target"
-            type="text"
-            class="flex-1 p-1 border border-gray-400 rounded"
-            placeholder="Enter IP or domain"
-          />
-          <button
-            class="bg-primaryMed hover:bg-primaryLight text-white font-semibold py-1 px-3 h-8 rounded shadow"
-            @click="runPingTest"
-          >
-            <img src="@/assets/icons/play.svg" alt="Play Icon" class="w-5 h-5" />
-          </button>
-        </div>
-      </div> -->
-
       <!-- ========== CONFIGURATION SECTION ========== -->
 
       <!-- Upload Section -->
@@ -161,7 +142,6 @@ export default {
     // Local editable state for the "general" configuration fields.
     const system_name = ref("");
     const reboot_time = ref("");
-    const ping_target = ref("");
 
     // File upload state.
     const current_config_file_name = ref("Config.json");
@@ -231,16 +211,24 @@ export default {
       }
     };
 
-    // Export the current full configuration as a JSON file.
     const exportConfiguration = () => {
       if (configStore.configData) {
         const data = JSON.stringify(configStore.configData, null, 2);
         const blob = new Blob([data], { type: "application/json" });
         const url = URL.createObjectURL(blob);
+        
+        // Create and click a download link
         const link = document.createElement("a");
         link.href = url;
-        link.download = current_config_file_name.value;
+        
+        // Use system name for the filename
+        const systemName = configStore.configData.general?.system_name || "System";
+        const safeSystemName = systemName.replace(/[^a-z0-9_-]/gi, '_');
+        link.download = `${safeSystemName}_config.json`;
+        
+        document.body.appendChild(link);
         link.click();
+        document.body.removeChild(link);
         URL.revokeObjectURL(url);
       }
     };
@@ -288,12 +276,6 @@ export default {
       console.log("Changes have been canceled.");
     };
 
-    // Ping test.
-    const runPingTest = () => {
-      alert(`Pinging ${ping_target.value}...`);
-      // Real ping logic would be implemented here.
-    };
-
     // Confirmation helper for reboot actions.
     const confirmAction = (actionName, callback) => {
       const confirmMessage = `You are about to ${actionName}.\n\nAre you sure you want to continue?`;
@@ -314,8 +296,19 @@ export default {
     };
 
     const factoryReset = () => {
-      console.log("Performing factory reset...");
-      alert("Factory reset initiated! This will restore all settings to default.");
+      console.log("Starting factory reset...");
+      
+      configStore.revertToDefaults()
+        .then((response) => {
+          console.log("Reset successful:", response);
+          // Reload local state from the new config
+          loadConfig();
+          alert("Factory reset completed successfully. System restored to default settings.");
+        })
+        .catch((error) => {
+          console.error("Factory reset failed:", error);
+          alert(`Failed to restore factory defaults: ${error.message}`);
+        });
     };
 
     // Computed for formatted current time.
@@ -355,7 +348,6 @@ export default {
       // Local state and references
       system_name,
       reboot_time,
-      ping_target,
       current_config_file_name,
       new_config_file_name,
       configFile,
@@ -367,7 +359,6 @@ export default {
       exportConfiguration,
       handleSubmit,
       handleCancel,
-      runPingTest,
       confirmAction,
       rebootDevice,
       rebootSystem,

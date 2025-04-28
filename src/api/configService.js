@@ -42,13 +42,25 @@ export async function updateConfigSection(section, newData) {
 
 /**
  * Fetch a specific configuration section.
- * (Optional: Useful for refreshing a single section if needed.)
  * @param {string} section - The section name to fetch.
  * @returns {Promise<Object>} The configuration section data.
  */
 export async function fetchConfigSection(section) {
   try {
     const response = await axios.get(`/config/${section}`);
+    return response.data;
+  } catch (error) {
+    throw new Error(error.response?.data?.detail || error.message);
+  }
+}
+
+/**
+ * Revert to default configuration by removing custom configuration.
+ * @returns {Promise<Object>} The API response.
+ */
+export async function revertToDefaults() {
+  try {
+    const response = await axios.post('/config/revert');
     return response.data;
   } catch (error) {
     throw new Error(error.response?.data?.detail || error.message);

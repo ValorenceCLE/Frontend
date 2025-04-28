@@ -4,6 +4,7 @@ import {
   fetchConfig as apiFetchConfig,
   updateConfig as apiUpdateConfig,
   updateConfigSection as apiUpdateConfigSection,
+  revertToDefaults as apiRevertToDefaults,
 } from '@/api/configService';
 
 export const useConfigStore = defineStore('config', {
@@ -59,18 +60,20 @@ export const useConfigStore = defineStore('config', {
           throw new Error("No token found. Please log in.");
         }
         // Call the API to update the specific section
-        const updatedSection = await apiUpdateConfigSection(section, newData);
+        const response = await apiUpdateConfigSection(section, newData);
         // Update the specific section in the in-memory state
         if (this.configData) {
-          this.configData[section] = updatedSection;
+          this.configData[section] = newData;
         } else {
           // If configData is not yet loaded, fetch the full config
           await this.fetchConfig();
         }
         // Update localStorage with the new state
         localStorage.setItem('config', JSON.stringify(this.configData));
+        return response;
       } catch (err) {
         this.error = err.response?.data?.message || err.message;
+        throw err;
       } finally {
         this.loading = false;
       }
@@ -88,14 +91,36 @@ export const useConfigStore = defineStore('config', {
         if (!token) {
           throw new Error("No token found. Please log in.");
         }
-        await apiUpdateConfig(newConfig);
+        const response = await apiUpdateConfig(newConfig);
         this.configData = newConfig;
         localStorage.setItem('config', JSON.stringify(newConfig));
+        return response;
       } catch (err) {
         this.error = err.response?.data?.message || err.message;
+        throw err;
       } finally {
         this.loading = false;
       }
     },
+    /**
+     * Revert to default configuration.
+     * Removes custom configuration and reloads the config.
+     */
+    async revertToDefaults() {
+      this.loading = true;
+      this.error = null;
+      try {
+        await apiRevertToDefaults();
+        // After reverting, fetch the updated configuration
+        await this.fetchConfig();
+        return { success: true };
+      } catch (err) {
+        console.error("Error in revertToDefaults:", err);
+        this.error = err.message || "Unknown error";
+        throw err;
+      } finally {
+        this.loading = false;
+      }
+    }
   },
 });
