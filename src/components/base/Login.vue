@@ -12,6 +12,7 @@
             type="text"
             placeholder="Username"
             class="w-full py-1 border border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-grayLight text-textColor text-Input text-center"
+            required
           />
         </div>
 
@@ -21,6 +22,8 @@
             type="password"
             placeholder="Password"
             class="w-full py-1 border border-gray-400 rounded-lg focus:outline-none focus:ring-1 focus:ring-grayLight text-textColor text-Input text-center"
+            @keyup.enter="login"
+            required
           />
         </div>
 
