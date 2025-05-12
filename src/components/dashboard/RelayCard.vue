@@ -94,7 +94,6 @@ const buttons = computed(() => {
 
 // Turn Relay On
 const turn_on = async () => {
-  monitoringService.trackEvent('button', 'click', 'TurnRelayOn');
   try {
     const result = await turnRelayOn(props.relay.id);
     console.log("Turn on result:", result);
@@ -107,7 +106,6 @@ const turn_on = async () => {
 
 // Turn Relay Off
 const turn_off = async () => {
-  monitoringService.trackEvent('button', 'click', 'TurnRelayOff');
   try {
     const result = await turnRelayOff(props.relay.id);
     console.log("Turn off result:", result);
@@ -119,7 +117,6 @@ const turn_off = async () => {
 
 // Pulse Relay
 const pulse_relay = async () => {
-  monitoringService.trackEvent('button', 'click', 'PulseRelay');
   try {
     isPulsing.value = true;
     const result = await pulseRelay(props.relay.id);

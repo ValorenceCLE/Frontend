@@ -66,7 +66,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useConfigStore } from "@/store/config";
 import EditModal from "@/components/relays/EditModal.vue";
 import ToastNotification from "@/components/etc/ToastNotification.vue";
@@ -101,8 +101,8 @@ const { isOpen: showEditModal, open: openEditModal, close: closeEditModal, modal
 // Prepare relay data for editing
 const prepareEditModal = (relayKey) => {
   currentRelayKey.value = relayKey;
-  // Make a shallow copy; if deep copy is needed, use JSON.parse(JSON.stringify(...))
-  currentRelay.value = { ...relays.value[relayKey] };
+  // Make a deep copy to avoid reference issues
+  currentRelay.value = JSON.parse(JSON.stringify(relays.value[relayKey]));
 
   // Ensure dashboard object is present with defaults if missing.
   if (!currentRelay.value.dashboard) {
@@ -118,20 +118,42 @@ const prepareEditModal = (relayKey) => {
   }
 };
 
-// Handle relay updates coming from the EditModal.
-const handleRelayUpdate = ({ relayKey, updatedRelay }) => {
-  // Update the store directly
-  if (configStore.configData && configStore.configData.relays) {
-    configStore.configData.relays[relayKey] = { ...updatedRelay };
+// Handle relay updates coming from the EditModal
+const handleRelayUpdate = async ({ relayKey, updatedRelay }) => {
+  try {
+    // First, update the local store data
+    if (configStore.configData && configStore.configData.relays) {
+      configStore.configData.relays[relayKey] = updatedRelay;
+      
+      // Now, update the full configuration on the backend
+      await configStore.updateConfig(configStore.configData);
+      
+      // Show success toast
+      toastMessage.value = "Changes Applied.";
+      showToast.value = true;
+      setTimeout(() => {
+        showToast.value = false;
+      }, 1500);
+    }
+  } catch (error) {
+    console.error("Error updating relay:", error);
+    toastMessage.value = "Error applying changes.";
+    showToast.value = true;
+    setTimeout(() => {
+      showToast.value = false;
+    }, 1500);
   }
 };
 
 // Show a toast notification when update is successful.
 const handleUpdated = () => {
-  toastMessage.value = "Changes Applied.";
-  showToast.value = true;
-  setTimeout(() => {
-    showToast.value = false;
-  }, 1500);
+  // This is handled directly in handleRelayUpdate now
 };
+
+// Fetch config on mount if not already loaded
+onMounted(() => {
+  if (!configStore.configData) {
+    configStore.fetchConfig();
+  }
+});
 </script>

@@ -101,7 +101,7 @@
                   format="HH:mm"
                   v-model="localRelay.schedule.time_on"
                   class="w-full border border-gray-500 rounded p-0.5 px-1 text-xs bg-white"
-                  @input="emitChanges"
+                  @change="emitChanges"
                 />
               </div>
             </div>
@@ -120,7 +120,7 @@
                   format="HH:mm"
                   v-model="localRelay.schedule.time_off"
                   class="w-full border border-gray-500 rounded p-0.5 px-1 text-xs bg-white"
-                  @input="emitChanges"
+                  @change="emitChanges"
                 />
               </div>
             </div>
@@ -154,6 +154,8 @@
 </template>
 
 <script>
+import { ref, onMounted, computed } from 'vue';
+
 export default {
   name: "SettingsModal",
   props: {
@@ -181,25 +183,45 @@ export default {
       }
     };
   },
+  created() {
+    this.initializeLocalRelay();
+  },
   watch: {
-    // Whenever the parent 'relay' prop changes, copy it into localRelay.
+    // Whenever the parent 'relay' prop changes, re-initialize localRelay.
     relay: {
-      immediate: true,
-      handler(newVal) {
-        this.localRelay = {
-          ...newVal,
-          schedule: {
-            enabled: newVal.schedule?.enabled ?? false,
-            time_on: newVal.schedule?.on_time || "",
-            time_off: newVal.schedule?.off_time || "",
-            // If days_mask is undefined, default to 0
-            days_mask: newVal.schedule?.days_mask ?? 0
-          },
-        };
+      handler() {
+        this.initializeLocalRelay();
       },
+      immediate: true,
     },
   },
   methods: {
+    // New method to properly initialize the localRelay
+    initializeLocalRelay() {
+      const relay = this.relay;
+      
+      // Create a deep copy of the relay to avoid reference issues
+      this.localRelay = JSON.parse(JSON.stringify({
+        ...relay,
+        schedule: {
+          enabled: relay.schedule?.enabled ?? false,
+          // Fix for the time_on and time_off fields
+          time_on: relay.schedule?.time_on || relay.schedule?.on_time || "",
+          time_off: relay.schedule?.time_off || relay.schedule?.off_time || "",
+          days_mask: relay.schedule?.days_mask ?? 0
+        },
+      }));
+      
+      // Initialize any missing properties
+      if (!this.localRelay.pulse_time) {
+        this.localRelay.pulse_time = 5; // Default pulse time
+      }
+
+      // Debug logs to check values
+      console.log("Initialized localRelay:", this.localRelay);
+      console.log("Schedule times - on:", this.localRelay.schedule.time_on, "off:", this.localRelay.schedule.time_off);
+    },
+
     /* ========== SCHEDULE ENABLE / DISABLE ========== */
     setScheduleEnabled(value) {
       this.localRelay.schedule.enabled = value;
@@ -259,7 +281,20 @@ export default {
 
     /* ========== EMIT CHANGES TO PARENT ========== */
     emitChanges() {
-      this.$emit("fields-updated", { ...this.localRelay });
+      // Ensure time fields have consistent names
+      const updatedRelay = { ...this.localRelay };
+      
+      // Make sure schedule times are properly formatted
+      if (updatedRelay.schedule) {
+        // Create both field versions for backward compatibility
+        updatedRelay.schedule.on_time = updatedRelay.schedule.time_on;
+        updatedRelay.schedule.off_time = updatedRelay.schedule.time_off;
+      }
+      
+      // Add debug logs
+      console.log("Emitting updated relay:", updatedRelay);
+      
+      this.$emit("fields-updated", updatedRelay);
     },
   },
 };
@@ -289,10 +324,6 @@ select:focus {
   border-color: rgba(51, 51, 51, 0.5);
   box-shadow: 0 0 0 0.75px rgba(51, 51, 51, 0.5);
 }
-
-/* We no longer rely on .btn-sel for the day toggles.
-   We replicate the "enabled/disabled" style with getDayButtonClass() instead.
-*/
 
 /* Transition for schedule content toggling */
 .fade-enter-active,

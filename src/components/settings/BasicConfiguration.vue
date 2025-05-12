@@ -108,7 +108,7 @@
       <div class="flex justify-between space-x-2">
         <button
           class="w-[90%] bg-textColor hover:bg-red-800 text-white text-FormButton px-2 py-2 rounded-md shadow"
-          @click="confirmAction('Restart the Raspberry Pi', rebootDevice)"
+          @click="rebootDevice"
         >
           Restart
         </button>
