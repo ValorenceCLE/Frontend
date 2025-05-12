@@ -41,7 +41,7 @@
                 Pending...
               </template>
               <template v-else>
-                {{ (speedTestStore.speedTestResults.upload / 1_000_000).toFixed(2) }} Mbps
+                {{ (speedTestStore.speedTestResults.upload / 1000000).toFixed(2) }} Mbps
               </template>
             </span>
           </div>
@@ -55,7 +55,7 @@
                 Pending...
               </template>
               <template v-else>
-                {{ (speedTestStore.speedTestResults.download / 1_000_000).toFixed(2) }} Mbps
+                {{ (speedTestStore.speedTestResults.download / 1000000).toFixed(2) }} Mbps
               </template>
             </span>
           </div>
@@ -109,8 +109,7 @@ import { useConfigStore } from "@/store/config";
 import { getEnabledRelayStates } from "@/api/relayService";
 import { getAllNetworkStatuses } from "@/api/networkService";
 import { useSpeedTestStore } from "@/store/speedTest";
-import { websocketService } from "@/services/websocketService";
-import { monitoringService } from '@/services/monitoringService';
+import { useWebSocket } from '@/composables/useWebSocket';
 
 /*********************
  * 1) Gauge Scaling  *
@@ -131,11 +130,8 @@ function measureScalingContainer() {
 onMounted(() => {
   measureScalingContainer();
   window.addEventListener("resize", measureScalingContainer, { passive: true });
-  monitoringService.trackEvent('component', 'view', 'Dashboard');
-  
-  // Mark the performance
-  monitoringService.markPerformance('dashboard:mounted');
 });
+
 onBeforeUnmount(() => {
   window.removeEventListener("resize", measureScalingContainer);
 });
@@ -240,52 +236,35 @@ function updateRelayState({ id, state }) {
 }
 
 /**********************************************
- * 5) Demo Gauges (WebSocket Integration)     *
+ * 5) Demo Gauges (WebSocket Integration) - UPDATED   *
  **********************************************/
-const temperature = ref(20);
-const volts = ref(0);
-
-let unsubscribeVolts = null;
-let unsubscribeEnvironmental = null;
-
-onMounted(() => {
-  // Subscribe to Volts WebSocket
-  unsubscribeVolts = websocketService.subscribeToMainVolts((event) => {
-    try {
-      const data = JSON.parse(event.data);
-      volts.value = typeof data === "number" 
-        ? parseFloat(data.toFixed(2)) 
-        : parseFloat(data.voltage.toFixed(2));
-    } catch (error) {
-      console.error("Error parsing volts websocket data:", error);
-    }
-  });
-
-  // Subscribe to Temperature WebSocket
-  unsubscribeEnvironmental = websocketService.subscribeToEnvironmental((event) => {
-    try {
-      const data = JSON.parse(event.data);
-      temperature.value = typeof data === "number" 
-        ? parseFloat(data.toFixed(2)) 
-        : parseFloat(data.temperature.toFixed(2));
-    } catch (error) {
-      console.error("Error parsing temperature websocket data:", error);
-    }
-  });
+// Use our new composable for WebSocket connections
+const { data: voltsData } = useWebSocket('main', {
+  formatter: (rawData) => {
+    return typeof rawData === "number" 
+      ? parseFloat(rawData.toFixed(2)) 
+      : parseFloat(rawData.voltage?.toFixed(2) || 0);
+  }
 });
 
-onBeforeUnmount(() => {
-  if (unsubscribeVolts) unsubscribeVolts();
-  if (unsubscribeEnvironmental) unsubscribeEnvironmental();
+const { data: temperatureData } = useWebSocket('environmental', {
+  formatter: (rawData) => {
+    return typeof rawData === "number" 
+      ? parseFloat(rawData.toFixed(2)) 
+      : parseFloat(rawData.temperature?.toFixed(2) || 0);
+  }
 });
+
+// Computed properties to use the websocket data
+const volts = computed(() => voltsData.value || 0);
+const temperature = computed(() => temperatureData.value || 0);
 
 /****************************************************
  * 6) Speed Test Store Integration - UPDATED SECTION *
  ****************************************************/
 const speedTestStore = useSpeedTestStore();
 
-// Start polling with a 30-second interval instead of the original 10-second interval
-// to avoid hitting rate limits (especially since your API has a 5-minute cache)
+// Start polling with a 30-second interval
 speedTestStore.startSpeedTestPolling(30000);
 
 // Clean up on component unmount

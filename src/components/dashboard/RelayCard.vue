@@ -38,19 +38,9 @@
 </template>
 
 <script setup>
-import { ref, computed, defineEmits, defineProps, onMounted } from "vue";
+import { ref, computed, defineEmits, defineProps } from "vue";
 import { turnRelayOn, turnRelayOff, pulseRelay } from "@/api/relayService";
-import { monitoringService } from '@/services/monitoringService';
 
-
-onMounted(() => {
-  // Track that this component was viewed
-  monitoringService.trackEvent('component', 'view', 'Dashboard');
-  
-  // Mark the performance
-  monitoringService.markPerformance('dashboard:mounted');
-});
-// The parent (Dashboard.vue) passes a relay object with { id, name, state, dashboard, etc. }
 const props = defineProps({
   relay: {
     type: Object,

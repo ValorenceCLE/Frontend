@@ -4,7 +4,6 @@ import { jwtDecode } from "jwt-decode";
 
 // Small components loaded normally
 import Help from "@/components/base/Help.vue";
-import Contact from "@/components/base/Contact.vue";
 
 // Create a simple loading component
 const RouteLoadingComponent = {
@@ -55,11 +54,6 @@ const router = createRouter({
           component: Help,
           meta: { requiresAuth: true, role: "user" },
         },
-        {
-          path: "contact",
-          component: Contact,
-          meta: { requiresAuth: true, role: "user" },
-        },
       ],
     },
 
@@ -77,11 +71,6 @@ const router = createRouter({
         {
           path: "help",
           component: Help,
-          meta: { requiresAuth: true, role: "admin" },
-        },
-        {
-          path: "contact",
-          component: Contact,
           meta: { requiresAuth: true, role: "admin" },
         },
         
@@ -130,11 +119,6 @@ const router = createRouter({
           component: () => import("@/components/monitor/RealTime.vue"),
           meta: { requiresAuth: true, role: "admin" },
         },
-        {
-          path: "monitor/application",
-          component: () => import("@/components/monitor/AppMonitor.vue"),
-          meta: { requiresAuth: true, role: "admin" },
-        }
       ],
     },
     // 404 route
@@ -169,31 +153,6 @@ router.beforeEach((to, from, next) => {
     }
   }
   next();
-});
-// Add performance monitoring for routes
-router.beforeEach((to, from, next) => {
-  const startMark = `route:start:${to.path}`;
-  performance.mark(startMark);
-  console.log(`Marked route start: ${startMark}`);
-  next();
-});
-
-router.afterEach((to) => {
-  const startMark = `route:start:${to.path}`;
-  const endMark = `route:end:${to.path}`;
-  performance.mark(endMark);
-  
-  try {
-    performance.measure(`route:${to.path}`, startMark, endMark);
-    console.log(`Measured route: route:${to.path}`);
-  } catch (e) {
-    console.error('Error measuring route performance:', e);
-  }
-  
-  // Also track this as a user event if monitoringService exists
-  if (window.monitoringService) {
-    window.monitoringService.trackEvent('navigation', 'pageView', to.path);
-  }
 });
 
 export default router;

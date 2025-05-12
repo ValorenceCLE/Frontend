@@ -18,7 +18,7 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount, nextTick, watch } from "vue";
 import * as echarts from "echarts";
-import { websocketService } from "@/services/websocketService";
+import { useWebSocket } from '@/composables/useWebSocket';
 
 // Define component props.
 const props = defineProps({
@@ -34,7 +34,6 @@ const props = defineProps({
 // Local references.
 let chartInstance = null;
 const chartContainer = ref(null);
-let unsubscribe = null; // To store the unsubscribe function
 
 // Mapping display field names to sensor data keys.
 const fieldMapping = {
@@ -46,12 +45,46 @@ const fieldMapping = {
 };
 
 // Object to store time-series data for each field.
-const seriesDataMap = {};
+const seriesDataMap = ref({});
+
+// WebSocket connection using our composable
+const { data, connect, disconnect } = useWebSocket(props.source, {
+  immediate: false, // Don't connect immediately
+  formatter: (data) => data
+});
+
+// Watch for changes in data
+watch(data, (newData) => {
+  if (props.isPaused || !newData) return;
+  
+  const timestamp = new Date();
+  
+  // For each selected field, add the new data point if available
+  for (const field of props.fields) {
+    const sensorKey = fieldMapping[field];
+    if (sensorKey && sensorKey in newData) {
+      if (!seriesDataMap.value[field]) {
+        seriesDataMap.value[field] = [];
+      }
+      seriesDataMap.value[field].push([timestamp, newData[sensorKey]]);
+      // Keep only the latest 120 points
+      if (seriesDataMap.value[field].length > 120) {
+        seriesDataMap.value[field].shift();
+      }
+    }
+  }
+  
+  // Update the chart
+  if (chartInstance) {
+    chartInstance.setOption(getChartOption());
+  }
+});
 
 // Initialize series data storage for each selected field.
 function initializeSeriesData() {
+  seriesDataMap.value = {};
   for (const field of props.fields) {
-    seriesDataMap[field] = [];
+    seriesDataMap.value[field] = [];
   }
 }
 
@@ -60,7 +93,7 @@ function getChartOption() {
   let globalMax = -Infinity,
     globalMin = Infinity;
   const series = props.fields.map((field) => {
-    const data = seriesDataMap[field] || [];
+    const data = seriesDataMap.value[field] || [];
     data.forEach(([time, value]) => {
       if (value > globalMax) globalMax = value;
       if (value < globalMin) globalMin = value;
@@ -139,62 +172,6 @@ function disposeChart() {
   }
 }
 
-// Handle incoming websocket messages.
-function handleMessage(event) {
-  if (props.isPaused) return; // Do nothing if paused.
-  let data;
-  try {
-    data = JSON.parse(event.data);
-  } catch (e) {
-    console.error("Error parsing websocket data:", e);
-    return;
-  }
-  const timestamp = new Date();
-  // For each selected field, add the new data point if available.
-  for (const field of props.fields) {
-    const sensorKey = fieldMapping[field];
-    if (sensorKey && sensorKey in data) {
-      if (!seriesDataMap[field]) {
-        seriesDataMap[field] = [];
-      }
-      seriesDataMap[field].push([timestamp, data[sensorKey]]);
-      // Keep only the latest 120 points.
-      if (seriesDataMap[field].length > 120) {
-        seriesDataMap[field].shift();
-      }
-    }
-  }
-  // Update the chart.
-  if (chartInstance) {
-    chartInstance.setOption(getChartOption());
-  }
-}
-
-// Subscribe to the appropriate websocket endpoint based on the source.
-function subscribeWebSocket() {
-  if (unsubscribe) {
-    unsubscribe();
-    unsubscribe = null;
-  }
-  
-  if (props.source === "environmental") {
-    unsubscribe = websocketService.subscribeToEnvironmental(handleMessage);
-  } else if (props.source === "main") {
-    unsubscribe = websocketService.subscribeToMainVolts(handleMessage);
-  } else {
-    // For any relay, use the relay endpoint
-    unsubscribe = websocketService.subscribeToRelay(props.source, handleMessage);
-  }
-}
-
-// Unsubscribe from the websocket.
-function unsubscribeWebSocket() {
-  if (unsubscribe) {
-    unsubscribe();
-    unsubscribe = null;
-  }
-}
-
 // Watch for changes in isRunning, source, or fields.
 watch(
   () => [props.isRunning, props.source, props.fields],
@@ -202,9 +179,9 @@ watch(
     if (running && source && fields.length > 0) {
       initializeSeriesData();
       initChart();
-      subscribeWebSocket();
+      connect(); // Connect using our composable
     } else {
-      unsubscribeWebSocket();
+      disconnect(); // Disconnect using our composable
       disposeChart();
     }
   },
@@ -222,7 +199,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   window.removeEventListener("resize", resizeChart);
-  unsubscribeWebSocket();
+  disconnect(); // Make sure we disconnect
   disposeChart();
 });
 </script>

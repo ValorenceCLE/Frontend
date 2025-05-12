@@ -21,10 +21,12 @@
               <td>
                 <div class="flex justify-center">
                   <input
-                    v-model="emailSettings.smtp_server"
+                    v-model="formData.smtp_server"
+                    @input="markTouched('smtp_server')"
                     class="border-gray-500 border rounded text-Form text-center w-52"
                     type="text"
                     autocomplete="off"
+                    :class="{'border-red-500': validationErrors.smtp_server && touched.smtp_server}"
                   />
                 </div>
               </td>
@@ -36,10 +38,12 @@
               <td>
                 <div class="flex justify-center">
                   <input
-                    v-model.number="emailSettings.smtp_port"
+                    v-model.number="formData.smtp_port"
+                    @input="markTouched('smtp_port')"
                     class="border-gray-500 border rounded text-Form text-center w-52"
                     type="number"
                     autocomplete="off"
+                    :class="{'border-red-500': validationErrors.smtp_port && touched.smtp_port}"
                   />
                 </div>
               </td>
@@ -51,10 +55,12 @@
               <td>
                 <div class="flex justify-center">
                   <input
-                    v-model="emailSettings.smtp_user"
+                    v-model="formData.smtp_user"
+                    @input="markTouched('smtp_user')"
                     class="border-gray-500 border rounded text-Form text-center w-52"
                     type="text"
                     autocomplete="off"
+                    :class="{'border-red-500': validationErrors.smtp_user && touched.smtp_user}"
                   />
                 </div>
               </td>
@@ -66,10 +72,12 @@
               <td>
                 <div class="flex justify-center">
                   <input
-                    v-model="emailSettings.smtp_password"
+                    v-model="formData.smtp_password"
+                    @input="markTouched('smtp_password')"
                     class="border-gray-500 border rounded text-Form text-center w-52"
                     type="password"
                     autocomplete="off"
+                    :class="{'border-red-500': validationErrors.smtp_password && touched.smtp_password}"
                   />
                 </div>
               </td>
@@ -81,8 +89,10 @@
               <td>
                 <div class="flex justify-center">
                   <select
-                    v-model="emailSettings.smtp_secure"
+                    v-model="formData.smtp_secure"
+                    @change="markTouched('smtp_secure')"
                     class="border-gray-500 border rounded text-Form text-center w-52"
+                    :class="{'border-red-500': validationErrors.smtp_secure && touched.smtp_secure}"
                   >
                     <option value="tls">TLS</option>
                     <option value="ssl">SSL</option>
@@ -97,10 +107,12 @@
               <td>
                 <div class="flex justify-center">
                   <input
-                    v-model="emailSettings.return_email"
+                    v-model="formData.return_email"
+                    @input="markTouched('return_email')"
                     class="border-gray-500 border rounded text-Form text-center w-52"
                     type="email"
                     autocomplete="off"
+                    :class="{'border-red-500': validationErrors.return_email && touched.return_email}"
                   />
                 </div>
               </td>
@@ -108,7 +120,7 @@
 
             <!-- Dynamic Optional Emails -->
             <tr
-              v-for="(email, index) in emailSettings.emails"
+              v-for="(email, index) in formData.emails"
               :key="index"
               class="text-center"
             >
@@ -118,10 +130,12 @@
               <td>
                 <div class="flex items-center justify-center gap-2">
                   <input
-                    v-model="emailSettings.emails[index]"
+                    v-model="formData.emails[index]"
+                    @input="markTouched(`emails.${index}`)"
                     class="border-gray-500 border rounded text-Form text-center w-44"
                     type="email"
                     autocomplete="off"
+                    :class="{'border-red-500': validationErrors[`emails.${index}`] && touched[`emails.${index}`]}"
                   />
                   <button
                     class="bg-red-500 hover:bg-red-700 text-white p-1 rounded"
@@ -139,7 +153,7 @@
                 <div class="flex justify-center">
                   <button
                     class="bg-textColor text-white text-ModalLabel py-1 px-5 justify-center rounded border border-gray-500"
-                    :disabled="emailSettings.emails.length >= maxEmails"
+                    :disabled="formData.emails.length >= maxEmails"
                     @click="addNewEmail"
                   >
                     Add Email
@@ -148,19 +162,31 @@
               </td>
             </tr>
 
+            <!-- Error message row -->
+            <tr v-if="submitError" class="text-center">
+              <td colspan="2" class="text-red-500 py-1">{{ submitError }}</td>
+            </tr>
+
+            <!-- Success message row -->
+            <tr v-if="submitSuccess" class="text-center">
+              <td colspan="2" class="text-green-600 py-1">Settings updated successfully!</td>
+            </tr>
+
             <!-- Submit & Clear Buttons -->
             <tr>
               <td class="pt-4 pb-2 text-center" colspan="2">
                 <div class="flex justify-center gap-2">
                   <button
                     class="bg-primaryMed hover:bg-primaryLight text-white text-FormSubmit py-1 flex justify-center rounded-md border border-gray-500 w-24"
-                    @click="submitSettings"
+                    @click="submitForm"
+                    :disabled="isSubmitting || !isDirty"
                   >
-                    Submit
+                    {{ isSubmitting ? 'Saving...' : 'Submit' }}
                   </button>
                   <button
                     class="bg-grayDark hover:bg-gray-700 text-white text-FormSubmit py-1 flex justify-center rounded-md border border-gray-500 w-24"
-                    @click="clearSettings"
+                    @click="resetForm"
+                    :disabled="isSubmitting || !isDirty"
                   >
                     Clear
                   </button>
@@ -174,86 +200,133 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, computed, watch } from 'vue';
 import { useConfigStore } from '@/store/config';
+import { useFormHandling } from '@/composables/useFormHandling';
+import { validateInput } from '@/utils/validation';
 
-export default {
-  name: "Emails",
-  data() {
-    return {
-      // Local copy for editing email settings
-      emailSettings: {
-        smtp_server: "",
-        smtp_port: 587,
-        smtp_user: "",
-        smtp_password: "",
-        smtp_secure: "tls",
-        return_email: "",
-        emails: [],
-      },
-      // Backup copy for reverting changes
-      backupSettings: {},
-      maxEmails: 5,
-    };
-  },
-  computed: {
-    // Access the global configuration store
-    configStore() {
-      return useConfigStore();
-    }
-  },
-  methods: {
-    loadEmailSettings() {
-      if (this.configStore.configData && this.configStore.configData.email) {
-        // Copy email settings from the global config into the local editable copy
-        this.emailSettings = { ...this.configStore.configData.email };
-        if (!Array.isArray(this.emailSettings.emails)) {
-          this.emailSettings.emails = [];
-        }
-        // Deep copy for backup
-        this.backupSettings = JSON.parse(JSON.stringify(this.emailSettings));
-      }
-    },
-    addNewEmail() {
-      if (this.emailSettings.emails.length < this.maxEmails) {
-        this.emailSettings.emails.push("");
-      }
-    },
-    removeEmail(index) {
-      this.emailSettings.emails.splice(index, 1);
-    },
-    submitSettings() {
-      // Use the store action to update just the email section.
-      this.configStore.updateConfigSection('email', this.emailSettings)
-        .then(() => {
-          // On success, update the backup copy with the latest confirmed settings
-          this.backupSettings = JSON.parse(JSON.stringify(this.emailSettings));
-        })
-        .catch((error) => {
-          console.error("Failed to update email settings:", error);
-        });
-    },
-    clearSettings() {
-      // Revert local changes using the backup copy
-      this.emailSettings = JSON.parse(JSON.stringify(this.backupSettings));
-    }
-  },
-  mounted() {
-    if (this.configStore.configData) {
-      this.loadEmailSettings();
-    } else {
-      const unwatch = this.$watch(
-        () => this.configStore.configData,
-        (newVal) => {
-          if (newVal) {
-            this.loadEmailSettings();
-            unwatch();
-          }
-        }
-      );
+// Access the global configuration store
+const configStore = useConfigStore();
+const maxEmails = ref(5);
+
+// Get initial email settings from the store
+const initialEmailSettings = computed(() => {
+  const email = configStore.configData?.email || {};
+  return {
+    smtp_server: email.smtp_server || "",
+    smtp_port: email.smtp_port || 587,
+    smtp_user: email.smtp_user || "",
+    smtp_password: email.smtp_password || "",
+    smtp_secure: email.smtp_secure || "tls",
+    return_email: email.return_email || "",
+    emails: Array.isArray(email.emails) ? [...email.emails] : [],
+  };
+});
+
+// Validate email settings
+function validateEmailSettings(data) {
+  const errors = {};
+  
+  // Validate SMTP Server
+  if (!data.smtp_server) {
+    errors.smtp_server = "SMTP server is required";
+  }
+  
+  // Validate SMTP Port
+  if (!data.smtp_port) {
+    errors.smtp_port = "SMTP port is required";
+  } else if (isNaN(Number(data.smtp_port)) || Number(data.smtp_port) < 1 || Number(data.smtp_port) > 65535) {
+    errors.smtp_port = "Port must be between 1 and 65535";
+  }
+  
+  // Validate Return Email
+  if (data.return_email) {
+    const emailResult = validateInput.email(data.return_email);
+    if (!emailResult.valid) {
+      errors.return_email = emailResult.message;
     }
   }
-};
+  
+  // Validate recipient emails
+  data.emails.forEach((email, index) => {
+    if (email) {
+      const emailResult = validateInput.email(email);
+      if (!emailResult.valid) {
+        errors[`emails.${index}`] = emailResult.message;
+      }
+    }
+  });
+  
+  return {
+    valid: Object.keys(errors).length === 0,
+    errors
+  };
+}
+
+// Submit handler function
+async function submitEmailSettings(formData) {
+  return await configStore.updateConfigSection('email', formData);
+}
+
+// Use the form handling composable
+const {
+  formData,
+  isSubmitting,
+  submitError,
+  submitSuccess,
+  validationErrors,
+  touched,
+  isDirty,
+  submitForm,
+  resetForm,
+  markTouched
+} = useFormHandling({
+  initialData: initialEmailSettings.value,
+  onSubmit: submitEmailSettings,
+  validate: validateEmailSettings,
+  onSuccess: () => {
+    // Success notification handled via submitSuccess flag
+    // Clear success message after 3 seconds
+    setTimeout(() => {
+      submitSuccess.value = false;
+    }, 3000);
+  },
+  onError: (error) => {
+    console.error("Failed to update email settings:", error);
+  }
+});
+
+// Add a new email to the list
+function addNewEmail() {
+  if (formData.emails.length < maxEmails.value) {
+    formData.emails.push("");
+    markTouched(`emails.${formData.emails.length - 1}`);
+  }
+}
+
+// Remove an email from the list
+function removeEmail(index) {
+  formData.emails.splice(index, 1);
+}
+
+// Watch for changes in the store's email settings
+watch(
+  () => configStore.configData?.email,
+  (newEmailSettings) => {
+    if (newEmailSettings && !isDirty.value) {
+      // Only update if form hasn't been modified
+      formData.smtp_server = newEmailSettings.smtp_server || "";
+      formData.smtp_port = newEmailSettings.smtp_port || 587;
+      formData.smtp_user = newEmailSettings.smtp_user || "";
+      formData.smtp_password = newEmailSettings.smtp_password || "";
+      formData.smtp_secure = newEmailSettings.smtp_secure || "tls";
+      formData.return_email = newEmailSettings.return_email || "";
+      formData.emails = Array.isArray(newEmailSettings.emails) ? [...newEmailSettings.emails] : [];
+    }
+  },
+  { deep: true }
+);
 </script>
 
 <style scoped>

@@ -23,149 +23,159 @@
 
     <!-- Modal -->
     <TaskModal
-      :show="showModal"
+      v-bind="taskModalProps"
       :title="modalTitle"
-      @close="closeModal"
     >
       <TaskForm
         :initial-task="currentTask"
         :enabled-relays="enabledRelays"
         :field-options="globalFieldMapping"
         @task-submit="handleTaskSubmit"
-        @cancel="closeModal"
+        @cancel="closeTaskModal"
       />
     </TaskModal>
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import { useConfigStore } from "@/store/config";
 import ConditionalTasksTable from "./ConditionalTasksTable.vue";
 import TaskModal from "./TaskModal.vue";
 import TaskForm from "./TaskForm.vue";
+import { useModal } from "@/composables/useModal";
 
-export default {
-  name: "RelayLogic",
-  components: {
-    ConditionalTasksTable,
-    TaskModal,
-    TaskForm,
-  },
-  data() {
-    return {
-      relays: {},
-      conditionalTasks: [],
-      currentTask: null,
-      showModal: false,
-      modalTitle: "Add Conditional Logic",
-      globalFieldMapping: {
-        environmental: ["temperature", "humidity"],
-        mainPower: ["volts", "watts", "amps"],
-      },
-    };
-  },
-  computed: {
-    enabledRelays() {
-      return Object.values(this.relays).filter((r) => r.enabled);
-    },
-  },
-  methods: {
-    // Simple UUID generator function
-    generateUUID() {
-      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-        const r = Math.random() * 16 | 0;
-        const v = c === 'x' ? r : (r & 0x3 | 0x8);
-        return v.toString(16);
-      });
-    },
-    
-    async fetchData() {
-      try {
-        if (!this.configStore.configData) {
-          await this.configStore.fetchConfig();
-        }
-        this.relays = this.configStore.configData?.relays || {};
-        this.conditionalTasks = this.configStore.configData?.tasks || [];
-        
-        // Ensure all tasks have an ID
-        this.conditionalTasks = this.conditionalTasks.map(task => {
-          if (!task.id) {
-            return { ...task, id: this.generateUUID() };
-          }
-          return task;
-        });
-      } catch (error) {
-        console.error("Error fetching config store data:", error);
-      }
-    },
-    
-    openAddTaskModal() {
-      this.currentTask = {
-        name: "",
-        source: "",
-        field: "",
-        operator: "",
-        value: null,
-        actions: [],
-      };
-      this.modalTitle = "Add Conditional Task";
-      this.showModal = true;
-    },
-    
-    closeModal() {
-      this.showModal = false;
-    },
-    
-    async handleTaskSubmit(task) {
-      try {
-        if (this.currentTask && this.currentTask.id !== undefined) {
-          // Update existing task - find index and replace
-          const index = this.conditionalTasks.findIndex(t => t.id === this.currentTask.id);
-          if (index !== -1) {
-            // Create new array with updated task
-            const updatedTasks = [...this.conditionalTasks];
-            updatedTasks[index] = { ...task, id: this.currentTask.id };
-            this.conditionalTasks = updatedTasks;
-          }
-        } else {
-          // New task - generate a UUID
-          const taskWithId = { ...task, id: this.generateUUID() };
-          this.conditionalTasks = [...this.conditionalTasks, taskWithId];
-        }
-        this.configStore.configData.tasks = [...this.conditionalTasks];
-        await this.configStore.updateConfig({ ...this.configStore.configData });
-        this.closeModal();
-      } catch (error) {
-        console.error("Error saving task:", error);
-      }
-    },
-    
-    async deleteTask(taskId) {
-      try {
-        // Filter out the task with the given ID
-        this.conditionalTasks = this.conditionalTasks.filter(task => task.id !== taskId);
-        this.configStore.configData.tasks = [...this.conditionalTasks];
-        await this.configStore.updateConfig({ ...this.configStore.configData });
-      } catch (error) {
-        console.error("Error deleting task:", error);
-      }
-    },
-    
-    editTask(task) {
-      if (!task.id) {
-        console.error("Task ID not found for editing.");
-        return;
-      }
-      this.currentTask = { ...task };
-      this.modalTitle = "Edit Custom Logic";
-      this.showModal = true;
-    },
-  },
-  created() {
-    this.configStore = useConfigStore();
-  },
-  mounted() {
-    this.fetchData();
-  },
+// Get the config store
+const configStore = useConfigStore();
+
+// Store for tasks and relays data
+const relays = ref({});
+const conditionalTasks = ref([]);
+const currentTask = ref(null);
+const modalTitle = ref("Add Conditional Logic");
+
+// Field mapping for logic options
+const globalFieldMapping = {
+  environmental: ["temperature", "humidity"],
+  main: ["volts", "watts", "amps"],
 };
+
+// Use the modal composable
+const { 
+  isOpen: showTaskModal, 
+  open: openTaskModal, 
+  close: closeTaskModal, 
+  modalProps: taskModalProps 
+} = useModal({
+  closeOnEscape: true,
+  closeOnOutsideClick: false
+});
+
+// Get enabled relays for the form
+const enabledRelays = computed(() => {
+  return Object.values(relays.value).filter((r) => r.enabled);
+});
+
+// UUID generator function
+function generateUUID() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
+// Fetch data from the config store
+async function fetchData() {
+  try {
+    if (!configStore.configData) {
+      await configStore.fetchConfig();
+    }
+    relays.value = configStore.configData?.relays || {};
+    conditionalTasks.value = configStore.configData?.tasks || [];
+    
+    // Ensure all tasks have an ID
+    conditionalTasks.value = conditionalTasks.value.map(task => {
+      if (!task.id) {
+        return { ...task, id: generateUUID() };
+      }
+      return task;
+    });
+  } catch (error) {
+    console.error("Error fetching config store data:", error);
+  }
+}
+
+// Open modal to add a new task
+function openAddTaskModal() {
+  currentTask.value = {
+    name: "",
+    source: "",
+    field: "",
+    operator: "",
+    value: null,
+    actions: [],
+  };
+  modalTitle.value = "Add Conditional Task";
+  openTaskModal();
+}
+
+// Open modal to edit an existing task
+function editTask(task) {
+  if (!task.id) {
+    console.error("Task ID not found for editing.");
+    return;
+  }
+  currentTask.value = { ...task };
+  modalTitle.value = "Edit Custom Logic";
+  openTaskModal();
+}
+
+// Handle task submission
+async function handleTaskSubmit(task) {
+  try {
+    if (currentTask.value && currentTask.value.id !== undefined) {
+      // Update existing task - find index and replace
+      const index = conditionalTasks.value.findIndex(t => t.id === currentTask.value.id);
+      if (index !== -1) {
+        // Create new array with updated task
+        const updatedTasks = [...conditionalTasks.value];
+        updatedTasks[index] = { ...task, id: currentTask.value.id };
+        conditionalTasks.value = updatedTasks;
+      }
+    } else {
+      // New task - generate a UUID
+      const taskWithId = { ...task, id: generateUUID() };
+      conditionalTasks.value = [...conditionalTasks.value, taskWithId];
+    }
+    
+    // Update the config store
+    configStore.configData.tasks = [...conditionalTasks.value];
+    await configStore.updateConfig({ ...configStore.configData });
+    
+    // Close the modal
+    closeTaskModal();
+  } catch (error) {
+    console.error("Error saving task:", error);
+  }
+}
+
+// Delete a task
+async function deleteTask(taskId) {
+  try {
+    // Filter out the task with the given ID
+    conditionalTasks.value = conditionalTasks.value.filter(task => task.id !== taskId);
+    
+    // Update the config store
+    configStore.configData.tasks = [...conditionalTasks.value];
+    await configStore.updateConfig({ ...configStore.configData });
+  } catch (error) {
+    console.error("Error deleting task:", error);
+  }
+}
+
+// Initialize data on component mount
+onMounted(() => {
+  fetchData();
+});
 </script>

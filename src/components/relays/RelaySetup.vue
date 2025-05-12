@@ -35,7 +35,7 @@
               <td class="text-center py-1.5 px-3 text-Body">
                 <button
                   class="bg-primaryMed hover:bg-primaryLight text-white py-1 px-3 rounded"
-                  @click="openModal(key)"
+                  @click="openEditModal(key)"
                 >
                   Edit
                 </button>
@@ -49,10 +49,9 @@
 
     <!-- Edit Modal -->
     <EditModal
-      :show="showEditModal"
+      v-bind="editModalProps"
       :relay="currentRelay"
       :relayKey="currentRelayKey"
-      @close="closeModal"
       @update-relay="handleRelayUpdate"
       @updated="handleUpdated"
     />
@@ -71,6 +70,7 @@ import { ref, computed } from "vue";
 import { useConfigStore } from "@/store/config";
 import EditModal from "@/components/relays/EditModal.vue";
 import ToastNotification from "@/components/etc/ToastNotification.vue";
+import { useModal } from "@/composables/useModal";
 
 // Global configuration store
 const configStore = useConfigStore();
@@ -82,15 +82,24 @@ const relays = computed(() => {
     : {};
 });
 
-// Local state for controlling the edit modal and toast notifications.
-const showEditModal = ref(false);
+// Local state for the current relay being edited
 const currentRelay = ref({});
 const currentRelayKey = ref("");
 const showToast = ref(false);
 const toastMessage = ref("");
 
-// Open the edit modal for a specific relay key.
-const openModal = (relayKey) => {
+// Use the modal composable for the edit modal
+const { isOpen: showEditModal, open: openEditModal, close: closeEditModal, modalProps: editModalProps } = useModal({
+  onOpen: (relayKey) => prepareEditModal(relayKey),
+  onClose: () => {
+    // Reset current relay data when modal closes
+    currentRelay.value = {};
+    currentRelayKey.value = "";
+  }
+});
+
+// Prepare relay data for editing
+const prepareEditModal = (relayKey) => {
   currentRelayKey.value = relayKey;
   // Make a shallow copy; if deep copy is needed, use JSON.parse(JSON.stringify(...))
   currentRelay.value = { ...relays.value[relayKey] };
@@ -107,23 +116,11 @@ const openModal = (relayKey) => {
   if (!currentRelay.value.state) {
     currentRelay.value.state = "off";
   }
-  showEditModal.value = true;
-};
-
-// Close the edit modal.
-const closeModal = () => {
-  showEditModal.value = false;
-  currentRelay.value = {};
-  currentRelayKey.value = "";
 };
 
 // Handle relay updates coming from the EditModal.
-// The EditModal emits an event with { relayKey, updatedRelay }.
 const handleRelayUpdate = ({ relayKey, updatedRelay }) => {
-  // Merge the updated relay into the local relays object.
-  // In a full application you might update the store directly.
-  // Here we emit the update event so that the parent (or store) can handle it.
-  // For demonstration, we'll update configStore.configData.relays locally:
+  // Update the store directly
   if (configStore.configData && configStore.configData.relays) {
     configStore.configData.relays[relayKey] = { ...updatedRelay };
   }
@@ -137,26 +134,4 @@ const handleUpdated = () => {
     showToast.value = false;
   }, 1500);
 };
-
-// Optionally, if your config store doesn't fetch relays automatically,
-// you can call configStore.fetchConfig() here.
-// onMounted(() => {
-//   if (!configStore.configData) {
-//     configStore.fetchConfig();
-//   }
-// });
 </script>
-
-<script>
-export default {
-  name: "RelaySetup",
-  components: {
-    EditModal,
-    ToastNotification,
-  },
-};
-</script>
-
-<style scoped>
-/* No changes to styling; preserve current layout and UI/UX */
-</style>

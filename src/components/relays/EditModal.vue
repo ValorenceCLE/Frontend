@@ -1,9 +1,9 @@
 <template>
   <transition name="fade">
     <div
-      v-if="show"
+      v-if="modelValue"
       class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50"
-      @click.self="closeModal"
+      @click.self="$emit('update:modelValue', false)"
     >
       <div
         class="bg-white rounded shadow-md w-full max-w-2xl relative border border-gray-500"
@@ -16,7 +16,7 @@
             :src="xIcon"
             alt="Close"
             class="w-6 h-6 cursor-pointer hover:scale-105 transition-transform absolute top-1 right-1"
-            @click="closeModal"
+            @click="$emit('update:modelValue', false)"
           />
 
           <!-- Page Title -->
@@ -24,7 +24,7 @@
             {{ currentPageTitle }}
           </h2>
           <p class="text-ModalInfo text-textColor italic transition-transform absolute top-2 left-3">
-            {{ editedRelay.name || 'Relay' }}
+            {{ relay.name || 'Relay' }}
           </p>
 
           <!-- Subheader -->
@@ -38,16 +38,16 @@
           <!-- Settings Page -->
           <SettingsModal
             v-if="currentPage === 'settings'"
-            :relay="editedRelay"
+            :relay="relay"
             :relayKey="relayKey"
             @fields-updated="handleRelayFields"
           />
           <!-- Dashboard Page -->
           <DashboardModal
             v-else-if="currentPage === 'dashboard'"
-            :dashboard="editedRelay.dashboard"
-            :relayName="editedRelay.name"
-            :relayState="editedRelay.state" 
+            :dashboard="relay.dashboard"
+            :relayName="relay.name"
+            :relayState="relay.state" 
             @dashboard-updated="handleDashboardFields"
           />
         </div>
@@ -98,117 +98,111 @@
   </transition>
 </template>
 
-<script>
+<script setup>
+import { ref, computed, watch } from 'vue';
 import SettingsModal from "./SettingsModal.vue";
 import DashboardModal from "./DashboardModal.vue";
 import xIcon from "@/assets/icons/x.svg";
 import chevronLeft from "@/assets/icons/chevron-left.svg";
 import chevronRight from "@/assets/icons/chevron-right.svg";
 
-export default {
-  name: "EditModal",
-  components: {
-    SettingsModal,
-    DashboardModal,
+// Props for the component
+const props = defineProps({
+  modelValue: {
+    type: Boolean,
+    required: true,
   },
-  props: {
-    show: {
-      type: Boolean,
-      required: true,
-    },
-    relay: {
-      type: Object,
-      required: true,
-    },
-    relayKey: {
-      type: [String, Number],
-      required: true,
-    },
+  relay: {
+    type: Object,
+    required: true,
   },
-  data() {
-    return {
-      xIcon,
-      chevronLeft,
-      chevronRight,
-      // This local object (editedRelay) is used to hold all changes from the child
-      editedRelay: {},
-      currentPage: "settings", // "settings" or "dashboard"
-    };
+  relayKey: {
+    type: [String, Number],
+    required: true,
   },
-  computed: {
-    currentPageTitle() {
-      return this.currentPage === "settings" ? "Relay Setup" : "Dashboard Setup";
-    },
-    currentPageSubheader() {
-      return this.currentPage === "settings"
-        ? "Modify the behavior of the relay in the system"
-        : "Modify the appearance of the relay on the dashboard";
-    },
-  },
-  watch: {
-    // Whenever the 'relay' prop changes from the outside,
-    // we do a deep copy to avoid overwriting local changes by reference.
-    relay: {
-      immediate: true,
-      handler(newRelay) {
-        this.editedRelay = JSON.parse(JSON.stringify(newRelay));
-      },
-    },
-  },
-  methods: {
-    closeModal() {
-      this.$emit("close");
-    },
-    switchPage(page) {
-      this.currentPage = page;
-    },
-    prevPage() {
-      if (this.currentPage === "dashboard") {
-        this.currentPage = "settings";
-      }
-    },
-    nextPage() {
-      if (this.currentPage === "settings") {
-        this.currentPage = "dashboard";
-      }
-    },
-    // Called when the child emits 'fields-updated'
-    handleRelayFields(updatedFields) {
-      // If there's a `schedule` key in updatedFields, merge it carefully
-      if (updatedFields.schedule) {
-        this.editedRelay.schedule = {
-          // keep existing schedule fields
-          ...this.editedRelay.schedule,
-          // override with what's new
-          ...updatedFields.schedule
-        };
-      }
+});
 
-      // Merge all other top-level fields (excluding schedule)
-      Object.keys(updatedFields).forEach(key => {
-        if (key !== "schedule") {
-          this.editedRelay[key] = updatedFields[key];
-        }
-      });
-    },
-    // Called when the DashboardModal emits 'dashboard-updated'
-    handleDashboardFields(updatedObj) {
-      // We expect updatedObj might be { dashboard: {}, state: 'on' }
-      if (updatedObj.dashboard) {
-        this.editedRelay.dashboard = { ...updatedObj.dashboard };
-      }
-      if (updatedObj.state) {
-        this.editedRelay.state = updatedObj.state;
-      }
-    },
-    saveChanges() {
-      // This is when you finalize everything, sending the updated relay back up
-      const updatedRelay = { ...this.editedRelay };
-      this.$emit("update-relay", { relayKey: this.relayKey, updatedRelay });
-      this.$emit("updated");
-      this.closeModal();
-    },
-  },
+// Define emits
+const emit = defineEmits(['update:modelValue', 'update-relay', 'updated']);
+
+// Track which page of the modal is active
+const currentPage = ref("settings"); // "settings" or "dashboard"
+
+// This local object (editedRelay) is used to hold all changes from the child
+const editedRelay = ref({ ...props.relay });
+
+// Computed properties for titles
+const currentPageTitle = computed(() => {
+  return currentPage.value === "settings" ? "Relay Setup" : "Dashboard Setup";
+});
+
+const currentPageSubheader = computed(() => {
+  return currentPage.value === "settings"
+    ? "Modify the behavior of the relay in the system"
+    : "Modify the appearance of the relay on the dashboard";
+});
+
+// Watch for changes in relay prop
+watch(() => props.relay, (newRelay) => {
+  // Create a deep copy to avoid mutation issues
+  editedRelay.value = JSON.parse(JSON.stringify(newRelay));
+}, { immediate: true });
+
+// Navigation methods
+const switchPage = (page) => {
+  currentPage.value = page;
+};
+
+const prevPage = () => {
+  if (currentPage.value === "dashboard") {
+    currentPage.value = "settings";
+  }
+};
+
+const nextPage = () => {
+  if (currentPage.value === "settings") {
+    currentPage.value = "dashboard";
+  }
+};
+
+// Called when the child emits 'fields-updated'
+const handleRelayFields = (updatedFields) => {
+  // If there's a `schedule` key in updatedFields, merge it carefully
+  if (updatedFields.schedule) {
+    editedRelay.value.schedule = {
+      // keep existing schedule fields
+      ...editedRelay.value.schedule,
+      // override with what's new
+      ...updatedFields.schedule
+    };
+  }
+
+  // Merge all other top-level fields (excluding schedule)
+  Object.keys(updatedFields).forEach(key => {
+    if (key !== "schedule") {
+      editedRelay.value[key] = updatedFields[key];
+    }
+  });
+};
+
+// Called when the DashboardModal emits 'dashboard-updated'
+const handleDashboardFields = (updatedObj) => {
+  // We expect updatedObj might be { dashboard: {}, state: 'on' }
+  if (updatedObj.dashboard) {
+    editedRelay.value.dashboard = { ...updatedObj.dashboard };
+  }
+  if (updatedObj.state) {
+    editedRelay.value.state = updatedObj.state;
+  }
+};
+
+// Save changes and close modal
+const saveChanges = () => {
+  // This is when you finalize everything, sending the updated relay back up
+  const updatedRelay = { ...editedRelay.value };
+  emit("update-relay", { relayKey: props.relayKey, updatedRelay });
+  emit("updated");
+  emit('update:modelValue', false);
 };
 </script>
 

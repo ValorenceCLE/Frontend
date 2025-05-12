@@ -9,14 +9,23 @@ export function formatTrigger(task, relays = {}) {
     return "Invalid Trigger";
   }
 
-  let sourceName = source; // fallback name if not found
-  // We look for a numeric key whose .id matches "relay_1", "relay_2", etc.
-  const foundKey = Object.keys(relays).find((k) => relays[k].id === source);
-  if (foundKey) {
-    console.log(`Relay found for source ${source}:`, relays[foundKey]);
-    sourceName = relays[foundKey].name;
+  let sourceName = source; // fallback name
+  
+  // Handle special sources
+  if (source === 'environmental') {
+    sourceName = 'Environment';
+  } else if (source === 'main') {
+    sourceName = 'Main Power';
   } else {
-    console.warn(`Relay not found for source ${source}.`);
+    // Handle relay sources
+    // We look for a numeric key whose .id matches "relay_1", "relay_2", etc.
+    const foundKey = Object.keys(relays).find((k) => relays[k].id === source);
+    if (foundKey) {
+      console.log(`Relay found for source ${source}:`, relays[foundKey]);
+      sourceName = relays[foundKey].name;
+    } else {
+      console.warn(`Relay not found for source ${source}.`);
+    }
   }
 
   return `${sourceName} ${field} ${operator} ${value}`;
@@ -39,8 +48,6 @@ function displayAction(action, relays) {
   }
 
   switch (action.type) {
-    case "email":
-      return "Email";
     case "io":
       // action.target might be "relay_2", etc.
       const foundKey = Object.keys(relays).find(
@@ -55,8 +62,6 @@ function displayAction(action, relays) {
       return "Reboot";
     case "log":
       return "Log";
-    case "awsLog":
-      return "AWS Log";
     default:
       return action.type.charAt(0).toUpperCase() + action.type.slice(1);
   }

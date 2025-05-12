@@ -126,154 +126,142 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import BasicConfiguration from "./BasicConfiguration.vue";
 import { useConfigStore } from "@/store/config";
 import { getAllNetworkStatuses } from "@/api/networkService";
-import { websocketService } from "@/services/websocketService";
 import { downloadRouterLogs, downloadCameraLogs } from "@/api/logsService";
+import { useWebSocket } from '@/composables/useWebSocket';
+import { usePolling } from '@/composables/usePolling';
 
-export default {
-  name: "General",
-  components: { BasicConfiguration },
-  data() {
-    return {
-      currentTime: new Date(),
-      // Network statuses
-      routerResults: { online: false },
-      cameraResults: { online: false },
-      networkLoading: true,
-      // Usage metrics for Controller section
-      usage: { cpu: 0, memory: 0, disk: 0 },
-      // WebSocket instances
-      socket: null, // For usage metrics
-      cameraVoltsSocket: null, // For main volts metrics
-      routerVoltsSocket: null, // For router volts metrics
-      // Reactive volts values
-      camera_volts: 0,
-      router_volts: 0,
-    };
-  },
-  computed: {
-    configStore() {
-      return useConfigStore();
-    },
-    displayed_system_name() {
-      const config = this.configStore.configData;
-      return config && config.general && config.general.system_name
-        ? config.general.system_name
-        : "Unknown System";
-    },
-    formattedDateTime() {
-      const date = this.currentTime;
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, "0");
-      const day = String(date.getDate()).padStart(2, "0");
-      const hours = String(date.getHours()).padStart(2, "0");
-      const minutes = String(date.getMinutes()).padStart(2, "0");
-      return `${year}-${month}-${day} ${hours}:${minutes}`;
-    },
-  },
-  methods: {
-    refreshConfig() {
-      this.configStore.refreshConfig();
-    },
-    async fetchNetworkStatuses() {
-      try {
-        const response = await getAllNetworkStatuses();
-        const results = response.results;
-        if (results && results.length >= 2) {
-          this.routerResults = results[0];
-          this.cameraResults = results[1];
-        } else if (results && results.length === 1) {
-          this.routerResults = results[0];
-        }
-      } catch (error) {
-        console.error("Error fetching network statuses:", error);
-      } finally {
-        this.networkLoading = false;
-      }
-    },
-    setupUsageWebSocket() {
-      this.unsubscribeUsage = websocketService.subscribeToUsageMetrics((event) => {
-        try {
-          const data = JSON.parse(event.data);
-          this.usage = data;
-        } catch (err) {
-          console.error("Error parsing usage WebSocket message:", err);
-        }
-      });
-    },
-    setupCameraVoltsWebSocket() {
-      this.unsubscribeCameraVolts = websocketService.subscribeToCameraVolts((event) => {
-        try {
-          const data = JSON.parse(event.data);
-          this.camera_volts = typeof data === "number" ? data : data.voltage;
-        } catch (err) {
-          console.error("Error parsing camera volts message:", err);
-        }
-      });
-    },
-    setupRouterVoltsWebSocket() {
-      this.unsubscribeRouterVolts = websocketService.subscribeToRouterVolts((event) => {
-        try {
-          const data = JSON.parse(event.data);
-          this.router_volts = typeof data === "number" ? data : data.voltage;
-        } catch (err) {
-          console.error("Error parsing router volts message:", err);
-        }
-      });
-    },
-    async handleDownloadRouterLogs() {
-      try {
-        const blob = await downloadRouterLogs();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "router.log";
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
-      } catch (error) {
-        console.error("Error downloading router logs:", error);
-      }
-    },
-    async handleDownloadCameraLogs() {
-      try {
-        const blob = await downloadCameraLogs();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "camera.log";
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
-      } catch (error) {
-        console.error("Error downloading camera logs:", error);
-      }
-    },
-  },
-  mounted() {
-    // Update current time every second.
-    this.timer = setInterval(() => {
-      this.currentTime = new Date();
-    }, 1000);
-    // Fetch network statuses.
-    this.fetchNetworkStatuses();
-    // Set up WebSocket subscriptions.
-    this.setupUsageWebSocket();
-    this.setupCameraVoltsWebSocket();
-    this.setupRouterVoltsWebSocket();
-  },
-  beforeUnmount() {
-    clearInterval(this.timer);
-    if (this.unsubscribeUsage) this.unsubscribeUsage();
-    if (this.unsubscribeCameraVolts) this.unsubscribeCameraVolts();
-    if (this.unsubscribeRouterVolts) this.unsubscribeRouterVolts();
+// Current time for display
+const currentTime = ref(new Date());
+const timer = ref(null);
+
+// Network statuses
+const routerResults = ref({ online: false });
+const cameraResults = ref({ online: false });
+const networkLoading = ref(true);
+
+// Use polling for network status
+const {
+  loading: networkStatusLoading
+} = usePolling(fetchNetworkStatuses, {
+  interval: 30000, // Check every 30 seconds
+  immediate: true
+});
+
+// Fetch network statuses
+async function fetchNetworkStatuses() {
+  try {
+    const response = await getAllNetworkStatuses();
+    const results = response.results;
+    if (results && results.length >= 2) {
+      routerResults.value = results[0];
+      cameraResults.value = results[1];
+    } else if (results && results.length === 1) {
+      routerResults.value = results[0];
+    }
+    networkLoading.value = false;
+    return results;
+  } catch (error) {
+    console.error("Error fetching network statuses:", error);
+    networkLoading.value = false;
+    throw error;
   }
-};
+}
+
+// Usage metrics - using websocket composable
+const { data: usageData } = useWebSocket('usage', {
+  formatter: (data) => data || { cpu: 0, memory: 0, disk: 0 }
+});
+
+// Access usage data
+const usage = computed(() => usageData.value || { cpu: 0, memory: 0, disk: 0 });
+
+// Camera volts - using websocket composable
+const { data: cameraVoltsData } = useWebSocket('camera', {
+  formatter: (rawData) => {
+    return typeof rawData === "number" 
+      ? rawData 
+      : (rawData?.voltage || 0);
+  }
+});
+
+// Router volts - using websocket composable
+const { data: routerVoltsData } = useWebSocket('router', {
+  formatter: (rawData) => {
+    return typeof rawData === "number" 
+      ? rawData 
+      : (rawData?.voltage || 0);
+  }
+});
+
+// Access volts data
+const camera_volts = computed(() => cameraVoltsData.value || 0);
+const router_volts = computed(() => routerVoltsData.value || 0);
+
+// Store access
+const configStore = useConfigStore();
+
+// Download log files
+async function handleDownloadRouterLogs() {
+  try {
+    const blob = await downloadRouterLogs();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "router.log";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error("Error downloading router logs:", error);
+  }
+}
+
+async function handleDownloadCameraLogs() {
+  try {
+    const blob = await downloadCameraLogs();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "camera.log";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error("Error downloading camera logs:", error);
+  }
+}
+
+// Computed display props
+const displayed_system_name = computed(
+  () => configStore.configData?.general?.system_name || "Unknown System"
+);
+
+const formattedDateTime = computed(() => {
+  const date = currentTime.value;
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  return `${year}-${month}-${day} ${hours}:${minutes}`;
+});
+
+// Lifecycle hooks
+onMounted(() => {
+  // Update current time every second
+  timer.value = setInterval(() => {
+    currentTime.value = new Date();
+  }, 1000);
+});
+
+onBeforeUnmount(() => {
+  clearInterval(timer.value);
+});
 </script>
-
-

@@ -20,9 +20,11 @@
               <td>
                 <div class="flex justify-center">
                   <input
-                    v-model="timezoneSettings.primary_ntp_server"
+                    v-model="formData.primary_ntp_server"
+                    @input="markTouched('primary_ntp_server')"
                     class="border-gray-500 border rounded text-Form text-center w-48"
                     type="text"
+                    :class="{'border-red-500': validationErrors.primary_ntp_server && touched.primary_ntp_server}"
                   />
                 </div>
               </td>
@@ -34,9 +36,11 @@
               <td>
                 <div class="flex justify-center">
                   <input
-                    v-model="timezoneSettings.secondary_ntp_server"
+                    v-model="formData.secondary_ntp_server"
+                    @input="markTouched('secondary_ntp_server')"
                     class="border-gray-500 border rounded text-Form text-center w-48"
                     type="text"
+                    :class="{'border-red-500': validationErrors.secondary_ntp_server && touched.secondary_ntp_server}"
                   />
                 </div>
               </td>
@@ -51,22 +55,22 @@
                     <button
                       :class="[ 
                         'py-0.5 px-3 text-FormButton transition-colors',
-                        timezoneSettings.sync_on_boot
+                        formData.sync_on_boot
                           ? 'bg-primaryMed text-white'
                           : 'bg-buttonUnselected text-textColor hover:bg-buttonHover hover:text-white'
                       ]"
-                      @click="timezoneSettings.sync_on_boot = true"
+                      @click="formData.sync_on_boot = true; markTouched('sync_on_boot')"
                     >
                       Yes
                     </button>
                     <button
                       :class="[ 
                         'py-0.5 px-3 text-FormButton transition-colors',
-                        !timezoneSettings.sync_on_boot
+                        !formData.sync_on_boot
                           ? 'bg-primaryMed text-white'
                           : 'bg-buttonUnselected text-textColor hover:bg-buttonHover hover:text-white'
                       ]"
-                      @click="timezoneSettings.sync_on_boot = false"
+                      @click="formData.sync_on_boot = false; markTouched('sync_on_boot')"
                     >
                       No
                     </button>
@@ -81,9 +85,10 @@
               <td>
                 <div class="flex justify-center">
                   <select
-                    v-model="timezoneSettings.time_zone"
-                    @change="updateUTCOffset"
+                    v-model="formData.time_zone"
+                    @change="updateUTCOffset(); markTouched('time_zone')"
                     class="border-gray-500 border rounded text-Form text-center w-48"
+                    :class="{'border-red-500': validationErrors.time_zone && touched.time_zone}"
                   >
                     <option value="" disabled>Select Time Zone</option>
                     <option value="America/New_York">New York</option>
@@ -104,12 +109,24 @@
               <td>
                 <div class="flex justify-center">
                   <input
-                    v-model="timezoneSettings.utc_offset"
+                    v-model="formData.utc_offset"
+                    @input="markTouched('utc_offset')"
                     class="border-gray-500 border rounded text-Form text-center w-48"
                     type="text"
+                    :class="{'border-red-500': validationErrors.utc_offset && touched.utc_offset}"
                   />
                 </div>
               </td>
+            </tr>
+
+            <!-- Error message row -->
+            <tr v-if="submitError" class="text-center">
+              <td colspan="2" class="text-red-500 py-1">{{ submitError }}</td>
+            </tr>
+
+            <!-- Success message row -->
+            <tr v-if="submitSuccess" class="text-center">
+              <td colspan="2" class="text-green-600 py-1">Settings updated successfully!</td>
             </tr>
 
             <!-- Submit & Clear Buttons -->
@@ -119,14 +136,16 @@
                   <!-- Submit Button -->
                   <button
                     class="bg-primaryMed hover:bg-primaryLight text-white text-FormSubmit py-1 flex justify-center rounded-md border border-gray-500 w-24"
-                    @click="submitSettings"
+                    @click="submitForm"
+                    :disabled="isSubmitting || !isDirty"
                   >
-                    Submit
+                    {{ isSubmitting ? 'Saving...' : 'Submit' }}
                   </button>
                   <!-- Clear Button -->
                   <button
                     class="bg-grayDark hover:bg-gray-700 text-white text-FormSubmit py-1 flex justify-center rounded-md border border-gray-500 w-24"
-                    @click="clearSettings"
+                    @click="resetForm"
+                    :disabled="isSubmitting || !isDirty"
                   >
                     Clear
                   </button>
@@ -140,102 +159,143 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { computed, watch } from 'vue';
 import { useConfigStore } from '@/store/config';
+import { useFormHandling } from '@/composables/useFormHandling';
+import { validateInput } from '@/utils/validation';
 
-export default {
-  name: "DateTime",
-  data() {
-    return {
-      // Local editable copy of the date/time settings
-      timezoneSettings: {
-        primary_ntp_server: "",
-        secondary_ntp_server: "",
-        sync_on_boot: true,
-        time_zone: "",
-        utc_offset: "",
-      },
-      // Backup copy for reverting changes
-      backupSettings: {},
-      // Mapping of time zones to UTC offsets
-      VALID_TIME_ZONES: {
-        "America/New_York": -5,
-        "America/Chicago": -6,
-        "America/Denver": -7,
-        "America/Phoenix": -7, // No DST
-        "America/Los_Angeles": -8,
-        "America/Adak": -10,
-        "Pacific/Honolulu": -10, // No DST
-      },
-    };
-  },
-  computed: {
-    // Access the global config store
-    configStore() {
-      return useConfigStore();
-    }
-  },
-  methods: {
-    loadTimezoneSettings() {
-      if (this.configStore.configData && this.configStore.configData.date_time) {
-        const dt = this.configStore.configData.date_time;
-        // Map the global keys to our local naming convention
-        this.timezoneSettings = {
-          primary_ntp_server: dt.primary_ntp || "",
-          secondary_ntp_server: dt.secondary_ntp || "",
-          sync_on_boot: dt.synchronize,
-          time_zone: dt.timezone || "",
-          utc_offset: dt.utc_offset !== undefined ? dt.utc_offset.toString() : "",
-        };
-        this.backupSettings = { ...this.timezoneSettings };
-      }
-    },
-    submitSettings() {
-      // Map local fields back to the global configuration structure for date_time.
-      const updatedDateTime = {
-        primary_ntp: this.timezoneSettings.primary_ntp_server,
-        secondary_ntp: this.timezoneSettings.secondary_ntp_server,
-        synchronize: this.timezoneSettings.sync_on_boot,
-        timezone: this.timezoneSettings.time_zone,
-        utc_offset: parseInt(this.timezoneSettings.utc_offset, 10)
-      };
-      // Use the store action to update just the "date_time" section.
-      this.configStore.updateConfigSection('date_time', updatedDateTime)
-        .then(() => {
-          // On success, update the backup copy with the latest confirmed settings.
-          this.backupSettings = { ...this.timezoneSettings };
-        })
-        .catch((error) => {
-          console.error("Failed to update Date/Time settings:", error);
-        });
-    },
-    clearSettings() {
-      // Revert local changes using the backup copy.
-      this.timezoneSettings = { ...this.backupSettings };
-    },
-    updateUTCOffset() {
-      // Update the UTC offset based on the selected time zone.
-      const selectedZone = this.timezoneSettings.time_zone;
-      this.timezoneSettings.utc_offset = this.VALID_TIME_ZONES[selectedZone]?.toString() || "";
-    }
-  },
-  mounted() {
-    if (this.configStore.configData) {
-      this.loadTimezoneSettings();
-    } else {
-      // Watch for when the global config becomes available.
-      const unwatch = this.$watch(
-        () => this.configStore.configData,
-        (newVal) => {
-          if (newVal) {
-            this.loadTimezoneSettings();
-            unwatch(); // Remove watcher once loaded.
-          }
-        }
-      );
+// Access the global config store
+const configStore = useConfigStore();
+
+// Valid time zones mapping
+const VALID_TIME_ZONES = {
+  "America/New_York": -5,
+  "America/Chicago": -6,
+  "America/Denver": -7,
+  "America/Phoenix": -7, // No DST
+  "America/Los_Angeles": -8,
+  "America/Adak": -10,
+  "Pacific/Honolulu": -10, // No DST
+};
+
+// Get initial date/time settings from the store
+const initialDateTimeSettings = computed(() => {
+  const dt = configStore.configData?.date_time || {};
+  return {
+    primary_ntp_server: dt.primary_ntp || "",
+    secondary_ntp_server: dt.secondary_ntp || "",
+    sync_on_boot: dt.synchronize ?? true,
+    time_zone: dt.timezone || "",
+    utc_offset: dt.utc_offset?.toString() || "",
+  };
+});
+
+// Validate date/time settings
+function validateDateTimeSettings(data) {
+  const errors = {};
+  
+  // Validate time zone
+  if (!data.time_zone) {
+    errors.time_zone = "Time zone is required";
+  } else if (!Object.keys(VALID_TIME_ZONES).includes(data.time_zone)) {
+    errors.time_zone = "Invalid time zone";
+  }
+  
+  // Validate UTC offset
+  if (!data.utc_offset) {
+    errors.utc_offset = "UTC offset is required";
+  } else {
+    const offsetNum = parseInt(data.utc_offset, 10);
+    if (isNaN(offsetNum) || offsetNum < -12 || offsetNum > 14) {
+      errors.utc_offset = "UTC offset must be between -12 and +14";
     }
   }
-};
+  
+  // NTP servers should be hostnames or IPs - basic validation
+  if (data.primary_ntp_server && !/^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(data.primary_ntp_server)) {
+    const ipResult = validateInput.ipAddress(data.primary_ntp_server);
+    if (!ipResult.valid) {
+      errors.primary_ntp_server = "Must be a valid hostname or IP address";
+    }
+  }
+  
+  if (data.secondary_ntp_server && !/^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(data.secondary_ntp_server)) {
+    const ipResult = validateInput.ipAddress(data.secondary_ntp_server);
+    if (!ipResult.valid) {
+      errors.secondary_ntp_server = "Must be a valid hostname or IP address";
+    }
+  }
+  
+  return {
+    valid: Object.keys(errors).length === 0,
+    errors
+  };
+}
+
+// Submit handler function - map back to API format
+async function submitDateTimeSettings(formData) {
+  const updatedDateTime = {
+    primary_ntp: formData.primary_ntp_server,
+    secondary_ntp: formData.secondary_ntp_server,
+    synchronize: formData.sync_on_boot,
+    timezone: formData.time_zone,
+    utc_offset: parseInt(formData.utc_offset, 10)
+  };
+  
+  return await configStore.updateConfigSection('date_time', updatedDateTime);
+}
+
+// Use the form handling composable
+const {
+  formData,
+  isSubmitting,
+  submitError,
+  submitSuccess,
+  validationErrors,
+  touched,
+  isDirty,
+  submitForm,
+  resetForm,
+  markTouched
+} = useFormHandling({
+  initialData: initialDateTimeSettings.value,
+  onSubmit: submitDateTimeSettings,
+  validate: validateDateTimeSettings,
+  onSuccess: () => {
+    // Success notification handled via submitSuccess flag
+    // Clear success message after 3 seconds
+    setTimeout(() => {
+      submitSuccess.value = false;
+    }, 3000);
+  },
+  onError: (error) => {
+    console.error("Failed to update Date/Time settings:", error);
+  }
+});
+
+// Update UTC offset when time zone changes
+function updateUTCOffset() {
+  const selectedZone = formData.time_zone;
+  formData.utc_offset = VALID_TIME_ZONES[selectedZone]?.toString() || "";
+  markTouched('utc_offset');
+}
+
+// Watch for changes in the store's date_time settings
+watch(
+  () => configStore.configData?.date_time,
+  (newDateTimeSettings) => {
+    if (newDateTimeSettings && !isDirty.value) {
+      // Update form data with new values from store
+      formData.primary_ntp_server = newDateTimeSettings.primary_ntp || "";
+      formData.secondary_ntp_server = newDateTimeSettings.secondary_ntp || "";
+      formData.sync_on_boot = newDateTimeSettings.synchronize ?? true;
+      formData.time_zone = newDateTimeSettings.timezone || "";
+      formData.utc_offset = newDateTimeSettings.utc_offset?.toString() || "";
+    }
+  },
+  { deep: true }
+);
 </script>
 
 <style scoped>

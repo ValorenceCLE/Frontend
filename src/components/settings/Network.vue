@@ -20,9 +20,11 @@
               <td>
                 <div class="flex justify-center">
                   <input
-                    v-model="networkSettings.ip_address"
+                    v-model="formData.ip_address"
+                    @input="markTouched('ip_address')"
                     class="border-gray-500 border rounded text-Form text-center w-48"
                     type="text"
+                    :class="{'border-red-500': validationErrors.ip_address && touched.ip_address}"
                   />
                 </div>
               </td>
@@ -34,9 +36,11 @@
               <td>
                 <div class="flex justify-center">
                   <input
-                    v-model="networkSettings.subnet_mask"
+                    v-model="formData.subnet_mask"
+                    @input="markTouched('subnet_mask')"
                     class="border-gray-500 border rounded text-Form text-center w-48"
                     type="text"
+                    :class="{'border-red-500': validationErrors.subnet_mask && touched.subnet_mask}"
                   />
                 </div>
               </td>
@@ -48,9 +52,11 @@
               <td>
                 <div class="flex justify-center">
                   <input
-                    v-model="networkSettings.gateway"
+                    v-model="formData.gateway"
+                    @input="markTouched('gateway')"
                     class="border-gray-500 border rounded text-Form text-center w-48"
                     type="text"
+                    :class="{'border-red-500': validationErrors.gateway && touched.gateway}"
                   />
                 </div>
               </td>
@@ -63,24 +69,24 @@
                 <div class="flex justify-center">
                   <div class="flex rounded-md w-max overflow-hidden border border-gray-500 font-bold">
                     <button
+                      @click="formData.dhcp = true; markTouched('dhcp')"
                       :class="[
                         'py-0.5 px-3 text-FormButton transition-colors',
-                        networkSettings.dhcp
+                        formData.dhcp
                           ? 'bg-primaryMed text-white'
                           : 'bg-buttonUnselected text-textColor hover:bg-buttonHover hover:text-white'
                       ]"
-                      @click="networkSettings.dhcp = true"
                     >
                       Yes
                     </button>
                     <button
+                      @click="formData.dhcp = false; markTouched('dhcp')"
                       :class="[
                         'py-0.5 px-3 text-FormButton transition-colors font-bold',
-                        !networkSettings.dhcp
+                        !formData.dhcp
                           ? 'bg-primaryMed text-white'
                           : 'bg-buttonUnselected text-textColor hover:bg-buttonHover hover:text-white'
                       ]"
-                      @click="networkSettings.dhcp = false"
                     >
                       No
                     </button>
@@ -95,9 +101,11 @@
               <td>
                 <div class="flex justify-center">
                   <input
-                    v-model="networkSettings.primary_dns"
+                    v-model="formData.primary_dns"
+                    @input="markTouched('primary_dns')"
                     class="border-gray-500 border rounded text-Form text-center w-48"
                     type="text"
+                    :class="{'border-red-500': validationErrors.primary_dns && touched.primary_dns}"
                   />
                 </div>
               </td>
@@ -109,26 +117,41 @@
               <td>
                 <div class="flex justify-center">
                   <input
-                    v-model="networkSettings.secondary_dns"
+                    v-model="formData.secondary_dns"
+                    @input="markTouched('secondary_dns')"
                     class="border-gray-500 border rounded text-Form text-center w-48"
                     type="text"
+                    :class="{'border-red-500': validationErrors.secondary_dns && touched.secondary_dns}"
                   />
                 </div>
               </td>
             </tr>
+
+            <!-- Error message row -->
+            <tr v-if="submitError" class="text-center">
+              <td colspan="2" class="text-red-500 py-1">{{ submitError }}</td>
+            </tr>
+
+            <!-- Success message row -->
+            <tr v-if="submitSuccess" class="text-center">
+              <td colspan="2" class="text-green-600 py-1">Settings updated successfully!</td>
+            </tr>
+
             <!-- Submit and Clear Buttons -->
             <tr>
               <td class="pt-2 pb-1.5 text-center" colspan="2">
                 <div class="flex justify-center gap-2">
                   <button
                     class="bg-primaryMed hover:bg-primaryLight text-white text-FormSubmit py-1 flex justify-center rounded-md border border-gray-500 w-24"
-                    @click="submitSettings"
+                    @click="submitForm"
+                    :disabled="isSubmitting || !isDirty"
                   >
-                    Submit
+                    {{ isSubmitting ? 'Saving...' : 'Submit' }}
                   </button>
                   <button
                     class="bg-grayDark hover:bg-gray-700 text-white text-FormSubmit py-1 flex justify-center rounded-md border border-gray-500 w-24"
-                    @click="clearSettings"
+                    @click="resetForm"
+                    :disabled="isSubmitting || !isDirty"
                   >
                     Clear
                   </button>
@@ -142,73 +165,117 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { computed, watch } from 'vue';
 import { useConfigStore } from '@/store/config';
+import { useFormHandling } from '@/composables/useFormHandling';
+import { validateInput } from '@/utils/validation';
 
-export default {
-  name: "Network",
-  data() {
-    return {
-      // Local copy for editing network settings
-      networkSettings: {
-        ip_address: "",
-        subnet_mask: "",
-        gateway: "",
-        dhcp: false,
-        primary_dns: "",
-        secondary_dns: "",
-      },
-      // Backup copy for "Clear" functionality
-      backupSettings: {}
-    };
-  },
-  computed: {
-    // Access the global configuration store
-    configStore() {
-      return useConfigStore();
+// Get the config store
+const configStore = useConfigStore();
+
+// Get initial network settings from the store
+const initialNetworkSettings = computed(() => {
+  return configStore.configData?.network || {
+    ip_address: "",
+    subnet_mask: "",
+    gateway: "",
+    dhcp: false,
+    primary_dns: "",
+    secondary_dns: "",
+  };
+});
+
+// Validate network settings
+function validateNetworkSettings(data) {
+  const errors = {};
+  
+  // Only validate IP fields if DHCP is disabled
+  if (!data.dhcp) {
+    // Validate IP Address
+    const ipResult = validateInput.ipAddress(data.ip_address, { required: true });
+    if (!ipResult.valid) {
+      errors.ip_address = ipResult.message;
     }
-  },
-  methods: {
-    loadNetworkSettings() {
-      if (this.configStore.configData && this.configStore.configData.network) {
-        // Copy network settings from the global config into the local editable copy
-        this.networkSettings = { ...this.configStore.configData.network };
-        this.backupSettings = { ...this.configStore.configData.network };
-      }
-    },
-    submitSettings() {
-      // Use the store action to update just the network section.
-      this.configStore.updateConfigSection('network', this.networkSettings)
-        .then(() => {
-          // On success, update the backup copy with the confirmed settings
-          this.backupSettings = { ...this.networkSettings };
-        })
-        .catch((error) => {
-          console.error("Failed to update network settings:", error);
-        });
-    },
-    clearSettings() {
-      // Revert local changes using the backup copy
-      this.networkSettings = { ...this.backupSettings };
+    
+    // Validate Subnet Mask
+    const subnetResult = validateInput.ipAddress(data.subnet_mask, { required: true });
+    if (!subnetResult.valid) {
+      errors.subnet_mask = subnetResult.message;
     }
-  },
-  mounted() {
-    // Initialize local network settings from the global config store.
-    if (this.configStore.configData) {
-      this.loadNetworkSettings();
-    } else {
-      const unwatch = this.$watch(
-        () => this.configStore.configData,
-        (newVal) => {
-          if (newVal) {
-            this.loadNetworkSettings();
-            unwatch(); // Remove the watcher once loaded.
-          }
-        }
-      );
+    
+    // Validate Gateway
+    const gatewayResult = validateInput.ipAddress(data.gateway, { required: true });
+    if (!gatewayResult.valid) {
+      errors.gateway = gatewayResult.message;
     }
   }
-};
+  
+  // DNS servers are optional but must be valid IP addresses if provided
+  if (data.primary_dns) {
+    const primaryDnsResult = validateInput.ipAddress(data.primary_dns);
+    if (!primaryDnsResult.valid) {
+      errors.primary_dns = primaryDnsResult.message;
+    }
+  }
+  
+  if (data.secondary_dns) {
+    const secondaryDnsResult = validateInput.ipAddress(data.secondary_dns);
+    if (!secondaryDnsResult.valid) {
+      errors.secondary_dns = secondaryDnsResult.message;
+    }
+  }
+  
+  return {
+    valid: Object.keys(errors).length === 0,
+    errors
+  };
+}
+
+// Submit handler function
+async function submitNetworkSettings(formData) {
+  return await configStore.updateConfigSection('network', formData);
+}
+
+// Use the form handling composable
+const {
+  formData,
+  isSubmitting,
+  submitError,
+  submitSuccess,
+  validationErrors,
+  touched,
+  isDirty,
+  submitForm,
+  resetForm,
+  markTouched
+} = useFormHandling({
+  initialData: initialNetworkSettings.value,
+  onSubmit: submitNetworkSettings,
+  validate: validateNetworkSettings,
+  onSuccess: () => {
+    // Success notification handled via submitSuccess flag
+    // Clear success message after 3 seconds
+    setTimeout(() => {
+      submitSuccess.value = false;
+    }, 3000);
+  },
+  onError: (error) => {
+    console.error("Failed to update network settings:", error);
+  }
+});
+
+// Watch for changes in the store's network settings
+watch(
+  () => configStore.configData?.network,
+  (newNetworkSettings) => {
+    if (newNetworkSettings && !isDirty.value) {
+      // Update the form with new settings from the store
+      Object.assign(formData, newNetworkSettings);
+    }
+  },
+  { deep: true }
+);
 </script>
 
 <style scoped>
