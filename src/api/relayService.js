@@ -1,31 +1,20 @@
-import axios from '@/axios';
+// src/api/relayService.js - REFACTORED
+import apiClient from './apiClient';
 
 /**
- * Get the state of a specific relay.
+ * Get the state of all relays.
  * @returns {Promise<Object>} { relayId: string, state: string }
  */
-export async function getAllRelayStates(){
-  try{
-    const response = await axios.get('/io/relays/state');
-    return response.data;
-  }
-  catch (error) {
-    throw new Error(error.response?.data?.detail || error.message);
-  }
+export async function getAllRelayStates() {
+  return await apiClient.get('/io/relays/state');
 }
 
 /**
- * Get the state of a specific relay.
+ * Get the state of enabled relays.
  * @returns {Promise<Object>} { relayId: string, state: string }
  */
-export async function getEnabledRelayStates(){
-  try{
-    const response = await axios.get('/io/relays/enabled/state');
-    return response.data;
-  }
-  catch (error) {
-    throw new Error(error.response?.data?.detail || error.message);
-  }
+export async function getEnabledRelayStates() {
+  return await apiClient.get('/io/relays/enabled/state');
 }
 
 /**
@@ -34,12 +23,7 @@ export async function getEnabledRelayStates(){
  * @returns {Promise<Object>} { relayId: string, state: string }
  */
 export async function getRelayState(relayId) {
-  try {
-    const response = await axios.get(`/io/${relayId}/state`);
-    return response.data;
-  } catch (error) {
-    throw new Error(error.response?.data?.detail || error.message);
-  }
+  return await apiClient.get(`/io/${relayId}/state`);
 }
 
 /**
@@ -48,12 +32,7 @@ export async function getRelayState(relayId) {
  * @returns {Promise<Object>} Response from the API.
  */
 export async function turnRelayOn(relayId) {
-  try {
-    const response = await axios.post(`/io/${relayId}/state/on`);
-    return response.data;
-  } catch (error) {
-    throw new Error(error.response?.data?.detail || error.message);
-  }
+  return await apiClient.post(`/io/${relayId}/state/on`);
 }
 
 /**
@@ -62,12 +41,7 @@ export async function turnRelayOn(relayId) {
  * @returns {Promise<Object>} Response from the API.
  */
 export async function turnRelayOff(relayId) {
-  try {
-    const response = await axios.post(`/io/${relayId}/state//off`);
-    return response.data;
-  } catch (error) {
-    throw new Error(error.response?.data?.detail || error.message);
-  }
+  return await apiClient.post(`/io/${relayId}/state//off`);
 }
 
 /**
@@ -76,10 +50,5 @@ export async function turnRelayOff(relayId) {
  * @returns {Promise<Object>} Response from the API.
  */
 export async function pulseRelay(relayId) {
-  try {
-    const response = await axios.post(`/io/${relayId}/state/pulse`);
-    return response.data;
-  } catch (error) {
-    throw new Error(error.response?.data?.detail || error.message);
-  }
+  return await apiClient.post(`/io/${relayId}/state/pulse`);
 }

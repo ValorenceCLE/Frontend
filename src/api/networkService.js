@@ -1,4 +1,5 @@
-import axios from '@/axios';
+// src/api/networkService.js - REFACTORED
+import apiClient from './apiClient';
 
 /**
  * Get the state of the router.
@@ -9,17 +10,13 @@ import axios from '@/axios';
  * @returns {Promise<Object>} { host: string, online: boolean, latency_ms: number }
  */
 export async function getRouterStatus({ retries = 2, timeout = 1, port = 443 } = {}) {
-    try {
-        const response = await axios.get(`/network/ping?hosts=192.168.1.1&retries=${retries}&timeout=${timeout}&port=${port}`);
-        const result = response.data.results[0]; // Assuming the first result is for the router
-        return {
-            host: result.host,
-            online: result.online,
-            latency_ms: result.latency_ms,
-        };
-    } catch (error) {
-        throw new Error(error.response?.data?.detail || error.message);
-    }
+  const queryParams = `?hosts=192.168.1.1&retries=${retries}&timeout=${timeout}&port=${port}`;
+  const response = await apiClient.get(`/network/ping${queryParams}`);
+  return {
+    host: response.results[0].host,
+    online: response.results[0].online,
+    latency_ms: response.results[0].latency_ms,
+  };
 }
 
 /**
@@ -31,17 +28,13 @@ export async function getRouterStatus({ retries = 2, timeout = 1, port = 443 } =
  * @returns {Promise<Object>} { host: string, online: boolean, latency_ms: number }
  */
 export async function getCameraStatus({ retries = 2, timeout = 1, port = 443 } = {}) {
-    try {
-        const response = await axios.get(`/network/ping?hosts=192.168.1.3&retries=${retries}&timeout=${timeout}&port=${port}`);
-        const result = response.data.results[0]; // Assuming the first result is for the camera
-        return {
-            host: result.host,
-            online: result.online,
-            latency_ms: result.latency_ms,
-        };
-    } catch (error) {
-        throw new Error(error.response?.data?.detail || error.message);
-    }
+  const queryParams = `?hosts=192.168.1.3&retries=${retries}&timeout=${timeout}&port=${port}`;
+  const response = await apiClient.get(`/network/ping${queryParams}`);
+  return {
+    host: response.results[0].host,
+    online: response.results[0].online,
+    latency_ms: response.results[0].latency_ms,
+  };
 }
 
 /**
@@ -53,12 +46,8 @@ export async function getCameraStatus({ retries = 2, timeout = 1, port = 443 } =
  * @returns {Promise<Object>} { summary: Object, results: Array }
  */
 export async function getAllNetworkStatuses({ retries = 2, timeout = 1, port = 443 } = {}) {
-    try {
-        const response = await axios.get(`/network/ping?hosts=192.168.1.1,192.168.1.3&retries=${retries}&timeout=${timeout}&port=${port}`);
-        return response.data; // Return the full response with summary and results
-    } catch (error) {
-        throw new Error(error.response?.data?.detail || error.message);
-    }
+  const queryParams = `?hosts=192.168.1.1,192.168.1.3&retries=${retries}&timeout=${timeout}&port=${port}`;
+  return await apiClient.get(`/network/ping${queryParams}`);
 }
 
 /**
@@ -71,17 +60,13 @@ export async function getAllNetworkStatuses({ retries = 2, timeout = 1, port = 4
  * @returns {Promise<Object>} { host: string, online: boolean, latency_ms: number }
  */
 export async function getNetworkStatus(host, { retries = 2, timeout = 1, port = 443 } = {}) {
-    try {
-        const response = await axios.get(`/network/ping?hosts=${host}&retries=${retries}&timeout=${timeout}&port=${port}`);
-        const result = response.data.results[0]; // Assuming the first result is for the specified host
-        return {
-            host: result.host,
-            online: result.online,
-            latency_ms: result.latency_ms,
-        };
-    } catch (error) {
-        throw new Error(error.response?.data?.detail || error.message);
-    }
+  const queryParams = `?hosts=${host}&retries=${retries}&timeout=${timeout}&port=${port}`;
+  const response = await apiClient.get(`/network/ping${queryParams}`);
+  return {
+    host: response.results[0].host,
+    online: response.results[0].online,
+    latency_ms: response.results[0].latency_ms,
+  };
 }
 
 /**
@@ -90,25 +75,20 @@ export async function getNetworkStatus(host, { retries = 2, timeout = 1, port = 
  * @returns {Promise<Object>} Speed test results including download and upload speeds.
  */
 export async function performSpeedTest(forceUpdate = false) {
-    try {
-        const response = await axios.get('/network/speedtest', {
-            params: { force: forceUpdate }
-        });
-        
-        // Extract just the results part
-        if (response.data.results) {
-            return response.data.results;
-        } else if (response.data.status) {
-            console.log("Speedtest status:", response.data.status);
-            return null;
-        } else if (response.data.error) {
-            console.error("Speedtest error:", response.data.error);
-            return null;
-        } else {
-            return response.data; // If somehow the structure is different
-        }
-    } catch (error) {
-        console.error("Speedtest request failed:", error);
-        throw new Error(error.response?.data?.detail || error.message);
-    }
+  const response = await apiClient.get('/network/speedtest', {
+    params: { force: forceUpdate }
+  });
+  
+  // Extract just the results part
+  if (response.results) {
+    return response.results;
+  } else if (response.status) {
+    console.log("Speedtest status:", response.status);
+    return null;
+  } else if (response.error) {
+    console.error("Speedtest error:", response.error);
+    return null;
+  } else {
+    return response; // If somehow the structure is different
+  }
 }

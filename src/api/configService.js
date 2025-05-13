@@ -1,17 +1,11 @@
-// src/api/configService.js
-import axios from '@/axios';
+// src/api/configService.js - REFACTORED
+import apiClient from './apiClient';
 
 /**
  * Fetch the full configuration.
  */
 export async function fetchConfig() {
-  try {
-    const response = await axios.get('/config/');
-    return response.data;
-  } catch (error) {
-    console.error("Fetch config error:", error);
-    throw new Error(error.response?.data?.detail || error.message);
-  }
+  return await apiClient.get('/config/');
 }
 
 /**
@@ -19,14 +13,9 @@ export async function fetchConfig() {
  */
 export async function updateConfig(newConfig) {
   console.log("API Service - Updating config:", newConfig); // Debug log
-  try {
-    const response = await axios.post('/config/', newConfig);
-    console.log("API Service - Update response:", response.data); // Debug log
-    return response.data;
-  } catch (error) {
-    console.error("API Service - Update error:", error);
-    throw new Error(error.response?.data?.detail || error.message);
-  }
+  const response = await apiClient.post('/config/', newConfig);
+  console.log("API Service - Update response:", response); // Debug log
+  return response;
 }
 
 /**
@@ -37,14 +26,9 @@ export async function updateConfig(newConfig) {
  */
 export async function updateConfigSection(section, newData) {
   console.log(`API Service - Updating section ${section}:`, newData); // Debug log
-  try {
-    const response = await axios.post(`/config/${section}`, newData);
-    console.log(`API Service - Section ${section} response:`, response.data); // Debug log
-    return response.data;
-  } catch (error) {
-    console.error(`API Service - Section ${section} error:`, error);
-    throw new Error(error.response?.data?.detail || error.message);
-  }
+  const response = await apiClient.post(`/config/${section}`, newData);
+  console.log(`API Service - Section ${section} response:`, response); // Debug log
+  return response;
 }
 
 /**
@@ -53,13 +37,7 @@ export async function updateConfigSection(section, newData) {
  * @returns {Promise<Object>} The configuration section data.
  */
 export async function fetchConfigSection(section) {
-  try {
-    const response = await axios.get(`/config/${section}`);
-    return response.data;
-  } catch (error) {
-    console.error(`API Service - Fetch section ${section} error:`, error);
-    throw new Error(error.response?.data?.detail || error.message);
-  }
+  return await apiClient.get(`/config/${section}`);
 }
 
 /**
@@ -67,11 +45,5 @@ export async function fetchConfigSection(section) {
  * @returns {Promise<Object>} The API response.
  */
 export async function revertToDefaults() {
-  try {
-    const response = await axios.post('/config/revert');
-    return response.data;
-  } catch (error) {
-    console.error("API Service - Revert to defaults error:", error);
-    throw new Error(error.response?.data?.detail || error.message);
-  }
+  return await apiClient.post('/config/revert');
 }

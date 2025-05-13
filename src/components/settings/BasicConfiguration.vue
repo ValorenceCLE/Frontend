@@ -285,14 +285,11 @@ export default {
     };
 
     const rebootDevice = () => {
-      console.log("Rebooting device...");
-      alert("Device is restarting now...");
       rebootDevice();
     };
 
     const rebootSystem = () => {
       console.log("Rebooting system...");
-      alert("Beginning power cycle...\nPlease do not navigate away from this page.");
     };
 
     const factoryReset = () => {

@@ -133,7 +133,6 @@ import { useConfigStore } from "@/store/config";
 import { getAllNetworkStatuses } from "@/api/networkService";
 import { downloadRouterLogs, downloadCameraLogs } from "@/api/logsService";
 import { useWebSocket } from '@/composables/useWebSocket';
-import { usePolling } from '@/composables/usePolling';
 
 // Current time for display
 const currentTime = ref(new Date());
@@ -143,34 +142,7 @@ const timer = ref(null);
 const routerResults = ref({ online: false });
 const cameraResults = ref({ online: false });
 const networkLoading = ref(true);
-
-// Use polling for network status
-const {
-  loading: networkStatusLoading
-} = usePolling(fetchNetworkStatuses, {
-  interval: 30000, // Check every 30 seconds
-  immediate: true
-});
-
-// Fetch network statuses
-async function fetchNetworkStatuses() {
-  try {
-    const response = await getAllNetworkStatuses();
-    const results = response.results;
-    if (results && results.length >= 2) {
-      routerResults.value = results[0];
-      cameraResults.value = results[1];
-    } else if (results && results.length === 1) {
-      routerResults.value = results[0];
-    }
-    networkLoading.value = false;
-    return results;
-  } catch (error) {
-    console.error("Error fetching network statuses:", error);
-    networkLoading.value = false;
-    throw error;
-  }
-}
+const networkPollInterval = ref(null);
 
 // Usage metrics - using websocket composable
 const { data: usageData } = useWebSocket('usage', {
@@ -204,6 +176,27 @@ const router_volts = computed(() => routerVoltsData.value || 0);
 
 // Store access
 const configStore = useConfigStore();
+
+// Fetch network statuses
+async function fetchNetworkStatuses() {
+  try {
+    const networkResponse = await getAllNetworkStatuses();
+    const networkResults = networkResponse.results;
+    
+    if (networkResults && networkResults.length >= 2) {
+      routerResults.value = networkResults[0];
+      cameraResults.value = networkResults[1];
+    } else if (networkResults && networkResults.length === 1) {
+      routerResults.value = networkResults[0];
+    }
+    
+    networkLoading.value = false;
+    console.log("Network statuses fetched:", networkResponse);
+  } catch (error) {
+    console.error("Error fetching network statuses:", error);
+    networkLoading.value = false;
+  }
+}
 
 // Download log files
 async function handleDownloadRouterLogs() {
@@ -259,9 +252,19 @@ onMounted(() => {
   timer.value = setInterval(() => {
     currentTime.value = new Date();
   }, 1000);
+  
+  // Fetch network status immediately and then poll every 30 seconds
+  fetchNetworkStatuses();
+  networkPollInterval.value = setInterval(() => {
+    fetchNetworkStatuses();
+  }, 30000);
 });
 
 onBeforeUnmount(() => {
+  // Clean up timers
   clearInterval(timer.value);
+  if (networkPollInterval.value) {
+    clearInterval(networkPollInterval.value);
+  }
 });
 </script>

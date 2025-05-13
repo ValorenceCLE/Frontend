@@ -1,15 +1,10 @@
-// deviceService.js
-import axios from '@/axios';
+// src/api/deviceService.js - REFACTORED
+import apiClient from './apiClient';
 
 /**
  * Reboot the device by calling the backend API.
  * @returns {Promise<Object>} Response from the backend.
  */
 export const rebootDevice = async () => {
-    try {
-        const response = await axios.post('/device/reboot');
-        return response.data;
-    } catch (error) {
-        throw new Error(error.response?.data?.detail || 'Failed to reboot the device.');
-    }
+  return await apiClient.post('/device/reboot');
 };
