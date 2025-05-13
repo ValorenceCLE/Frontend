@@ -1,17 +1,43 @@
-// src/api/networkService.js - REFACTORED
+// src/api/networkService.js
 import apiClient from './apiClient';
+import configUtils from '@/utils/configUtils';
+
+/**
+ * Get network status for specified hosts
+ * @param {string|string[]} hosts - Host IP addresses to check
+ * @param {Object} options - Network ping options
+ * @returns {Promise<Object>} Network status results
+ */
+export async function getNetworkStatus(hosts, options = {}) {
+  // Get default options from config
+  const defaultOptions = configUtils.get('network.pingOptions', {
+    retries: 2,
+    timeout: 1,
+    port: 443
+  });
+  
+  // Merge with provided options
+  const pingOptions = { ...defaultOptions, ...options };
+  
+  // Format hosts as comma-separated string if it's an array
+  const hostsParam = Array.isArray(hosts) ? hosts.join(',') : hosts;
+  
+  // Build query parameters
+  const queryParams = `?hosts=${hostsParam}&retries=${pingOptions.retries}&timeout=${pingOptions.timeout}&port=${pingOptions.port}`;
+  
+  // Make API request
+  return await apiClient.get(`/network/ping${queryParams}`);
+}
 
 /**
  * Get the state of the router.
  * @param {Object} options - Options for the request.
- * @param {number} options.retries - Number of retry attempts.
- * @param {number} options.timeout - Timeout in seconds for each request.
- * @param {number} options.port - Port to use for the ping.
- * @returns {Promise<Object>} { host: string, online: boolean, latency_ms: number }
+ * @returns {Promise<Object>} Router status information
  */
-export async function getRouterStatus({ retries = 2, timeout = 1, port = 443 } = {}) {
-  const queryParams = `?hosts=192.168.1.1&retries=${retries}&timeout=${timeout}&port=${port}`;
-  const response = await apiClient.get(`/network/ping${queryParams}`);
+export async function getRouterStatus(options = {}) {
+  const routerIp = configUtils.get('network.devices.router', '192.168.1.1');
+  const response = await getNetworkStatus(routerIp, options);
+  
   return {
     host: response.results[0].host,
     online: response.results[0].online,
@@ -22,14 +48,12 @@ export async function getRouterStatus({ retries = 2, timeout = 1, port = 443 } =
 /**
  * Get the state of the camera.
  * @param {Object} options - Options for the request.
- * @param {number} options.retries - Number of retry attempts.
- * @param {number} options.timeout - Timeout in seconds for each request.
- * @param {number} options.port - Port to use for the ping.
- * @returns {Promise<Object>} { host: string, online: boolean, latency_ms: number }
+ * @returns {Promise<Object>} Camera status information
  */
-export async function getCameraStatus({ retries = 2, timeout = 1, port = 443 } = {}) {
-  const queryParams = `?hosts=192.168.1.3&retries=${retries}&timeout=${timeout}&port=${port}`;
-  const response = await apiClient.get(`/network/ping${queryParams}`);
+export async function getCameraStatus(options = {}) {
+  const cameraIp = configUtils.get('network.devices.camera', '192.168.1.3');
+  const response = await getNetworkStatus(cameraIp, options);
+  
   return {
     host: response.results[0].host,
     online: response.results[0].online,
@@ -38,41 +62,21 @@ export async function getCameraStatus({ retries = 2, timeout = 1, port = 443 } =
 }
 
 /**
- * Get the status of all network devices with additional query parameters.
+ * Get the status of all network devices.
  * @param {Object} options - Options for the request.
- * @param {number} options.retries - Number of retry attempts.
- * @param {number} options.timeout - Timeout in seconds for each request.
- * @param {number} options.port - Port to use for the ping.
- * @returns {Promise<Object>} { summary: Object, results: Array }
+ * @returns {Promise<Object>} All devices status information
  */
-export async function getAllNetworkStatuses({ retries = 2, timeout = 1, port = 443 } = {}) {
-  const queryParams = `?hosts=192.168.1.1,192.168.1.3&retries=${retries}&timeout=${timeout}&port=${port}`;
-  return await apiClient.get(`/network/ping${queryParams}`);
-}
-
-/**
- * Get the status of a specific network device.
- * @param {string} host - The IP address of the device.
- * @param {Object} options - Options for the request.
- * @param {number} options.retries - Number of retry attempts.
- * @param {number} options.timeout - Timeout in seconds for each request.
- * @param {number} options.port - Port to use for the ping.
- * @returns {Promise<Object>} { host: string, online: boolean, latency_ms: number }
- */
-export async function getNetworkStatus(host, { retries = 2, timeout = 1, port = 443 } = {}) {
-  const queryParams = `?hosts=${host}&retries=${retries}&timeout=${timeout}&port=${port}`;
-  const response = await apiClient.get(`/network/ping${queryParams}`);
-  return {
-    host: response.results[0].host,
-    online: response.results[0].online,
-    latency_ms: response.results[0].latency_ms,
-  };
+export async function getAllNetworkStatuses(options = {}) {
+  const routerIp = configUtils.get('network.devices.router', '192.168.1.1');
+  const cameraIp = configUtils.get('network.devices.camera', '192.168.1.3');
+  
+  return await getNetworkStatus([routerIp, cameraIp], options);
 }
 
 /**
  * Perform a speed test.
  * @param {boolean} forceUpdate - Whether to force a new test instead of using cached results.
- * @returns {Promise<Object>} Speed test results including download and upload speeds.
+ * @returns {Promise<Object>} Speed test results
  */
 export async function performSpeedTest(forceUpdate = false) {
   const response = await apiClient.get('/network/speedtest', {

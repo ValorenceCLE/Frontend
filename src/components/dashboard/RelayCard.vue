@@ -38,8 +38,9 @@
 </template>
 
 <script setup>
-import { ref, computed, defineEmits, defineProps } from "vue";
+import { ref, computed } from "vue";
 import { turnRelayOn, turnRelayOff, pulseRelay } from "@/api/relayService";
+import configUtils from '@/utils/configUtils';
 
 const props = defineProps({
   relay: {
@@ -62,29 +63,44 @@ const display_status = computed(() => {
   if (isPulsing.value) {
     return props.relay.dashboard?.pulse_button?.status_text || "Pulsing...";
   }
-  return currentState.value === 1 ? "On" : "Off";
+  return currentState.value === 1 ? 
+    (props.relay.dashboard?.on_button?.status_text || "On") : 
+    (props.relay.dashboard?.off_button?.status_text || "Off");
 });
 
 // Style for the status badge (background color)
 const statusStyle = computed(() => {
   let color = "gray";
+  
   if (isPulsing.value) {
-    color = props.relay.dashboard?.pulse_button?.status_color || "gray";
+    color = props.relay.dashboard?.pulse_button?.status_color || "yellow";
   } else if (currentState.value === 1) {
     color = props.relay.dashboard?.on_button?.status_color || "green";
   } else {
     color = props.relay.dashboard?.off_button?.status_color || "red";
   }
-  return { backgroundColor: color.toLowerCase() };
+  
+  // Use color mapping if available
+  const colorMap = {
+    'red': configUtils.get('ui.colors.red', '#eb191a'),
+    'green': configUtils.get('ui.colors.green', '#2a980c'),
+    'yellow': configUtils.get('ui.colors.yellow', '#FFDF00'),
+    'blue': configUtils.get('ui.colors.blue', '#0a44a3'),
+    'gray': configUtils.get('ui.colors.gray', '#d1d5db')
+  };
+  
+  return { 
+    backgroundColor: colorMap[color.toLowerCase()] || color.toLowerCase() 
+  };
 });
 
 // Button labels from the relay dashboard config
 const buttons = computed(() => {
   if (props.relay.dashboard) {
     return {
-      on: props.relay.dashboard.on_button.show ? props.relay.dashboard.on_button.button_label : null,
-      off: props.relay.dashboard.off_button.show ? props.relay.dashboard.off_button.button_label : null,
-      pulse: props.relay.dashboard.pulse_button.show ? props.relay.dashboard.pulse_button.button_label : null,
+      on: props.relay.dashboard.on_button.show ? props.relay.dashboard.on_button.button_label || "On" : null,
+      off: props.relay.dashboard.off_button.show ? props.relay.dashboard.off_button.button_label || "Off" : null,
+      pulse: props.relay.dashboard.pulse_button.show ? props.relay.dashboard.pulse_button.button_label || "Pulse" : null,
     };
   }
   return { on: "On", off: "Off", pulse: "Pulse" };
@@ -119,24 +135,24 @@ const turn_off = async () => {
 const pulse_relay = async () => {
   try {
     isPulsing.value = true;
+    
+    // Get pulse duration from config if not specified in relay
+    const defaultDuration = configUtils.get('relay.defaultPulseTime', 5);
+    const duration = props.relay.pulse_time || defaultDuration;
+    
     const result = await pulseRelay(props.relay.id);
     console.log("Pulse result:", result);
-    // The API returns { status: "success", duration, initial_state }
-    // We can retrieve the new state from the API or assume the hardware is toggling.
-    // Let's do a quick GET to confirm the new state if you want to be certain:
-    //   const newState = await getRelayState(props.relay.id);
-    //   emit("update-state", { id: props.relay.id, state: newState.state });
-
+    
     // If the API returned a "state" property, use it:
     if (result.state !== undefined) {
       emit("update-state", { id: props.relay.id, state: result.state });
     }
 
     // Show "Pulsing" for the specified duration
-    const duration = result.duration || 5;
+    const pulseTime = result.duration || duration;
     setTimeout(() => {
       isPulsing.value = false;
-    }, duration * 1000);
+    }, pulseTime * 1000);
   } catch (error) {
     console.error("Error pulsing relay:", error);
     isPulsing.value = false;

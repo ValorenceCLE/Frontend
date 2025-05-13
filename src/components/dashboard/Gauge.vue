@@ -16,6 +16,7 @@
 
 <script setup>
 import { computed } from "vue";
+import configUtils from '@/utils/configUtils';
 
 /**
  * PROPS:
@@ -49,16 +50,34 @@ const titleStyle = computed(() => {
 
 /**
  * Function to determine the color of the gauge arc
+ * Uses the configuration color stops
  */
 function getArcColor(fraction) {
   if (fraction < 0) fraction = 0;
   if (fraction > 1) fraction = 1;
 
-  if (fraction < 0.5) {
-    return blendColor("#2a980c", "#FFDF00", fraction / 0.5);
-  } else {
-    return blendColor("#FFDF00", "#eb191a", (fraction - 0.5) / 0.5);
+  // Get color stops from configuration
+  const colorStops = configUtils.get('charts.gauge.colorStops', [
+    [0, '#2a980c'],    // Green at 0%
+    [0.5, '#FFDF00'],  // Yellow at 50%
+    [1, '#eb191a']     // Red at 100%
+  ]);
+  
+  // Find the right color stops
+  for (let i = 1; i < colorStops.length; i++) {
+    const prevStop = colorStops[i-1][0];
+    const nextStop = colorStops[i][0];
+    
+    if (fraction >= prevStop && fraction <= nextStop) {
+      const startColor = colorStops[i-1][1];
+      const endColor = colorStops[i][1];
+      const localFraction = (fraction - prevStop) / (nextStop - prevStop);
+      return blendColor(startColor, endColor, localFraction);
+    }
   }
+  
+  // Fallback to the last color
+  return colorStops[colorStops.length - 1][1];
 }
 
 /**
@@ -92,6 +111,11 @@ const chartOption = computed(() => {
   const fraction = range ? (props.value - props.min) / range : 0;
   const progressColor = getArcColor(fraction);
 
+  // Apply gauge settings from configuration
+  const gaugeWidth = configUtils.get('charts.gauge.arcWidth', 28) * s;
+  const tickLength = configUtils.get('charts.gauge.tickLength', 5) * s;
+  const splitLineLength = configUtils.get('charts.gauge.splitLineLength', 10) * s;
+
   return {
     backgroundColor: "transparent",
     series: [
@@ -107,14 +131,14 @@ const chartOption = computed(() => {
 
         axisLine: {
           lineStyle: {
-            width: 28 * s,
+            width: gaugeWidth,
             color: [[1, "#fcfcfc"]],
           },
         },
 
         progress: {
           show: true,
-          width: 28 * s,
+          width: gaugeWidth,
           itemStyle: {
             color: progressColor,
           },
@@ -122,9 +146,9 @@ const chartOption = computed(() => {
 
         axisTick: {
           show: true,
-          distance: -28 * s,
+          distance: -gaugeWidth,
           splitNumber: 5,
-          length: -5 * s,
+          length: -tickLength,
           lineStyle: {
             width: 2 * s,
             color: "#909294",
@@ -133,8 +157,8 @@ const chartOption = computed(() => {
 
         splitLine: {
           show: true,
-          distance: -28 * s,
-          length: -10 * s,
+          distance: -gaugeWidth,
+          length: -splitLineLength,
           lineStyle: {
             width: 2 * s,
             color: "#909294",

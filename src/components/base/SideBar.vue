@@ -69,7 +69,7 @@ export default {
           icon: settingsIcon,
           route: "settings",
           defaultSubRoute: "general",
-          items: ["General", "Network", "Date/Time", "Emails"],
+          items: ["General", "Network", "Date/Time"],
         },
         {
           title: "Relays",

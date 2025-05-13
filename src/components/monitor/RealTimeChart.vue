@@ -19,6 +19,7 @@
 import { ref, computed, onMounted, onBeforeUnmount, nextTick, watch } from "vue";
 import * as echarts from "echarts";
 import { useWebSocket } from '@/composables/useWebSocket';
+import configUtils from '@/utils/configUtils';
 
 // Define component props.
 const props = defineProps({
@@ -36,14 +37,14 @@ let chartInstance = null;
 const chartContainer = ref(null);
 const wsConnection = ref(null);
 
-// Mapping display field names to sensor data keys.
-const fieldMapping = {
-  Volts: "voltage",
-  Amps: "current",
-  Watts: "power",
-  Temperature: "temperature",
-  Humidity: "humidity",
-};
+// Get field mappings from configuration
+const fieldMapping = computed(() => configUtils.get('fieldMappings.display', {
+  "Volts": "voltage",
+  "Amps": "current",
+  "Watts": "power",
+  "Temperature": "temperature",
+  "Humidity": "humidity",
+}));
 
 // Object to store time-series data for each field.
 const seriesDataMap = ref({});
@@ -60,7 +61,7 @@ const handleWebSocketMessage = (rawData) => {
   
   // For each selected field, add the new data point if available
   for (const field of props.fields) {
-    const sensorKey = fieldMapping[field];
+    const sensorKey = fieldMapping.value[field];
     
     // Make sure the sensorKey exists and has a value in the data
     if (sensorKey && rawData[sensorKey] !== undefined) {
@@ -74,12 +75,11 @@ const handleWebSocketMessage = (rawData) => {
       
       if (!isNaN(value)) {
         seriesDataMap.value[field].push([timestamp, value]);
-        // Keep only the latest 120 points
-        if (seriesDataMap.value[field].length > 120) {
+        // Keep only the latest 120 points (2 minutes at 1Hz)
+        const maxPoints = configUtils.get('charts.realTime.maxDataPoints', 120);
+        if (seriesDataMap.value[field].length > maxPoints) {
           seriesDataMap.value[field].shift();
         }
-        
-        console.log(`Added data point for ${field}: [${timestamp.toISOString()}, ${value}]`);
       }
     }
   }
@@ -153,12 +153,38 @@ function getChartOption() {
       if (value < globalMin) globalMin = value;
     });
     
+    // Get color from config
+    const color = configUtils.getChartColor(field);
+    
+    // Determine symbols and smoothing based on data size
+    const showSymbol = data.length < configUtils.get('charts.realTime.symbolThreshold', 1000);
+    const isSmooth = data.length < configUtils.get('charts.realTime.smoothThreshold', 500);
+    
     return {
       name: field,
       type: "line",
       data: data,
-      smooth: false,
-      showSymbol: false,
+      smooth: isSmooth,
+      showSymbol: showSymbol,
+      symbolSize: showSymbol ? 
+        (data.length < 200 ? 5 : 3) : 0,
+      sampling: data.length > 2000 ? 'lttb' : false,
+      lineStyle: {
+        width: data.length < 1000 ? 2 : 1.5,
+        color: color
+      },
+      itemStyle: {
+        color: color
+      },
+      emphasis: {
+        // Highlight on hover
+        itemStyle: {
+          borderWidth: 2
+        },
+        lineStyle: {
+          width: 3
+        }
+      }
     };
   });
   
@@ -166,8 +192,10 @@ function getChartOption() {
   if (globalMax === -Infinity) globalMax = 1;
   if (globalMin === Infinity) globalMin = 0;
   
-  const maxY = Math.ceil(globalMax + 2);
-  const minY = Math.floor(globalMin - 2);
+  // Add some padding to the y-axis
+  const padding = (globalMax - globalMin) * 0.1;
+  const yMax = Math.ceil(globalMax + padding);
+  const yMin = Math.floor(globalMin - padding);
 
   return {
     title: {
@@ -186,7 +214,8 @@ function getChartOption() {
         const dateStr = new Date(params[0].value[0]).toLocaleString();
         let html = `<b>${dateStr}</b><br/>`;
         for (const p of params) {
-          html += `<b>${p.seriesName}:</b> ${p.value[1]}<br/>`;
+          html += `<span style="display:inline-block;margin-right:5px;border-radius:50%;width:10px;height:10px;background-color:${p.color};"></span>`;
+          html += `<b>${p.seriesName}:</b> ${p.value[1].toFixed(2)}<br/>`;
         }
         return html;
       },
@@ -205,10 +234,15 @@ function getChartOption() {
     },
     yAxis: {
       type: "value",
-      min: minY,
-      max: maxY,
+      min: yMin,
+      max: yMax,
     },
     series: series,
+    // Apply animation settings from config
+    animation: configUtils.get('charts.defaults.animation', true),
+    // Progressive rendering for large datasets
+    progressive: 750,
+    progressiveThreshold: 2000,
   };
 }
 

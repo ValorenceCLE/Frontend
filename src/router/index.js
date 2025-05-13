@@ -90,11 +90,11 @@ const router = createRouter({
           component: () => import("@/components/settings/DateTime.vue"),
           meta: { requiresAuth: true, role: "admin" },
         },
-        {
-          path: "settings/emails",
-          component: () => import("@/components/settings/Emails.vue"),
-          meta: { requiresAuth: true, role: "admin" },
-        },
+        // {
+        //   path: "settings/emails",
+        //   component: () => import("@/components/settings/Emails.vue"),
+        //   meta: { requiresAuth: true, role: "admin" },
+        // },
         
         // Relay Routes
         {

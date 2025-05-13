@@ -1,16 +1,31 @@
 // src/services/websocketManager.js
+import configUtils from '@/utils/configUtils';
+
+/**
+ * WebSocket Manager for handling WebSocket connections
+ * Uses centralized configuration for connection parameters
+ */
 class WebSocketManager {
   constructor() {
+    // Maps to store connection state
     this.sockets = new Map();
     this.subscribers = new Map();
+    this.reconnectAttempts = new Map();
+    this.connectionTimeouts = new Map();
+    
+    // Connection parameters from config
     this.protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     this.baseUrl = this._buildBaseUrl();
-    this.reconnectAttempts = new Map();
-    this.maxReconnectAttempts = 5;
-    this.reconnectDelay = 1000;
-    this.connectionTimeouts = new Map();
+    this.maxReconnectAttempts = configUtils.get('websocket.reconnectAttempts', 5);
+    this.reconnectDelay = configUtils.get('websocket.reconnectDelay', 1000);
+    this.connectionTimeout = configUtils.get('websocket.connectionTimeout', 10000);
   }
   
+  /**
+   * Build the base URL for WebSocket connections
+   * @private
+   * @returns {string} Base WebSocket URL
+   */
   _buildBaseUrl() {
     const hostname = window.location.hostname;
     let port = window.location.port;
@@ -21,14 +36,19 @@ class WebSocketManager {
     return `${this.protocol}//${hostname}:${port}/api`;
   }
 
+  /**
+   * Get WebSocket URL for an endpoint
+   * @param {string} endpoint - The endpoint to connect to
+   * @returns {string} Full WebSocket URL
+   */
   getWsUrl(endpoint) {
     const formattedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
     return `${this.baseUrl}${formattedEndpoint}`;
   }
 
   /**
-   * Get JWT token string from localStorage
-   * @returns {string|null} Raw JWT token string or null if not found
+   * Get JWT token from localStorage
+   * @returns {string|null} JWT token or null if not found
    */
   getAuthToken() {
     try {
@@ -53,6 +73,12 @@ class WebSocketManager {
     }
   }
 
+  /**
+   * Subscribe to a WebSocket endpoint
+   * @param {string} endpoint - Endpoint to subscribe to
+   * @param {Function} callback - Callback for received messages
+   * @returns {Function} Unsubscribe function
+   */
   subscribe(endpoint, callback) {
     const url = this.getWsUrl(endpoint);
     
@@ -71,6 +97,11 @@ class WebSocketManager {
     return () => this.unsubscribe(url, callback);
   }
 
+  /**
+   * Create a new WebSocket connection
+   * @private
+   * @param {string} url - WebSocket URL to connect to
+   */
   createSocket(url) {
     if (this.sockets.has(url)) return;
     
@@ -91,7 +122,7 @@ class WebSocketManager {
           socket.close();
           this.handleConnectionFailure(url, new Error('Connection timeout'));
         }
-      }, 10000);
+      }, this.connectionTimeout);
       
       this.connectionTimeouts.set(url, timeoutId);
       
@@ -163,7 +194,12 @@ class WebSocketManager {
     }
   }
 
-  // Other methods remain the same...
+  /**
+   * Handle connection failures and implement reconnection
+   * @private
+   * @param {string} url - WebSocket URL
+   * @param {Error} error - Error that occurred
+   */
   handleConnectionFailure(url, error) {
     console.error(`WebSocket connection failure for ${url}:`, error);
     
@@ -172,6 +208,7 @@ class WebSocketManager {
     if (currentAttempts < this.maxReconnectAttempts) {
       this.reconnectAttempts.set(url, currentAttempts + 1);
       
+      // Calculate delay with exponential backoff and jitter
       const baseDelay = this.reconnectDelay * Math.pow(1.5, currentAttempts);
       const jitter = Math.random() * 0.3 * baseDelay;
       const delay = Math.min(30000, baseDelay + jitter);
@@ -196,6 +233,11 @@ class WebSocketManager {
     }
   }
 
+  /**
+   * Unsubscribe from a WebSocket endpoint
+   * @param {string} url - WebSocket URL
+   * @param {Function} callback - Callback to remove
+   */
   unsubscribe(url, callback) {
     if (!this.subscribers.has(url)) return;
     
@@ -213,6 +255,10 @@ class WebSocketManager {
     }
   }
 
+  /**
+   * Close a WebSocket connection
+   * @param {string} url - WebSocket URL
+   */
   closeSocket(url) {
     if (this.connectionTimeouts.has(url)) {
       clearTimeout(this.connectionTimeouts.get(url));
@@ -226,6 +272,9 @@ class WebSocketManager {
     this.sockets.delete(url);
   }
 
+  /**
+   * Close all WebSocket connections
+   */
   closeAll() {
     this.connectionTimeouts.forEach((timeoutId) => {
       clearTimeout(timeoutId);
@@ -249,7 +298,7 @@ const wsManager = new WebSocketManager();
 export const websocketService = {
   manager: wsManager,
   
-  // Same helper methods as before
+  // Helper methods for specific endpoints
   subscribeToUsageMetrics(callback) {
     return wsManager.subscribe('/device/usage', callback);
   },

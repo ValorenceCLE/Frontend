@@ -30,7 +30,7 @@
             </span>
           </div>
 
-          <!-- Upload/Download Speeds from the Store - UPDATED SECTION -->
+          <!-- Upload/Download Speeds from the Store -->
           <div class="flex justify-between">
             <strong>Upload Speed:</strong>
             <span>
@@ -41,7 +41,7 @@
                 Pending...
               </template>
               <template v-else>
-                {{ (speedTestStore.speedTestResults.upload / 1000000).toFixed(2) }} Mbps
+                {{ formatBytesToMbps(speedTestStore.speedTestResults.upload) }} Mbps
               </template>
             </span>
           </div>
@@ -55,7 +55,7 @@
                 Pending...
               </template>
               <template v-else>
-                {{ (speedTestStore.speedTestResults.download / 1000000).toFixed(2) }} Mbps
+                {{ formatBytesToMbps(speedTestStore.speedTestResults.download) }} Mbps
               </template>
             </span>
           </div>
@@ -66,9 +66,9 @@
       <div class="flex-[1.5] bg-gray-200 p-1 rounded h-44 border border-gray-500">
         <Gauge
           title="Main Power"
-          :min="0"
-          :max="24"
-          unit="v"
+          :min="configUtils.get('gauges.main.min', 0)"
+          :max="configUtils.get('gauges.main.max', 24)"
+          :unit="configUtils.get('gauges.main.unit', 'v')"
           :value="volts"
           :scale="sharedScale"
           class="w-full h-full"
@@ -79,9 +79,9 @@
       <div class="flex-[1.5] bg-gray-200 p-1 rounded h-44 border border-gray-500">
         <Gauge
           title="Temperature"
-          :min="-32" 
-          :max="120"
-          unit="°F"
+          :min="configUtils.get('gauges.temperature.min', -32)" 
+          :max="configUtils.get('gauges.temperature.max', 120)"
+          :unit="configUtils.get('gauges.temperature.unit', '°F')"
           :value="temperature"
           :scale="sharedScale"
           class="w-full h-full"
@@ -110,6 +110,7 @@ import { getEnabledRelayStates } from "@/api/relayService";
 import { getAllNetworkStatuses } from "@/api/networkService";
 import { useSpeedTestStore } from "@/store/speedTest";
 import { useWebSocket } from '@/composables/useWebSocket';
+import configUtils from '@/utils/configUtils';
 
 /*********************
  * 1) Gauge Scaling  *
@@ -140,9 +141,14 @@ const sharedScale = computed(() => {
   const w = containerWidth.value;
   const h = containerHeight.value;
   if (!w || !h) return 1;
+  
   const dimension = Math.min(w, h);
+  const maxScale = configUtils.get('charts.gauge.maxScale', 2.0);
+  const defaultScale = configUtils.get('charts.gauge.defaultScale', 1.0);
+  
   let s = dimension / 400;
-  s = Math.max(1.0, Math.min(s, 2.0));
+  s = Math.max(defaultScale, Math.min(s, maxScale));
+  
   return s;
 });
 
@@ -158,7 +164,7 @@ const leftTitleStyle = computed(() => ({
  ***************************************/
 const configStore = useConfigStore();
 const system_name = computed(
-  () => configStore.configData?.general?.system_name || "Unnamed System"
+  () => configStore.systemName
 );
 
 /****************************************************
@@ -203,9 +209,12 @@ onMounted(() => {
     console.error("Network fetch error:", error)
   );
 
-  // Poll relay states immediately and then every 2 seconds
+  // Poll relay states immediately and then every X seconds (from config)
+  const pollingInterval = configUtils.get('relay.pollingInterval', 2000);
+  
   pollRelayStates();
-  const pollInterval = setInterval(pollRelayStates, 2000);
+  const pollInterval = setInterval(pollRelayStates, pollingInterval);
+  
   onBeforeUnmount(() => clearInterval(pollInterval));
 });
 
@@ -213,18 +222,13 @@ onMounted(() => {
  * 4) Merge polled relay states with config store    *
  *****************************************************/
 const enabled_relays = computed(() => {
-  if (!configStore.configData?.relays) return [];
-  return Object.values(configStore.configData.relays)
-    .filter((relay) => relay.enabled)
-    .map((relay) => {
-      let configState = relay.state;
-      if (typeof configState === "string") {
-        configState = configState.toLowerCase() === "on" ? 1 : 0;
-      }
-      const polled = polledRelayStates.value[relay.id];
-      const state = polled !== undefined ? polled : configState;
-      return { ...relay, state };
-    });
+  return configStore.enabledRelays.map(relay => {
+    // Get state from polled state or use config state as fallback
+    const polledState = polledRelayStates.value[relay.id];
+    const state = polledState !== undefined ? polledState : relay.state;
+    
+    return { ...relay, state };
+  });
 });
 
 // 4b) Update Relay State on immediate UI feedback
@@ -236,9 +240,9 @@ function updateRelayState({ id, state }) {
 }
 
 /**********************************************
- * 5) Demo Gauges (WebSocket Integration) - UPDATED   *
+ * 5) WebSocket Integration for Gauge Data   *
  **********************************************/
-// Use our new composable for WebSocket connections
+// Use our composable for WebSocket connections
 const { data: voltsData } = useWebSocket('main', {
   formatter: (rawData) => {
     return typeof rawData === "number" 
@@ -260,12 +264,20 @@ const volts = computed(() => voltsData.value || 0);
 const temperature = computed(() => temperatureData.value || 0);
 
 /****************************************************
- * 6) Speed Test Store Integration - UPDATED SECTION *
+ * 6) Speed Test Store Integration                  *
  ****************************************************/
 const speedTestStore = useSpeedTestStore();
 
-// Start polling with a 30-second interval
-speedTestStore.startSpeedTestPolling(30000);
+// Helper function to format bytes to Mbps with the right precision
+function formatBytesToMbps(bytes) {
+  if (!bytes) return "0.00";
+  const mbps = bytes / 1000000; // Convert bytes to megabits
+  return mbps.toFixed(2); // Format to 2 decimal places
+}
+
+// Start polling with the interval from config
+const speedTestPollingInterval = configUtils.get('network.speedTest.pollingInterval', 30000);
+speedTestStore.startSpeedTestPolling(speedTestPollingInterval);
 
 // Clean up on component unmount
 onBeforeUnmount(() => {
