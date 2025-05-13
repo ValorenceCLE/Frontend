@@ -1,3 +1,4 @@
+<!-- src/components/settings/Network.vue -->
 <template>
   <div class="flex items-center justify-center w-full h-full relative">
     <div class="w-full mx-auto rounded-md" style="max-width: 40rem">
@@ -25,6 +26,7 @@
                     class="border-gray-500 border rounded text-Form text-center w-48"
                     type="text"
                     :class="{'border-red-500': validationErrors.ip_address && touched.ip_address}"
+                    :disabled="formData.dhcp"
                   />
                 </div>
               </td>
@@ -41,6 +43,7 @@
                     class="border-gray-500 border rounded text-Form text-center w-48"
                     type="text"
                     :class="{'border-red-500': validationErrors.subnet_mask && touched.subnet_mask}"
+                    :disabled="formData.dhcp"
                   />
                 </div>
               </td>
@@ -57,6 +60,7 @@
                     class="border-gray-500 border rounded text-Form text-center w-48"
                     type="text"
                     :class="{'border-red-500': validationErrors.gateway && touched.gateway}"
+                    :disabled="formData.dhcp"
                   />
                 </div>
               </td>
@@ -128,13 +132,23 @@
             </tr>
 
             <!-- Error message row -->
-            <tr v-if="submitError" class="text-center">
-              <td colspan="2" class="text-red-500 py-1">{{ submitError }}</td>
+            <tr v-if="error" class="text-center">
+              <td colspan="2" class="text-red-500 py-1">{{ error }}</td>
             </tr>
 
             <!-- Success message row -->
-            <tr v-if="submitSuccess" class="text-center">
-              <td colspan="2" class="text-green-600 py-1">Settings updated successfully!</td>
+            <tr v-if="successMessage" class="text-center">
+              <td colspan="2" class="text-green-600 py-1">{{ successMessage }}</td>
+            </tr>
+            
+            <!-- Loading indicator -->
+            <tr v-if="isLoading" class="text-center">
+              <td colspan="2" class="py-1">
+                <div class="flex justify-center items-center">
+                  <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-primaryMed"></div>
+                  <span class="ml-2 text-sm text-gray-600">Loading...</span>
+                </div>
+              </td>
             </tr>
 
             <!-- Submit and Clear Buttons -->
@@ -144,14 +158,14 @@
                   <button
                     class="bg-primaryMed hover:bg-primaryLight text-white text-FormSubmit py-1 flex justify-center rounded-md border border-gray-500 w-24"
                     @click="submitForm"
-                    :disabled="isSubmitting || !isDirty"
+                    :disabled="isLoading || !isDirty"
                   >
-                    {{ isSubmitting ? 'Saving...' : 'Submit' }}
+                    {{ isLoading ? 'Saving...' : 'Submit' }}
                   </button>
                   <button
                     class="bg-grayDark hover:bg-gray-700 text-white text-FormSubmit py-1 flex justify-center rounded-md border border-gray-500 w-24"
                     @click="resetForm"
-                    :disabled="isSubmitting || !isDirty"
+                    :disabled="isLoading || !isDirty"
                   >
                     Clear
                   </button>
@@ -166,116 +180,121 @@
 </template>
 
 <script setup>
-import { computed, watch } from 'vue';
-import { useConfigStore } from '@/store/config';
-import { useFormHandling } from '@/composables/useFormHandling';
+import { reactive, ref, computed, watch } from 'vue';
+import { useConfig } from '@/composables/useConfig';
 import { validateInput } from '@/utils/validation';
 
-// Get the config store
-const configStore = useConfigStore();
+// Use our new config composable for the 'network' section
+const { 
+  sectionData: networkConfig, 
+  isConfigLoaded,
+  isLoading,
+  error,
+  successMessage,
+  updateSection
+} = useConfig('network');
 
-// Get initial network settings from the store
-const initialNetworkSettings = computed(() => {
-  return configStore.configData?.network || {
-    ip_address: "",
-    subnet_mask: "",
-    gateway: "",
-    dhcp: false,
-    primary_dns: "",
-    secondary_dns: "",
-  };
+// Form data states
+const formData = reactive({
+  ip_address: "",
+  subnet_mask: "",
+  gateway: "",
+  dhcp: false,
+  primary_dns: "",
+  secondary_dns: "",
 });
 
-// Validate network settings
-function validateNetworkSettings(data) {
+const validationErrors = ref({});
+const touched = ref({});
+
+// Flag to track if form has been modified
+const isDirty = ref(false);
+
+// Load the network config into the form when it becomes available
+watch(networkConfig, (newConfig) => {
+  if (newConfig && !isDirty.value) {
+    // Copy all properties from the config
+    Object.assign(formData, newConfig);
+    // Reset validation and touched states
+    validationErrors.value = {};
+    touched.value = {};
+    isDirty.value = false;
+  }
+}, { immediate: true });
+
+// Mark fields as touched when they're modified
+const markTouched = (field) => {
+  touched.value[field] = true;
+  isDirty.value = true;
+};
+
+// Validate the form data
+const validateForm = () => {
   const errors = {};
   
   // Only validate IP fields if DHCP is disabled
-  if (!data.dhcp) {
+  if (!formData.dhcp) {
     // Validate IP Address
-    const ipResult = validateInput.ipAddress(data.ip_address, { required: true });
+    const ipResult = validateInput.ipAddress(formData.ip_address, { required: true });
     if (!ipResult.valid) {
       errors.ip_address = ipResult.message;
     }
     
     // Validate Subnet Mask
-    const subnetResult = validateInput.ipAddress(data.subnet_mask, { required: true });
+    const subnetResult = validateInput.ipAddress(formData.subnet_mask, { required: true });
     if (!subnetResult.valid) {
       errors.subnet_mask = subnetResult.message;
     }
     
     // Validate Gateway
-    const gatewayResult = validateInput.ipAddress(data.gateway, { required: true });
+    const gatewayResult = validateInput.ipAddress(formData.gateway, { required: true });
     if (!gatewayResult.valid) {
       errors.gateway = gatewayResult.message;
     }
   }
   
   // DNS servers are optional but must be valid IP addresses if provided
-  if (data.primary_dns) {
-    const primaryDnsResult = validateInput.ipAddress(data.primary_dns);
+  if (formData.primary_dns) {
+    const primaryDnsResult = validateInput.ipAddress(formData.primary_dns);
     if (!primaryDnsResult.valid) {
       errors.primary_dns = primaryDnsResult.message;
     }
   }
   
-  if (data.secondary_dns) {
-    const secondaryDnsResult = validateInput.ipAddress(data.secondary_dns);
+  if (formData.secondary_dns) {
+    const secondaryDnsResult = validateInput.ipAddress(formData.secondary_dns);
     if (!secondaryDnsResult.valid) {
       errors.secondary_dns = secondaryDnsResult.message;
     }
   }
   
-  return {
-    valid: Object.keys(errors).length === 0,
-    errors
-  };
-}
+  validationErrors.value = errors;
+  return Object.keys(errors).length === 0;
+};
 
-// Submit handler function
-async function submitNetworkSettings(formData) {
-  return await configStore.updateConfigSection('network', formData);
-}
-
-// Use the form handling composable
-const {
-  formData,
-  isSubmitting,
-  submitError,
-  submitSuccess,
-  validationErrors,
-  touched,
-  isDirty,
-  submitForm,
-  resetForm,
-  markTouched
-} = useFormHandling({
-  initialData: initialNetworkSettings.value,
-  onSubmit: submitNetworkSettings,
-  validate: validateNetworkSettings,
-  onSuccess: () => {
-    // Success notification handled via submitSuccess flag
-    // Clear success message after 3 seconds
-    setTimeout(() => {
-      submitSuccess.value = false;
-    }, 3000);
-  },
-  onError: (error) => {
-    console.error("Failed to update network settings:", error);
+// Submit form changes to the backend
+const submitForm = async () => {
+  if (!validateForm()) return;
+  
+  try {
+    await updateSection(formData);
+    isDirty.value = false;
+    // Validation and success messages are handled by the composable
+  } catch (err) {
+    // Error handling is done by the composable
+    console.error("Submit failed:", err);
   }
-});
+};
 
-// Watch for changes in the store's network settings
-watch(
-  () => configStore.configData?.network,
-  (newNetworkSettings) => {
-    if (newNetworkSettings && !isDirty.value) {
-      // Update the form with new settings from the store
-      Object.assign(formData, newNetworkSettings);
-    }
-  },
-  { deep: true }
-);
+// Reset the form to the current config
+const resetForm = () => {
+  if (networkConfig.value) {
+    Object.assign(formData, networkConfig.value);
+  }
+  validationErrors.value = {};
+  touched.value = {};
+  isDirty.value = false;
+};
 </script>
 
 <style scoped>

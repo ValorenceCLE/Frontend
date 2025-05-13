@@ -1,157 +1,44 @@
-// src/store/config.js
+// src/store/config.js - REPLACEMENT VERSION
 import { defineStore } from 'pinia';
-import {
-  fetchConfig as apiFetchConfig,
-  updateConfig as apiUpdateConfig,
-  updateConfigSection as apiUpdateConfigSection,
-  revertToDefaults as apiRevertToDefaults,
-} from '@/api/configService';
-import configUtils from '@/utils/configUtils';
+import axios from '@/axios';
 
 /**
- * Config store for managing application configuration
+ * Configuration store that ensures data is always fresh
+ * This is a complete replacement for the existing config store
  */
 export const useConfigStore = defineStore('config', {
   state: () => ({
     configData: null,
     loading: false,
     error: null,
-    lastUpdate: null,
   }),
   
   getters: {
-    /**
-     * Get a specific section of configuration
-     * @param {string} section - The section name
-     * @returns {Object|null} The section data or null
-     */
-    getSection: (state) => (section) => {
-      if (!state.configData || !section) return null;
-      return state.configData[section] || null;
-    },
-    
-    /**
-     * Get a value from the configuration
-     * Uses the configUtils to safely access nested properties
-     * @param {string} path - Path to the value using dot notation
-     * @param {any} defaultValue - Default value if not found
-     * @returns {any} The value or default
-     */
-    getValue: (state) => (path, defaultValue) => {
-      if (!state.configData) return defaultValue;
-      
-      // Use the configUtils.get method for safe access
-      return configUtils.get(path, defaultValue);
-    },
-    
-    /**
-     * Get system name (convenience getter)
-     * @returns {string} System name
-     */
-    systemName: (state) => {
-      return state.configData?.general?.system_name || 'Unnamed System';
-    },
-    
-    /**
-     * Get enabled relays (convenience getter)
-     * @returns {Array} Array of enabled relay objects
-     */
-    enabledRelays: (state) => {
-      if (!state.configData?.relays) return [];
-      
-      return Object.values(state.configData.relays)
-        .filter(relay => relay.enabled)
-        .map(relay => ({
-          ...relay,
-          // Convert string state to numeric if needed
-          state: typeof relay.state === 'string' ? 
-            (relay.state.toLowerCase() === 'on' ? 1 : 0) : relay.state
-        }));
-    },
-    
-    /**
-     * Check if configuration is loaded
-     * @returns {boolean} True if config is loaded
-     */
-    isLoaded: (state) => {
-      return !!state.configData;
-    }
+    // Compatibility with existing code
+    isConfigLoaded: (state) => state.configData !== null,
   },
   
   actions: {
     /**
-     * Fetch the full configuration from the backend
-     * @returns {Promise<void>}
+     * Fetch configuration without any changes to your existing API endpoints
      */
     async fetchConfig() {
       this.loading = true;
       this.error = null;
       
       try {
-        const token = localStorage.getItem("token");
-        if (!token) {
-          console.warn("No token found, redirecting to login.");
-          window.location.href = "/login";
-          return;
-        }
+        console.log("✅ Fetching fresh configuration data");
         
-        const data = await apiFetchConfig();
-        this.configData = data;
-        this.lastUpdate = new Date();
+        // Standard API call, matching your existing endpoint
+        const response = await axios.get('/config/');
         
-        // Update localStorage after a successful fetch
-        localStorage.setItem('config', JSON.stringify(data));
+        this.configData = response.data;
+        console.log("✅ Configuration data refreshed successfully");
+        
+        return this.configData;
       } catch (err) {
         this.error = err.response?.data?.message || err.message;
-        console.error('Error fetching config:', this.error);
-      } finally {
-        this.loading = false;
-      }
-    },
-    
-    /**
-     * Manually refresh the configuration
-     * @returns {Promise<void>}
-     */
-    async refreshConfig() {
-      await this.fetchConfig();
-    },
-    
-    /**
-     * Update a specific configuration section
-     * @param {string} section - The section to update
-     * @param {Object} newData - The new data for that section
-     * @returns {Promise<Object>} API response
-     */
-    async updateConfigSection(section, newData) {
-      this.loading = true;
-      this.error = null;
-      
-      try {
-        const token = localStorage.getItem("token");
-        if (!token) {
-          throw new Error("No token found. Please log in.");
-        }
-        
-        // Call the API to update the specific section
-        const response = await apiUpdateConfigSection(section, newData);
-        
-        // Update the specific section in the in-memory state
-        if (this.configData) {
-          this.configData[section] = newData;
-          this.lastUpdate = new Date();
-        } else {
-          // If configData is not yet loaded, fetch the full config
-          await this.fetchConfig();
-        }
-        
-        // Update localStorage with the new state
-        localStorage.setItem('config', JSON.stringify(this.configData));
-        
-        return response;
-      } catch (err) {
-        this.error = err.response?.data?.message || err.message;
-        console.error('Error updating config section:', this.error);
+        console.error("❌ Error fetching configuration:", this.error);
         throw err;
       } finally {
         this.loading = false;
@@ -160,29 +47,52 @@ export const useConfigStore = defineStore('config', {
     
     /**
      * Update the full configuration
-     * @param {Object} newConfig - The full configuration object
-     * @returns {Promise<Object>} API response
      */
     async updateConfig(newConfig) {
       this.loading = true;
       this.error = null;
       
       try {
-        const token = localStorage.getItem("token");
-        if (!token) {
-          throw new Error("No token found. Please log in.");
-        }
+        console.log("🔄 Updating full configuration...");
         
-        const response = await apiUpdateConfig(newConfig);
-        this.configData = newConfig;
-        this.lastUpdate = new Date();
+        // Step 1: Update the configuration on the backend
+        const response = await axios.post('/config/', newConfig);
         
-        localStorage.setItem('config', JSON.stringify(newConfig));
+        // Step 2: ALWAYS fetch the latest config to ensure consistency
+        await this.fetchConfig();
         
-        return response;
+        console.log("✅ Full configuration updated and refreshed");
+        return response.data;
       } catch (err) {
         this.error = err.response?.data?.message || err.message;
-        console.error('Error updating config:', this.error);
+        console.error("❌ Error updating configuration:", this.error);
+        throw err;
+      } finally {
+        this.loading = false;
+      }
+    },
+    
+    /**
+     * Update a specific configuration section
+     */
+    async updateConfigSection(section, newData) {
+      this.loading = true;
+      this.error = null;
+      
+      try {
+        console.log(`🔄 Updating ${section} configuration...`);
+        
+        // Step 1: Update the configuration on the backend
+        const response = await axios.post(`/config/${section}`, newData);
+        
+        // Step 2: ALWAYS fetch the latest config to ensure consistency
+        await this.fetchConfig();
+        
+        console.log(`✅ Configuration section ${section} updated and refreshed`);
+        return response.data;
+      } catch (err) {
+        this.error = err.response?.data?.message || err.message;
+        console.error(`❌ Error updating ${section} configuration:`, this.error);
         throw err;
       } finally {
         this.loading = false;
@@ -191,20 +101,25 @@ export const useConfigStore = defineStore('config', {
     
     /**
      * Revert to default configuration
-     * @returns {Promise<Object>} API response
      */
     async revertToDefaults() {
       this.loading = true;
       this.error = null;
       
       try {
-        await apiRevertToDefaults();
-        // After reverting, fetch the updated configuration
+        console.log("🔄 Reverting to default configuration...");
+        
+        // Step 1: Call the revert API
+        const response = await axios.post('/config/revert');
+        
+        // Step 2: ALWAYS fetch the latest config to ensure consistency
         await this.fetchConfig();
-        return { success: true };
+        
+        console.log("✅ Configuration reverted to defaults and refreshed");
+        return response.data;
       } catch (err) {
-        console.error("Error in revertToDefaults:", err);
-        this.error = err.message || "Unknown error";
+        this.error = err.response?.data?.message || err.message;
+        console.error("❌ Error reverting to defaults:", this.error);
         throw err;
       } finally {
         this.loading = false;

@@ -1,3 +1,4 @@
+<!-- src/components/dashboard/Dashboard.vue -->
 <template>
   <div class="w-full max-w-4xl mx-auto">
     <!-- Dashboard Header -->
@@ -41,7 +42,7 @@
                 Pending...
               </template>
               <template v-else>
-                {{ formatBytesToMbps(speedTestStore.speedTestResults.upload) }} Mbps
+                {{ (speedTestStore.speedTestResults.upload / 1000000).toFixed(2) }} Mbps
               </template>
             </span>
           </div>
@@ -55,7 +56,7 @@
                 Pending...
               </template>
               <template v-else>
-                {{ formatBytesToMbps(speedTestStore.speedTestResults.download) }} Mbps
+                {{ (speedTestStore.speedTestResults.download / 1000000).toFixed(2) }} Mbps
               </template>
             </span>
           </div>
@@ -66,9 +67,9 @@
       <div class="flex-[1.5] bg-gray-200 p-1 rounded h-44 border border-gray-500">
         <Gauge
           title="Main Power"
-          :min="configUtils.get('gauges.main.min', 0)"
-          :max="configUtils.get('gauges.main.max', 24)"
-          :unit="configUtils.get('gauges.main.unit', 'v')"
+          :min="0"
+          :max="24"
+          unit="v"
           :value="volts"
           :scale="sharedScale"
           class="w-full h-full"
@@ -79,9 +80,9 @@
       <div class="flex-[1.5] bg-gray-200 p-1 rounded h-44 border border-gray-500">
         <Gauge
           title="Temperature"
-          :min="configUtils.get('gauges.temperature.min', -32)" 
-          :max="configUtils.get('gauges.temperature.max', 120)"
-          :unit="configUtils.get('gauges.temperature.unit', '°F')"
+          :min="-32" 
+          :max="120"
+          unit="°F"
           :value="temperature"
           :scale="sharedScale"
           class="w-full h-full"
@@ -89,14 +90,25 @@
       </div>
     </div>
 
+    <!-- Loading indicator for relays -->
+    <div v-if="isLoading" class="flex items-center justify-center py-4">
+      <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-primaryMed"></div>
+      <span class="ml-2 text-sm text-gray-600">Loading relays...</span>
+    </div>
+
     <!-- Relay Cards Section -->
-    <div class="w-full mt-2 space-y-1.5">
+    <div v-else class="w-full mt-2 space-y-1.5">
       <RelayCard
         v-for="relay in enabled_relays"
         :key="relay.id"
         :relay="relay"
         @update-state="updateRelayState"
       />
+    </div>
+
+    <!-- Error messages -->
+    <div v-if="error" class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 my-3">
+      {{ error }}
     </div>
   </div>
 </template>
@@ -105,12 +117,18 @@
 import { ref, computed, onMounted, onBeforeUnmount, nextTick } from "vue";
 import Gauge from "@/components/dashboard/Gauge.vue";
 import RelayCard from "@/components/dashboard/RelayCard.vue";
-import { useConfigStore } from "@/store/config";
+import { useConfig } from '@/composables/useConfig';
 import { getEnabledRelayStates } from "@/api/relayService";
 import { getAllNetworkStatuses } from "@/api/networkService";
 import { useSpeedTestStore } from "@/store/speedTest";
 import { useWebSocket } from '@/composables/useWebSocket';
-import configUtils from '@/utils/configUtils';
+
+// Use the config composable
+const { 
+  configData, 
+  isLoading, 
+  error
+} = useConfig();
 
 /*********************
  * 1) Gauge Scaling  *
@@ -141,14 +159,9 @@ const sharedScale = computed(() => {
   const w = containerWidth.value;
   const h = containerHeight.value;
   if (!w || !h) return 1;
-  
   const dimension = Math.min(w, h);
-  const maxScale = configUtils.get('charts.gauge.maxScale', 2.0);
-  const defaultScale = configUtils.get('charts.gauge.defaultScale', 1.0);
-  
   let s = dimension / 400;
-  s = Math.max(defaultScale, Math.min(s, maxScale));
-  
+  s = Math.max(1.0, Math.min(s, 2.0));
   return s;
 });
 
@@ -160,12 +173,11 @@ const leftTitleStyle = computed(() => ({
 }));
 
 /***************************************
- * 2) Config Store & System Name      *
+ * 2) System Name from Config          *
  ***************************************/
-const configStore = useConfigStore();
-const system_name = computed(
-  () => configStore.systemName
-);
+let system_name = computed(() => {
+  return configData.value?.general?.system_name || "Unnamed System";
+});
 
 /****************************************************
  * 3) Network Status & Relay State Polling         *
@@ -209,12 +221,9 @@ onMounted(() => {
     console.error("Network fetch error:", error)
   );
 
-  // Poll relay states immediately and then every X seconds (from config)
-  const pollingInterval = configUtils.get('relay.pollingInterval', 2000);
-  
+  // Poll relay states immediately and then every 2 seconds
   pollRelayStates();
-  const pollInterval = setInterval(pollRelayStates, pollingInterval);
-  
+  const pollInterval = setInterval(pollRelayStates, 2000);
   onBeforeUnmount(() => clearInterval(pollInterval));
 });
 
@@ -222,13 +231,19 @@ onMounted(() => {
  * 4) Merge polled relay states with config store    *
  *****************************************************/
 const enabled_relays = computed(() => {
-  return configStore.enabledRelays.map(relay => {
-    // Get state from polled state or use config state as fallback
-    const polledState = polledRelayStates.value[relay.id];
-    const state = polledState !== undefined ? polledState : relay.state;
-    
-    return { ...relay, state };
-  });
+  if (!configData.value?.relays) return [];
+  
+  return Object.values(configData.value.relays)
+    .filter((relay) => relay.enabled)
+    .map((relay) => {
+      let configState = relay.state;
+      if (typeof configState === "string") {
+        configState = configState.toLowerCase() === "on" ? 1 : 0;
+      }
+      const polled = polledRelayStates.value[relay.id];
+      const state = polled !== undefined ? polled : configState;
+      return { ...relay, state };
+    });
 });
 
 // 4b) Update Relay State on immediate UI feedback
@@ -240,7 +255,7 @@ function updateRelayState({ id, state }) {
 }
 
 /**********************************************
- * 5) WebSocket Integration for Gauge Data   *
+ * 5) Websocket Integration                   *
  **********************************************/
 // Use our composable for WebSocket connections
 const { data: voltsData } = useWebSocket('main', {
@@ -268,16 +283,10 @@ const temperature = computed(() => temperatureData.value || 0);
  ****************************************************/
 const speedTestStore = useSpeedTestStore();
 
-// Helper function to format bytes to Mbps with the right precision
-function formatBytesToMbps(bytes) {
-  if (!bytes) return "0.00";
-  const mbps = bytes / 1000000; // Convert bytes to megabits
-  return mbps.toFixed(2); // Format to 2 decimal places
-}
-
-// Start polling with the interval from config
-const speedTestPollingInterval = configUtils.get('network.speedTest.pollingInterval', 30000);
-speedTestStore.startSpeedTestPolling(speedTestPollingInterval);
+// Start polling with a 30-second interval
+onMounted(() => {
+  speedTestStore.startSpeedTestPolling(30000);
+});
 
 // Clean up on component unmount
 onBeforeUnmount(() => {

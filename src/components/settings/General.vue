@@ -1,3 +1,4 @@
+<!-- src/components/settings/General.vue -->
 <template>
   <div class="flex items-center justify-center w-full h-full relative">
     <div class="w-full mx-auto relative" style="width: 60rem">
@@ -129,10 +130,13 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import BasicConfiguration from "./BasicConfiguration.vue";
-import { useConfigStore } from "@/store/config";
+import { useConfig } from '@/composables/useConfig';
 import { getAllNetworkStatuses } from "@/api/networkService";
 import { downloadRouterLogs, downloadCameraLogs } from "@/api/logsService";
 import { useWebSocket } from '@/composables/useWebSocket';
+
+// Use the config composable instead of direct store access
+const { configData, isConfigLoaded } = useConfig(null, { autoFetch: true });
 
 // Current time for display
 const currentTime = ref(new Date());
@@ -174,8 +178,20 @@ const { data: routerVoltsData } = useWebSocket('router', {
 const camera_volts = computed(() => cameraVoltsData.value || 0);
 const router_volts = computed(() => routerVoltsData.value || 0);
 
-// Store access
-const configStore = useConfigStore();
+// Use computed property to get system name from config data
+const displayed_system_name = computed(() => {
+  return configData.value?.general?.system_name || "Unknown System";
+});
+
+const formattedDateTime = computed(() => {
+  const date = currentTime.value;
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  return `${year}-${month}-${day} ${hours}:${minutes}`;
+});
 
 // Fetch network statuses
 async function fetchNetworkStatuses() {
@@ -230,21 +246,6 @@ async function handleDownloadCameraLogs() {
     console.error("Error downloading camera logs:", error);
   }
 }
-
-// Computed display props
-const displayed_system_name = computed(
-  () => configStore.configData?.general?.system_name || "Unknown System"
-);
-
-const formattedDateTime = computed(() => {
-  const date = currentTime.value;
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  const hours = String(date.getHours()).padStart(2, "0");
-  const minutes = String(date.getMinutes()).padStart(2, "0");
-  return `${year}-${month}-${day} ${hours}:${minutes}`;
-});
 
 // Lifecycle hooks
 onMounted(() => {

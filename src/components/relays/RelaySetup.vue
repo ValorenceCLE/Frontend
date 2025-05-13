@@ -1,3 +1,4 @@
+<!-- src/components/relays/RelaySetup.vue -->
 <template>
   <div class="flex items-center justify-center w-full h-full">
     <div class="w-full mx-auto max-w-3xl">
@@ -6,7 +7,12 @@
         <p class="text-gray-600">Manage your relay configurations here.</p>
       </div>
 
-      <div v-if="Object.keys(relays).length > 0" class="bg-gray-200 rounded my-3 border-gray-500 border relative">
+      <div v-if="isLoading" class="flex items-center justify-center py-8">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primaryMed"></div>
+        <span class="ml-2 text-gray-600">Loading relays...</span>
+      </div>
+
+      <div v-else-if="Object.keys(relays).length > 0" class="bg-gray-200 rounded my-3 border-gray-500 border relative">
         <table class="text-left w-full border-collapse rounded-md overflow-hidden">
           <thead>
             <tr class="bg-gray-200 border-b border-gray-500">
@@ -44,12 +50,21 @@
           </tbody>
         </table>
       </div>
-      <div v-else class="text-center py-4">Loading relays...</div>
+      <div v-else class="text-center py-4">No relays available. Please check your configuration.</div>
+
+      <!-- Success/Error Messages -->
+      <div v-if="successMessage" class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 my-3">
+        {{ successMessage }}
+      </div>
+      
+      <div v-if="error" class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 my-3">
+        {{ error }}
+      </div>
     </div>
 
     <!-- Edit Modal -->
     <EditModal
-      v-bind="editModalProps"
+      v-model="showEditModal"
       :relay="currentRelay"
       :relayKey="currentRelayKey"
       @update-relay="handleRelayUpdate"
@@ -67,39 +82,33 @@
 
 <script setup>
 import { ref, computed, onMounted } from "vue";
-import { useConfigStore } from "@/store/config";
+import { useConfig } from '@/composables/useConfig';
 import EditModal from "@/components/relays/EditModal.vue";
 import ToastNotification from "@/components/etc/ToastNotification.vue";
-import { useModal } from "@/composables/useModal";
 
-// Global configuration store
-const configStore = useConfigStore();
+// Use the config composable
+const { 
+  configData, 
+  isLoading, 
+  error, 
+  successMessage,
+  updateConfig 
+} = useConfig();
 
-// Instead of manually fetching via an API, we rely on configStore.configData.relays.
+// Computed property to get relays from the config data
 const relays = computed(() => {
-  return configStore.configData && configStore.configData.relays
-    ? configStore.configData.relays
-    : {};
+  return configData.value?.relays || {};
 });
 
 // Local state for the current relay being edited
 const currentRelay = ref({});
 const currentRelayKey = ref("");
+const showEditModal = ref(false);
 const showToast = ref(false);
 const toastMessage = ref("");
 
-// Use the modal composable for the edit modal
-const { isOpen: showEditModal, open: openEditModal, close: closeEditModal, modalProps: editModalProps } = useModal({
-  onOpen: (relayKey) => prepareEditModal(relayKey),
-  onClose: () => {
-    // Reset current relay data when modal closes
-    currentRelay.value = {};
-    currentRelayKey.value = "";
-  }
-});
-
-// Prepare relay data for editing
-const prepareEditModal = (relayKey) => {
+// Open the edit modal for a relay
+const openEditModal = (relayKey) => {
   currentRelayKey.value = relayKey;
   // Make a deep copy to avoid reference issues
   currentRelay.value = JSON.parse(JSON.stringify(relays.value[relayKey]));
@@ -112,29 +121,33 @@ const prepareEditModal = (relayKey) => {
       pulse_button: { show: false, status_text: "", status_color: "yellow", button_label: "" },
     };
   }
+  
   // Ensure state has a default
   if (!currentRelay.value.state) {
     currentRelay.value.state = "off";
   }
+  
+  showEditModal.value = true;
 };
 
 // Handle relay updates coming from the EditModal
 const handleRelayUpdate = async ({ relayKey, updatedRelay }) => {
   try {
-    // First, update the local store data
-    if (configStore.configData && configStore.configData.relays) {
-      configStore.configData.relays[relayKey] = updatedRelay;
-      
-      // Now, update the full configuration on the backend
-      await configStore.updateConfig(configStore.configData);
-      
-      // Show success toast
-      toastMessage.value = "Changes Applied.";
-      showToast.value = true;
-      setTimeout(() => {
-        showToast.value = false;
-      }, 1500);
-    }
+    // Create a copy of the current configuration
+    const updatedConfig = { ...configData.value };
+    
+    // Update the specific relay
+    updatedConfig.relays[relayKey] = updatedRelay;
+    
+    // Update the full configuration
+    await updateConfig(updatedConfig);
+    
+    // Show success toast
+    toastMessage.value = "Changes Applied.";
+    showToast.value = true;
+    setTimeout(() => {
+      showToast.value = false;
+    }, 1500);
   } catch (error) {
     console.error("Error updating relay:", error);
     toastMessage.value = "Error applying changes.";
@@ -145,15 +158,8 @@ const handleRelayUpdate = async ({ relayKey, updatedRelay }) => {
   }
 };
 
-// Show a toast notification when update is successful.
+// Handle modal close
 const handleUpdated = () => {
-  // This is handled directly in handleRelayUpdate now
+  showEditModal.value = false;
 };
-
-// Fetch config on mount if not already loaded
-onMounted(() => {
-  if (!configStore.configData) {
-    configStore.fetchConfig();
-  }
-});
 </script>

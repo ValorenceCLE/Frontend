@@ -1,3 +1,4 @@
+<!-- src/components/settings/DateTime.vue -->
 <template>
   <div class="flex items-center justify-center w-full h-full relative">
     <div class="w-full mx-auto rounded-md" style="max-width: 40rem">
@@ -114,19 +115,30 @@
                     class="border-gray-500 border rounded text-Form text-center w-48"
                     type="text"
                     :class="{'border-red-500': validationErrors.utc_offset && touched.utc_offset}"
+                    :disabled="true"
                   />
                 </div>
               </td>
             </tr>
 
             <!-- Error message row -->
-            <tr v-if="submitError" class="text-center">
-              <td colspan="2" class="text-red-500 py-1">{{ submitError }}</td>
+            <tr v-if="error" class="text-center">
+              <td colspan="2" class="text-red-500 py-1">{{ error }}</td>
             </tr>
 
             <!-- Success message row -->
-            <tr v-if="submitSuccess" class="text-center">
-              <td colspan="2" class="text-green-600 py-1">Settings updated successfully!</td>
+            <tr v-if="successMessage" class="text-center">
+              <td colspan="2" class="text-green-600 py-1">{{ successMessage }}</td>
+            </tr>
+            
+            <!-- Loading indicator -->
+            <tr v-if="isLoading" class="text-center">
+              <td colspan="2" class="py-1">
+                <div class="flex justify-center items-center">
+                  <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-primaryMed"></div>
+                  <span class="ml-2 text-sm text-gray-600">Loading...</span>
+                </div>
+              </td>
             </tr>
 
             <!-- Submit & Clear Buttons -->
@@ -137,15 +149,15 @@
                   <button
                     class="bg-primaryMed hover:bg-primaryLight text-white text-FormSubmit py-1 flex justify-center rounded-md border border-gray-500 w-24"
                     @click="submitForm"
-                    :disabled="isSubmitting || !isDirty"
+                    :disabled="isLoading || !isDirty"
                   >
-                    {{ isSubmitting ? 'Saving...' : 'Submit' }}
+                    {{ isLoading ? 'Saving...' : 'Submit' }}
                   </button>
                   <!-- Clear Button -->
                   <button
                     class="bg-grayDark hover:bg-gray-700 text-white text-FormSubmit py-1 flex justify-center rounded-md border border-gray-500 w-24"
                     @click="resetForm"
-                    :disabled="isSubmitting || !isDirty"
+                    :disabled="isLoading || !isDirty"
                   >
                     Clear
                   </button>
@@ -160,13 +172,18 @@
 </template>
 
 <script setup>
-import { computed, watch } from 'vue';
-import { useConfigStore } from '@/store/config';
-import { useFormHandling } from '@/composables/useFormHandling';
+import { ref, reactive, watch } from 'vue';
+import { useConfig } from '@/composables/useConfig';
 import { validateInput } from '@/utils/validation';
 
-// Access the global config store
-const configStore = useConfigStore();
+// Use the config composable for the date_time section
+const { 
+  sectionData: dateTimeConfig, 
+  isLoading, 
+  error, 
+  successMessage, 
+  updateSection 
+} = useConfig('date_time');
 
 // Valid time zones mapping
 const VALID_TIME_ZONES = {
@@ -179,100 +196,45 @@ const VALID_TIME_ZONES = {
   "Pacific/Honolulu": -10, // No DST
 };
 
-// Get initial date/time settings from the store
-const initialDateTimeSettings = computed(() => {
-  const dt = configStore.configData?.date_time || {};
-  return {
-    primary_ntp_server: dt.primary_ntp || "",
-    secondary_ntp_server: dt.secondary_ntp || "",
-    sync_on_boot: dt.synchronize ?? true,
-    time_zone: dt.timezone || "",
-    utc_offset: dt.utc_offset?.toString() || "",
-  };
+// Form data and validation state
+const formData = reactive({
+  primary_ntp_server: "",
+  secondary_ntp_server: "",
+  sync_on_boot: true,
+  time_zone: "",
+  utc_offset: "",
 });
 
-// Validate date/time settings
-function validateDateTimeSettings(data) {
-  const errors = {};
-  
-  // Validate time zone
-  if (!data.time_zone) {
-    errors.time_zone = "Time zone is required";
-  } else if (!Object.keys(VALID_TIME_ZONES).includes(data.time_zone)) {
-    errors.time_zone = "Invalid time zone";
-  }
-  
-  // Validate UTC offset
-  if (!data.utc_offset) {
-    errors.utc_offset = "UTC offset is required";
-  } else {
-    const offsetNum = parseInt(data.utc_offset, 10);
-    if (isNaN(offsetNum) || offsetNum < -12 || offsetNum > 14) {
-      errors.utc_offset = "UTC offset must be between -12 and +14";
-    }
-  }
-  
-  // NTP servers should be hostnames or IPs - basic validation
-  if (data.primary_ntp_server && !/^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(data.primary_ntp_server)) {
-    const ipResult = validateInput.ipAddress(data.primary_ntp_server);
-    if (!ipResult.valid) {
-      errors.primary_ntp_server = "Must be a valid hostname or IP address";
-    }
-  }
-  
-  if (data.secondary_ntp_server && !/^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(data.secondary_ntp_server)) {
-    const ipResult = validateInput.ipAddress(data.secondary_ntp_server);
-    if (!ipResult.valid) {
-      errors.secondary_ntp_server = "Must be a valid hostname or IP address";
-    }
-  }
-  
-  return {
-    valid: Object.keys(errors).length === 0,
-    errors
-  };
-}
+const validationErrors = ref({});
+const touched = ref({});
+const isDirty = ref(false);
 
-// Submit handler function - map back to API format
-async function submitDateTimeSettings(formData) {
-  const updatedDateTime = {
-    primary_ntp: formData.primary_ntp_server,
-    secondary_ntp: formData.secondary_ntp_server,
-    synchronize: formData.sync_on_boot,
-    timezone: formData.time_zone,
-    utc_offset: parseInt(formData.utc_offset, 10)
-  };
-  
-  return await configStore.updateConfigSection('date_time', updatedDateTime);
-}
-
-// Use the form handling composable
-const {
-  formData,
-  isSubmitting,
-  submitError,
-  submitSuccess,
-  validationErrors,
-  touched,
-  isDirty,
-  submitForm,
-  resetForm,
-  markTouched
-} = useFormHandling({
-  initialData: initialDateTimeSettings.value,
-  onSubmit: submitDateTimeSettings,
-  validate: validateDateTimeSettings,
-  onSuccess: () => {
-    // Success notification handled via submitSuccess flag
-    // Clear success message after 3 seconds
-    setTimeout(() => {
-      submitSuccess.value = false;
-    }, 3000);
-  },
-  onError: (error) => {
-    console.error("Failed to update Date/Time settings:", error);
+// Initialize form data when date_time config becomes available
+watch(dateTimeConfig, (newConfig) => {
+  if (newConfig && !isDirty.value) {
+    // Map API format to form fields
+    formData.primary_ntp_server = newConfig.primary_ntp || "";
+    formData.secondary_ntp_server = newConfig.secondary_ntp || "";
+    formData.sync_on_boot = newConfig.synchronize ?? true;
+    formData.time_zone = newConfig.timezone || "";
+    formData.utc_offset = newConfig.utc_offset?.toString() || "";
+    
+    // Reset validation state
+    validationErrors.value = {};
+    touched.value = {};
+    isDirty.value = false;
   }
-});
+}, { immediate: true });
+
+// Watch form data for changes
+watch(formData, () => {
+  isDirty.value = true;
+}, { deep: true });
+
+// Mark a field as touched
+const markTouched = (field) => {
+  touched.value[field] = true;
+};
 
 // Update UTC offset when time zone changes
 function updateUTCOffset() {
@@ -281,21 +243,88 @@ function updateUTCOffset() {
   markTouched('utc_offset');
 }
 
-// Watch for changes in the store's date_time settings
-watch(
-  () => configStore.configData?.date_time,
-  (newDateTimeSettings) => {
-    if (newDateTimeSettings && !isDirty.value) {
-      // Update form data with new values from store
-      formData.primary_ntp_server = newDateTimeSettings.primary_ntp || "";
-      formData.secondary_ntp_server = newDateTimeSettings.secondary_ntp || "";
-      formData.sync_on_boot = newDateTimeSettings.synchronize ?? true;
-      formData.time_zone = newDateTimeSettings.timezone || "";
-      formData.utc_offset = newDateTimeSettings.utc_offset?.toString() || "";
+// Validate the form
+function validateForm() {
+  const errors = {};
+  
+  // Validate time zone
+  if (!formData.time_zone) {
+    errors.time_zone = "Time zone is required";
+  } else if (!Object.keys(VALID_TIME_ZONES).includes(formData.time_zone)) {
+    errors.time_zone = "Invalid time zone";
+  }
+  
+  // Validate UTC offset
+  if (!formData.utc_offset) {
+    errors.utc_offset = "UTC offset is required";
+  } else {
+    const offsetNum = parseInt(formData.utc_offset, 10);
+    if (isNaN(offsetNum) || offsetNum < -12 || offsetNum > 14) {
+      errors.utc_offset = "UTC offset must be between -12 and +14";
     }
-  },
-  { deep: true }
-);
+  }
+  
+  // NTP servers should be hostnames or IPs - basic validation
+  if (formData.primary_ntp_server && !/^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(formData.primary_ntp_server)) {
+    const ipResult = validateInput.ipAddress(formData.primary_ntp_server);
+    if (!ipResult.valid) {
+      errors.primary_ntp_server = "Must be a valid hostname or IP address";
+    }
+  }
+  
+  if (formData.secondary_ntp_server && !/^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(formData.secondary_ntp_server)) {
+    const ipResult = validateInput.ipAddress(formData.secondary_ntp_server);
+    if (!ipResult.valid) {
+      errors.secondary_ntp_server = "Must be a valid hostname or IP address";
+    }
+  }
+  
+  validationErrors.value = errors;
+  return Object.keys(errors).length === 0;
+}
+
+// Submit the form
+async function submitForm() {
+  if (!validateForm()) return;
+  
+  // Map form fields back to API format
+  const updatedDateTime = {
+    primary_ntp: formData.primary_ntp_server,
+    secondary_ntp: formData.secondary_ntp_server,
+    synchronize: formData.sync_on_boot,
+    timezone: formData.time_zone,
+    utc_offset: parseInt(formData.utc_offset, 10)
+  };
+  
+  try {
+    await updateSection(updatedDateTime);
+    isDirty.value = false;
+  } catch (err) {
+    console.error("Failed to update Date/Time settings:", err);
+  }
+}
+
+// Reset the form
+function resetForm() {
+  if (dateTimeConfig.value) {
+    formData.primary_ntp_server = dateTimeConfig.value.primary_ntp || "";
+    formData.secondary_ntp_server = dateTimeConfig.value.secondary_ntp || "";
+    formData.sync_on_boot = dateTimeConfig.value.synchronize ?? true;
+    formData.time_zone = dateTimeConfig.value.timezone || "";
+    formData.utc_offset = dateTimeConfig.value.utc_offset?.toString() || "";
+  } else {
+    // Reset to defaults if no config
+    formData.primary_ntp_server = "";
+    formData.secondary_ntp_server = "";
+    formData.sync_on_boot = true;
+    formData.time_zone = "";
+    formData.utc_offset = "";
+  }
+  
+  validationErrors.value = {};
+  touched.value = {};
+  isDirty.value = false;
+}
 </script>
 
 <style scoped>
