@@ -16,10 +16,10 @@
     </div>
 
     <!-- Tasks Table Card -->
-    <div v-else-if="conditionalTasks.length" 
+    <div v-else-if="tasks.length" 
          class="bg-gray-200 rounded my-3 border-gray-500 border relative w-full max-w-3xl">
       <ConditionalTasksTable
-        :tasks="conditionalTasks"
+        :tasks="tasks"
         :relays="relays"
         @editTask="editTask"
         @deleteTask="deleteTask"
@@ -54,20 +54,20 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed } from "vue";
 import { useConfig } from '@/composables/useConfig';
 import ConditionalTasksTable from "./ConditionalTasksTable.vue";
 import TaskModal from "./TaskModal.vue";
 import TaskForm from "./TaskForm.vue";
 
-// Use the config composable
+// Use the config composable for the full configuration
 const { 
   configData, 
   isLoading, 
   error, 
   successMessage,
   updateConfig
-} = useConfig();
+} = useConfig(null, { autoFetch: true });
 
 // Local state for tasks and modal
 const currentTask = ref(null);
@@ -86,13 +86,13 @@ const relays = computed(() => {
 });
 
 // Get tasks from the config
-const conditionalTasks = computed(() => {
+const tasks = computed(() => {
   return configData.value?.tasks || [];
 });
 
 // Get enabled relays for the form
 const enabledRelays = computed(() => {
-  return Object.values(relays.value).filter((r) => r.enabled);
+  return Object.values(relays.value).filter(r => r.enabled);
 });
 
 // UUID generator function

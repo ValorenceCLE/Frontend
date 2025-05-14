@@ -1,5 +1,5 @@
 // src/api/configService.js
-import apiClient from './apiClient';
+import apiClient from '@/api/apiClient';
 
 /**
  * Fetch the full configuration from the server.
@@ -26,7 +26,7 @@ export async function fetchConfig(cacheBuster = null) {
 /**
  * Update the full configuration on the server.
  * @param {Object} config - The full configuration object to update
- * @returns {Promise<Object>} The API response
+ * @returns {Promise<Object>} The API response with updated config
  */
 export async function updateConfig(config) {
   try {
@@ -42,7 +42,7 @@ export async function updateConfig(config) {
  * Update a specific configuration section on the server.
  * @param {string} section - The section name to update (e.g., "general", "network")
  * @param {Object} data - The section data to update
- * @returns {Promise<Object>} The API response
+ * @returns {Promise<Object>} The API response with updated section
  */
 export async function updateConfigSection(section, data) {
   try {
@@ -55,31 +55,8 @@ export async function updateConfigSection(section, data) {
 }
 
 /**
- * Fetch a specific configuration section from the server.
- * @param {string} section - The section name to fetch
- * @param {number} cacheBuster - Optional timestamp to prevent caching
- * @returns {Promise<Object>} The section data
- */
-export async function fetchConfigSection(section, cacheBuster = null) {
-  try {
-    let url = `/config/${section}`;
-    
-    // Add cache-busting parameter if provided
-    if (cacheBuster) {
-      url += `?t=${cacheBuster}`;
-    }
-    
-    const response = await apiClient.get(url);
-    return response;
-  } catch (error) {
-    console.error(`Error fetching ${section} configuration:`, error);
-    throw error;
-  }
-}
-
-/**
  * Revert configuration to defaults on the server.
- * @returns {Promise<Object>} The API response
+ * @returns {Promise<Object>} The API response with default config
  */
 export async function revertToDefaults() {
   try {

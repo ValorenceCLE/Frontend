@@ -1,3 +1,4 @@
+<!-- src/components/logic/TaskForm.vue -->
 <template>
   <form @submit.prevent="handleSaveAndExit" class="space-y-2">
     <!-- TASK NAME -->
@@ -92,12 +93,3 @@ export default {
   },
 };
 </script>
-
-<style scoped>
-/* 
-  In keeping with EditModal.vue’s style, 
-  we use a single button with .bg-primaryMed, 
-  minimal vertical padding (py-0.5), 
-  and .border-t.border-gray-500 at the container’s top for the footer bar.
-*/
-</style>

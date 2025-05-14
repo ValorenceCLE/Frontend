@@ -23,6 +23,12 @@ export function useConfig(section = null, options = {}) {
   const successMessage = ref('');
   const lastUpdateCounter = ref(configStore.updateCounter); // Track store updates
   
+  // Form management
+  const formData = ref({});
+  const isDirty = ref(false);
+  const touched = ref({});
+  const validationErrors = ref({});
+  
   // Get the section data from the store
   const sectionData = computed(() => {
     if (!section) return configStore.configData;
@@ -36,30 +42,30 @@ export function useConfig(section = null, options = {}) {
   const isConfigLoaded = computed(() => configStore.isConfigLoaded);
   
   /**
-   * Fetch the configuration if not already loaded
-   * @returns {Promise<Object>} The configuration data
+   * Safely create a deep copy of an object
+   * @param {Object} obj - Object to clone
+   * @returns {Object} Cloned object
    */
-  const ensureConfigLoaded = async () => {
-    if (!configStore.isConfigLoaded || forceRefresh) {
-      isLoading.value = true;
-      error.value = null;
+  const safeDeepCopy = (obj) => {
+    try {
+      // Try JSON method first
+      return JSON.parse(JSON.stringify(obj));
+    } catch (error) {
+      console.warn('Deep copy using JSON failed, falling back to shallow copy', error);
       
-      try {
-        await configStore.fetchConfig(forceRefresh);
-        return configStore.configData;
-      } catch (err) {
-        error.value = err.message;
-        return null;
-      } finally {
-        isLoading.value = false;
+      // If JSON fails, fallback to a shallow copy
+      if (Array.isArray(obj)) {
+        return [...obj];
+      } else if (obj && typeof obj === 'object') {
+        return { ...obj };
       }
+      
+      return obj;
     }
-    
-    return configStore.configData;
   };
   
   /**
-   * Fetch the full configuration from the backend
+   * Fetch configuration without checking if already loaded
    * @param {boolean} force - Whether to force a refresh
    * @returns {Promise<Object>} The configuration data
    */
@@ -80,8 +86,66 @@ export function useConfig(section = null, options = {}) {
   };
   
   /**
+   * Fetch the configuration if not already loaded
+   * @returns {Promise<Object>} The configuration data
+   */
+  const ensureConfigLoaded = async () => {
+    if (!configStore.isConfigLoaded || forceRefresh) {
+      isLoading.value = true;
+      error.value = null;
+      
+      try {
+        await configStore.fetchConfig(forceRefresh);
+        lastUpdateCounter.value = configStore.updateCounter;
+        return configStore.configData;
+      } catch (err) {
+        error.value = err.message;
+        return null;
+      } finally {
+        isLoading.value = false;
+      }
+    }
+    
+    return configStore.configData;
+  };
+  
+  /**
+   * Initialize form data from section
+   */
+  const initForm = () => {
+    // Skip if form is already dirty (user has made changes)
+    if (isDirty.value) return;
+    
+    const data = sectionData.value;
+    if (data) {
+      formData.value = safeDeepCopy(data); // Using our safe copy method instead of structuredClone
+      isDirty.value = false;
+      touched.value = {};
+      validationErrors.value = {};
+    }
+  };
+  
+  /**
+   * Mark a field as touched for validation display
+   */
+  const markTouched = (field) => {
+    touched.value[field] = true;
+    isDirty.value = true;
+  };
+  
+  /**
+   * Reset the form to the current config
+   */
+  const resetForm = () => {
+    initForm();
+    isDirty.value = false;
+    touched.value = {};
+    validationErrors.value = {};
+  };
+  
+  /**
    * Update a configuration section
-   * @param {Object} data - New section data
+   * @param {Object} data - New section data (optional, uses formData if not provided)
    * @param {string} targetSection - Section to update (defaults to constructor param)
    * @returns {Promise<Object>} The API response
    */
@@ -90,17 +154,22 @@ export function useConfig(section = null, options = {}) {
       throw new Error('No section specified for update');
     }
     
+    const sectionData = data || formData.value;
+    
     isLoading.value = true;
     error.value = null;
     successMessage.value = '';
     
     try {
-      const response = await configStore.updateConfigSection(targetSection, data);
+      const response = await configStore.updateConfigSection(targetSection, sectionData);
       lastUpdateCounter.value = configStore.updateCounter;
+      
       successMessage.value = `${targetSection} settings updated successfully`;
       setTimeout(() => {
         successMessage.value = '';
       }, 3000);
+      
+      isDirty.value = false;
       return response;
     } catch (err) {
       error.value = err.message;
@@ -123,10 +192,12 @@ export function useConfig(section = null, options = {}) {
     try {
       const response = await configStore.updateConfig(config);
       lastUpdateCounter.value = configStore.updateCounter;
+      
       successMessage.value = 'Configuration updated successfully';
       setTimeout(() => {
         successMessage.value = '';
       }, 3000);
+      
       return response;
     } catch (err) {
       error.value = err.message;
@@ -148,10 +219,12 @@ export function useConfig(section = null, options = {}) {
     try {
       const response = await configStore.revertToDefaults();
       lastUpdateCounter.value = configStore.updateCounter;
+      
       successMessage.value = 'Configuration reverted to defaults';
       setTimeout(() => {
         successMessage.value = '';
       }, 3000);
+      
       return response;
     } catch (err) {
       error.value = err.message;
@@ -167,20 +240,25 @@ export function useConfig(section = null, options = {}) {
       console.log(`Detected configStore update: ${lastUpdateCounter.value} -> ${newCounter}`);
       lastUpdateCounter.value = newCounter;
       
-      // Can trigger a refresh here if needed
-      if (forceRefresh) {
-        fetchConfig(true);
+      // Reinitialize form if not dirty
+      if (!isDirty.value && section) {
+        initForm();
       }
     }
   });
   
-  // Watch for changes in the store's section data if requested
+  // Watch for changes in the section data if requested
   if (section && watchSection) {
     watch(
       () => configStore.configData?.[section],
       (newValue) => {
         // The section data changed in the store
         console.log(`Section ${section} updated in store:`, newValue);
+        
+        // Reinitialize form if not dirty
+        if (!isDirty.value) {
+          initForm();
+        }
       },
       { deep: true }
     );
@@ -191,14 +269,25 @@ export function useConfig(section = null, options = {}) {
     ensureConfigLoaded();
   }
   
+  // Initialize form with current section data if a section was specified
+  if (section) {
+    watch(sectionData, () => {
+      initForm();
+    }, { immediate: true });
+  }
+  
   return {
     // State
     configData,
     sectionData,
+    formData,
     isConfigLoaded,
     isLoading,
     error,
     successMessage,
+    isDirty,
+    touched,
+    validationErrors,
     updateCounter: computed(() => configStore.updateCounter),
     
     // Methods
@@ -207,5 +296,8 @@ export function useConfig(section = null, options = {}) {
     updateSection,
     updateConfig,
     revertToDefaults,
+    markTouched,
+    resetForm,
+    initForm,
   };
 }

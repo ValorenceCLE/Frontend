@@ -99,7 +99,7 @@
     <!-- Relay Cards Section -->
     <div v-else class="w-full mt-2 space-y-1.5">
       <RelayCard
-        v-for="relay in enabled_relays"
+        v-for="relay in enabledRelays"
         :key="relay.id"
         :relay="relay"
         @update-state="updateRelayState"
@@ -123,12 +123,12 @@ import { getAllNetworkStatuses } from "@/api/networkService";
 import { useSpeedTestStore } from "@/store/speedTest";
 import { useWebSocket } from '@/composables/useWebSocket';
 
-// Use the config composable
+// Use the config composable for accessing configuration
 const { 
   configData, 
   isLoading, 
-  error
-} = useConfig();
+  error 
+} = useConfig(null, { autoFetch: true });
 
 /*********************
  * 1) Gauge Scaling  *
@@ -175,7 +175,7 @@ const leftTitleStyle = computed(() => ({
 /***************************************
  * 2) System Name from Config          *
  ***************************************/
-let system_name = computed(() => {
+const system_name = computed(() => {
   return configData.value?.general?.system_name || "Unnamed System";
 });
 
@@ -209,7 +209,6 @@ async function fetchNetworkStatuses() {
       routerResults.value = networkResults[0];
     }
     networkLoading.value = false;
-    console.log("Network statuses fetched:", networkResponse);
   } catch (error) {
     console.error("Error fetching network statuses:", error);
     networkLoading.value = false;
@@ -217,9 +216,7 @@ async function fetchNetworkStatuses() {
 }
 
 onMounted(() => {
-  fetchNetworkStatuses().catch((error) =>
-    console.error("Network fetch error:", error)
-  );
+  fetchNetworkStatuses();
 
   // Poll relay states immediately and then every 2 seconds
   pollRelayStates();
@@ -228,22 +225,21 @@ onMounted(() => {
 });
 
 /*****************************************************
- * 4) Merge polled relay states with config store    *
+ * 4) Get enabled relays from config store           *
  *****************************************************/
-const enabled_relays = computed(() => {
+const enabledRelays = computed(() => {
   if (!configData.value?.relays) return [];
   
-  return Object.values(configData.value.relays)
-    .filter((relay) => relay.enabled)
-    .map((relay) => {
-      let configState = relay.state;
-      if (typeof configState === "string") {
-        configState = configState.toLowerCase() === "on" ? 1 : 0;
-      }
-      const polled = polledRelayStates.value[relay.id];
-      const state = polled !== undefined ? polled : configState;
-      return { ...relay, state };
-    });
+  // Get only enabled relays
+  const enabledRelayList = Object.values(configData.value.relays)
+    .filter(relay => relay.enabled);
+  
+  // Merge with polled states
+  return enabledRelayList.map(relay => {
+    const polledState = polledRelayStates.value[relay.id];
+    const state = polledState !== undefined ? polledState : (relay.state === 'on' ? 1 : 0);
+    return { ...relay, state };
+  });
 });
 
 // 4b) Update Relay State on immediate UI feedback

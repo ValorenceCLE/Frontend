@@ -1,3 +1,4 @@
+<!-- src/components/dashboard/RelayCard.vue -->
 <template>
   <div class="w-full flex items-center bg-white border border-gray-500 rounded-lg shadow-lg">
     <!-- Left section: Name & Status -->
@@ -112,7 +113,6 @@ const buttons = computed(() => {
 const turn_on = async () => {
   try {
     const result = await turnRelayOn(props.relay.id);
-    console.log("Turn on result:", result);
     // Emit the new state so the parent can update immediately
     emit("update-state", { id: props.relay.id, state: result.state });
   } catch (error) {
@@ -124,7 +124,6 @@ const turn_on = async () => {
 const turn_off = async () => {
   try {
     const result = await turnRelayOff(props.relay.id);
-    console.log("Turn off result:", result);
     emit("update-state", { id: props.relay.id, state: result.state });
   } catch (error) {
     console.error("Error turning relay off:", error);
@@ -141,7 +140,6 @@ const pulse_relay = async () => {
     const duration = props.relay.pulse_time || defaultDuration;
     
     const result = await pulseRelay(props.relay.id);
-    console.log("Pulse result:", result);
     
     // If the API returned a "state" property, use it:
     if (result.state !== undefined) {

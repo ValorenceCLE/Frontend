@@ -12,7 +12,7 @@
         <span class="ml-2 text-gray-600">Loading relays...</span>
       </div>
 
-      <div v-else-if="Object.keys(relays).length > 0" class="bg-gray-200 rounded my-3 border-gray-500 border relative">
+      <div v-else-if="relays && Object.keys(relays).length > 0" class="bg-gray-200 rounded my-3 border-gray-500 border relative">
         <table class="text-left w-full border-collapse rounded-md overflow-hidden">
           <thead>
             <tr class="bg-gray-200 border-b border-gray-500">
@@ -86,14 +86,14 @@ import { useConfig } from '@/composables/useConfig';
 import EditModal from "@/components/relays/EditModal.vue";
 import ToastNotification from "@/components/etc/ToastNotification.vue";
 
-// Use the config composable
+// Use the config composable for the full configuration
 const { 
   configData, 
   isLoading, 
   error, 
   successMessage,
   updateConfig 
-} = useConfig();
+} = useConfig(null, { autoFetch: true });
 
 // Computed property to get relays from the config data
 const relays = computed(() => {
@@ -121,12 +121,6 @@ const openEditModal = (relayKey) => {
       pulse_button: { show: false, status_text: "", status_color: "yellow", button_label: "" },
     };
   }
-  
-  // Ensure state has a default
-  if (!currentRelay.value.state) {
-    currentRelay.value.state = "off";
-  }
-  
   showEditModal.value = true;
 };
 

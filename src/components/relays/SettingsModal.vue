@@ -1,3 +1,4 @@
+<!-- src/components/relays/SettingsModal.vue -->
 <template>
   <!-- OUTER container to match DashboardModal -->
   <div class="px-4 py-2 mx-auto" style="max-width: 40rem;">
@@ -216,10 +217,6 @@ export default {
       if (!this.localRelay.pulse_time) {
         this.localRelay.pulse_time = 5; // Default pulse time
       }
-
-      // Debug logs to check values
-      console.log("Initialized localRelay:", this.localRelay);
-      console.log("Schedule times - on:", this.localRelay.schedule.time_on, "off:", this.localRelay.schedule.time_off);
     },
 
     /* ========== SCHEDULE ENABLE / DISABLE ========== */
@@ -290,9 +287,6 @@ export default {
         updatedRelay.schedule.on_time = updatedRelay.schedule.time_on;
         updatedRelay.schedule.off_time = updatedRelay.schedule.time_off;
       }
-      
-      // Add debug logs
-      console.log("Emitting updated relay:", updatedRelay);
       
       this.$emit("fields-updated", updatedRelay);
     },

@@ -16,9 +16,11 @@
         <label class="text-Settings text-textColor">System Name:</label>
         <input
           v-model="formData.system_name"
+          @input="markTouched('system_name')"
           type="text"
           class="w-[40%] p-1 border border-gray-400 rounded"
-          :placeholder="generalConfig?.system_name || 'Enter system name'"
+          :class="{'border-red-500': validationErrors.system_name && touched.system_name}"
+          :placeholder="generalData?.system_name || 'Enter system name'"
         />
       </div>
 
@@ -27,8 +29,10 @@
         <label class="text-Settings text-textColor">Reboot Time:</label>
         <input
           v-model="formData.reboot_time"
+          @input="markTouched('reboot_time')"
           type="time"
           class="w-[40%] p-1 border border-gray-400 rounded"
+          :class="{'border-red-500': validationErrors.reboot_time && touched.reboot_time}"
         />
       </div>
 
@@ -103,7 +107,7 @@
           type="button"
           class="bg-primaryMed hover:bg-primaryLight text-white text-FormButton py-1.5 px-3 flex justify-center rounded-md border border-gray-400 w-24"
           @click="handleSubmit"
-          :disabled="isLoading || !isDirty"
+          :disabled="isLoading || (!isDirty && !uploaded_config)"
         >
           <span v-if="isLoading">
             <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white inline-block mr-1"></div>
@@ -114,7 +118,7 @@
           type="button"
           class="bg-textColor hover:bg-gray-700 text-white text-FormButton py-1.5 px-3 flex justify-center rounded-md border border-gray-400 w-24"
           @click="handleCancel"
-          :disabled="isLoading || !isDirty"
+          :disabled="isLoading || (!isDirty && !uploaded_config)"
         >
           Cancel
         </button>
@@ -151,47 +155,33 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch } from 'vue';
+import { ref } from 'vue';
 import { useConfig } from '@/composables/useConfig';
 import { rebootDevice } from '@/api/deviceService';
 
-// Use the config composable for the general section
+// Use the config composable for the general section and full config
 const { 
-  sectionData: generalConfig, 
+  sectionData: generalData,
   configData,
+  formData, 
   isLoading, 
   error, 
-  successMessage,
+  successMessage, 
+  isDirty,
+  touched,
+  validationErrors,
+  markTouched,
   updateSection,
   updateConfig,
-  revertToDefaults 
+  revertToDefaults,
+  resetForm
 } = useConfig('general');
-
-// Local form state
-const formData = reactive({
-  system_name: "",
-  reboot_time: "",
-});
 
 // File upload state
 const current_config_file_name = ref("config.json");
 const new_config_file_name = ref(null);
 const uploaded_config = ref(null);
 const configFile = ref(null);
-const isDirty = ref(false);
-
-// Watch for changes in the general config data
-watch(generalConfig, (newConfig) => {
-  if (newConfig && !isDirty.value) {
-    formData.system_name = newConfig.system_name || "";
-    formData.reboot_time = newConfig.reboot_time || "";
-  }
-}, { immediate: true });
-
-// Watch for changes to the form data
-watch(formData, () => {
-  isDirty.value = true;
-}, { deep: true });
 
 // Open the hidden file input
 const openFilePicker = () => {
@@ -208,10 +198,10 @@ const handleFileSelection = (event) => {
       try {
         const parsedConfig = JSON.parse(e.target.result);
         uploaded_config.value = parsedConfig;
-        isDirty.value = true;
         console.log("Configuration file selected:", file.name);
       } catch (err) {
         console.error("Error parsing the configuration file:", err);
+        error.value = "Invalid configuration file format. Please select a valid JSON file.";
       }
     };
     reader.readAsText(file);
@@ -253,10 +243,8 @@ const handleSubmit = async () => {
       uploaded_config.value = null;
     } else {
       // Otherwise, update only the "general" section
-      await updateSection(formData);
+      await updateSection();
     }
-    
-    isDirty.value = false;
   } catch (error) {
     console.error("Failed to submit configuration:", error);
   }
@@ -264,14 +252,9 @@ const handleSubmit = async () => {
 
 // Cancel local changes
 const handleCancel = () => {
-  if (generalConfig.value) {
-    formData.system_name = generalConfig.value.system_name || "";
-    formData.reboot_time = generalConfig.value.reboot_time || "";
-  }
-  
+  resetForm();
   new_config_file_name.value = null;
   uploaded_config.value = null;
-  isDirty.value = false;
 };
 
 // Confirmation helper for reboot actions
@@ -303,15 +286,6 @@ const factoryResetHandler = async () => {
   try {
     await revertToDefaults();
     // Reset handled by the composable, which will update store and show success message
-    
-    // Reset local form data
-    if (generalConfig.value) {
-      formData.system_name = generalConfig.value.system_name || "";
-      formData.reboot_time = generalConfig.value.reboot_time || "";
-    }
-    
-    isDirty.value = false;
-    
   } catch (err) {
     // Error handled by composable
     console.error("Factory reset failed:", err);

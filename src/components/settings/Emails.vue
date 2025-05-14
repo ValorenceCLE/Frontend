@@ -154,7 +154,7 @@
                 <div class="flex justify-center">
                   <button
                     class="bg-textColor text-white text-ModalLabel py-1 px-5 justify-center rounded border border-gray-500"
-                    :disabled="formData.emails.length >= maxEmails || isLoading"
+                    :disabled="formData.emails && formData.emails.length >= maxEmails || isLoading"
                     @click="addNewEmail"
                   >
                     Add Email
@@ -212,79 +212,43 @@
 </template>
 
 <script setup>
-import { ref, reactive, watch } from 'vue';
+import { ref } from 'vue';
 import { useConfig } from '@/composables/useConfig';
 import { validateInput } from '@/utils/validation';
 
 // Use the config composable for the email section
 const { 
-  sectionData: emailConfig, 
+  formData, 
   isLoading, 
   error, 
   successMessage, 
-  updateSection 
+  isDirty,
+  touched,
+  validationErrors,
+  markTouched,
+  updateSection,
+  resetForm
 } = useConfig('email');
 
 // Constants
 const maxEmails = ref(5);
 
-// Form data, error tracking, and validation state
-const formData = reactive({
-  smtp_server: "",
-  smtp_port: 587,
-  smtp_user: "",
-  smtp_password: "",
-  smtp_secure: "tls",
-  return_email: "",
-  emails: [],
-});
-
-const validationErrors = ref({});
-const touched = ref({});
-const isDirty = ref(false);
-
-// Initialize form data when email config becomes available
-watch(emailConfig, (newConfig) => {
-  if (newConfig && !isDirty.value) {
-    // Copy all properties from the config
-    formData.smtp_server = newConfig.smtp_server || "";
-    formData.smtp_port = newConfig.smtp_port || 587;
-    formData.smtp_user = newConfig.smtp_user || "";
-    formData.smtp_password = newConfig.smtp_password || "";
-    formData.smtp_secure = newConfig.smtp_secure || "tls";
-    formData.return_email = newConfig.return_email || "";
-    formData.emails = Array.isArray(newConfig.emails) ? [...newConfig.emails] : [];
-    
-    // Reset validation state
-    validationErrors.value = {};
-    touched.value = {};
-    isDirty.value = false;
-  }
-}, { immediate: true });
-
-// Watch form data for changes
-watch(formData, () => {
-  isDirty.value = true;
-}, { deep: true });
-
-// Mark a field as touched
-const markTouched = (field) => {
-  touched.value[field] = true;
-  isDirty.value = true;
-};
-
 // Add a new email to the list
 function addNewEmail() {
-  if (formData.emails.length < maxEmails.value) {
-    formData.emails.push("");
-    markTouched(`emails.${formData.emails.length - 1}`);
+  if (!formData.value.emails) {
+    formData.value.emails = [];
+  }
+  
+  if (formData.value.emails.length < maxEmails.value) {
+    formData.value.emails.push("");
+    markTouched(`emails.${formData.value.emails.length - 1}`);
   }
 }
 
 // Remove an email from the list
 function removeEmail(index) {
-  formData.emails.splice(index, 1);
-  isDirty.value = true;
+  formData.value.emails.splice(index, 1);
+  markTouched('emails');
 }
 
 // Validate the form before submission
@@ -292,34 +256,29 @@ function validateForm() {
   const errors = {};
   
   // Validate SMTP Server
-  if (!formData.smtp_server) {
-    errors.smtp_server = "SMTP server is required";
-  }
-  
-  // Validate SMTP Port
-  if (!formData.smtp_port) {
-    errors.smtp_port = "SMTP port is required";
-  } else if (isNaN(Number(formData.smtp_port)) || Number(formData.smtp_port) < 1 || Number(formData.smtp_port) > 65535) {
-    errors.smtp_port = "Port must be between 1 and 65535";
+  if (formData.value.smtp_server && !formData.value.smtp_port) {
+    errors.smtp_port = "SMTP port is required when server is specified";
   }
   
   // Validate Return Email
-  if (formData.return_email) {
-    const emailResult = validateInput.email(formData.return_email);
+  if (formData.value.return_email) {
+    const emailResult = validateInput.email(formData.value.return_email);
     if (!emailResult.valid) {
       errors.return_email = emailResult.message;
     }
   }
   
   // Validate recipient emails
-  formData.emails.forEach((email, index) => {
-    if (email) {
-      const emailResult = validateInput.email(email);
-      if (!emailResult.valid) {
-        errors[`emails.${index}`] = emailResult.message;
+  if (formData.value.emails) {
+    formData.value.emails.forEach((email, index) => {
+      if (email) {
+        const emailResult = validateInput.email(email);
+        if (!emailResult.valid) {
+          errors[`emails.${index}`] = emailResult.message;
+        }
       }
-    }
-  });
+    });
+  }
   
   validationErrors.value = errors;
   return Object.keys(errors).length === 0;
@@ -330,37 +289,10 @@ async function submitForm() {
   if (!validateForm()) return;
   
   try {
-    await updateSection(formData);
-    isDirty.value = false;
+    await updateSection();
   } catch (err) {
     console.error("Failed to update email settings:", err);
   }
-}
-
-// Reset the form to the current config values
-function resetForm() {
-  if (emailConfig.value) {
-    formData.smtp_server = emailConfig.value.smtp_server || "";
-    formData.smtp_port = emailConfig.value.smtp_port || 587;
-    formData.smtp_user = emailConfig.value.smtp_user || "";
-    formData.smtp_password = emailConfig.value.smtp_password || "";
-    formData.smtp_secure = emailConfig.value.smtp_secure || "tls";
-    formData.return_email = emailConfig.value.return_email || "";
-    formData.emails = Array.isArray(emailConfig.value.emails) ? [...emailConfig.value.emails] : [];
-  } else {
-    // Reset to defaults if no config
-    formData.smtp_server = "";
-    formData.smtp_port = 587;
-    formData.smtp_user = "";
-    formData.smtp_password = "";
-    formData.smtp_secure = "tls";
-    formData.return_email = "";
-    formData.emails = [];
-  }
-  
-  validationErrors.value = {};
-  touched.value = {};
-  isDirty.value = false;
 }
 </script>
 

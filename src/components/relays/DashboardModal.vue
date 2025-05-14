@@ -1,3 +1,4 @@
+<!-- src/components/relays/DashboardModal.vue -->
 <template>
   <!-- Main container -->
   <div class="px-4 py-2 mx-auto" style="max-width: 40rem;">

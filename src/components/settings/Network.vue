@@ -180,52 +180,33 @@
 </template>
 
 <script setup>
-import { reactive, ref, computed, watch } from 'vue';
 import { useConfig } from '@/composables/useConfig';
 import { validateInput } from '@/utils/validation';
 
 // Use our new config composable for the 'network' section
 const { 
-  sectionData: networkConfig, 
-  isConfigLoaded,
+  formData, 
   isLoading,
   error,
   successMessage,
-  updateSection
+  isDirty,
+  touched,
+  validationErrors,
+  markTouched,
+  updateSection,
+  resetForm
 } = useConfig('network');
 
-// Form data states
-const formData = reactive({
-  ip_address: "",
-  subnet_mask: "",
-  gateway: "",
-  dhcp: false,
-  primary_dns: "",
-  secondary_dns: "",
-});
-
-const validationErrors = ref({});
-const touched = ref({});
-
-// Flag to track if form has been modified
-const isDirty = ref(false);
-
-// Load the network config into the form when it becomes available
-watch(networkConfig, (newConfig) => {
-  if (newConfig && !isDirty.value) {
-    // Copy all properties from the config
-    Object.assign(formData, newConfig);
-    // Reset validation and touched states
-    validationErrors.value = {};
-    touched.value = {};
-    isDirty.value = false;
+// Submit form changes to the backend
+const submitForm = async () => {
+  if (!validateForm()) return;
+  
+  try {
+    await updateSection();
+    // Success message and form state handled by the composable
+  } catch (err) {
+    console.error("Submit failed:", err);
   }
-}, { immediate: true });
-
-// Mark fields as touched when they're modified
-const markTouched = (field) => {
-  touched.value[field] = true;
-  isDirty.value = true;
 };
 
 // Validate the form data
@@ -233,36 +214,36 @@ const validateForm = () => {
   const errors = {};
   
   // Only validate IP fields if DHCP is disabled
-  if (!formData.dhcp) {
+  if (!formData.value.dhcp) {
     // Validate IP Address
-    const ipResult = validateInput.ipAddress(formData.ip_address, { required: true });
+    const ipResult = validateInput.ipAddress(formData.value.ip_address, { required: true });
     if (!ipResult.valid) {
       errors.ip_address = ipResult.message;
     }
     
     // Validate Subnet Mask
-    const subnetResult = validateInput.ipAddress(formData.subnet_mask, { required: true });
+    const subnetResult = validateInput.ipAddress(formData.value.subnet_mask, { required: true });
     if (!subnetResult.valid) {
       errors.subnet_mask = subnetResult.message;
     }
     
     // Validate Gateway
-    const gatewayResult = validateInput.ipAddress(formData.gateway, { required: true });
+    const gatewayResult = validateInput.ipAddress(formData.value.gateway, { required: true });
     if (!gatewayResult.valid) {
       errors.gateway = gatewayResult.message;
     }
   }
   
   // DNS servers are optional but must be valid IP addresses if provided
-  if (formData.primary_dns) {
-    const primaryDnsResult = validateInput.ipAddress(formData.primary_dns);
+  if (formData.value.primary_dns) {
+    const primaryDnsResult = validateInput.ipAddress(formData.value.primary_dns);
     if (!primaryDnsResult.valid) {
       errors.primary_dns = primaryDnsResult.message;
     }
   }
   
-  if (formData.secondary_dns) {
-    const secondaryDnsResult = validateInput.ipAddress(formData.secondary_dns);
+  if (formData.value.secondary_dns) {
+    const secondaryDnsResult = validateInput.ipAddress(formData.value.secondary_dns);
     if (!secondaryDnsResult.valid) {
       errors.secondary_dns = secondaryDnsResult.message;
     }
@@ -270,30 +251,6 @@ const validateForm = () => {
   
   validationErrors.value = errors;
   return Object.keys(errors).length === 0;
-};
-
-// Submit form changes to the backend
-const submitForm = async () => {
-  if (!validateForm()) return;
-  
-  try {
-    await updateSection(formData);
-    isDirty.value = false;
-    // Validation and success messages are handled by the composable
-  } catch (err) {
-    // Error handling is done by the composable
-    console.error("Submit failed:", err);
-  }
-};
-
-// Reset the form to the current config
-const resetForm = () => {
-  if (networkConfig.value) {
-    Object.assign(formData, networkConfig.value);
-  }
-  validationErrors.value = {};
-  touched.value = {};
-  isDirty.value = false;
 };
 </script>
 

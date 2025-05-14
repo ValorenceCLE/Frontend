@@ -135,7 +135,7 @@ import { getAllNetworkStatuses } from "@/api/networkService";
 import { downloadRouterLogs, downloadCameraLogs } from "@/api/logsService";
 import { useWebSocket } from '@/composables/useWebSocket';
 
-// Use the config composable instead of direct store access
+// Use the config composable for accessing configuration
 const { configData, isConfigLoaded } = useConfig(null, { autoFetch: true });
 
 // Current time for display
@@ -207,7 +207,6 @@ async function fetchNetworkStatuses() {
     }
     
     networkLoading.value = false;
-    console.log("Network statuses fetched:", networkResponse);
   } catch (error) {
     console.error("Error fetching network statuses:", error);
     networkLoading.value = false;

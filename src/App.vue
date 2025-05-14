@@ -18,7 +18,6 @@ export default {
 };
 </script>
 
-<!-- App.vue - Add this script before your existing setup -->
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from "vue";
 import { useConfigStore } from "./store/config.js";
@@ -100,63 +99,4 @@ onBeforeUnmount(() => {
   
   window.removeEventListener('popstate', refreshConfigOnNavigation);
 });
-
-// Make refresh function available globally for debugging
-if (process.env.NODE_ENV === 'production') {
-  window.refreshConfig = async () => {
-    try {
-      await configStore.fetchConfig();
-      console.log("🔄 Manual configuration refresh completed");
-      return "✅ Configuration refreshed successfully";
-    } catch (error) {
-      console.error("❌ Error during manual config refresh:", error);
-      return "❌ Error refreshing configuration";
-    }
-  };
-  
-  // Create debug UI for refreshing config
-  onMounted(() => {
-    setTimeout(() => {
-      // Check if button already exists
-      if (document.getElementById('config-refresh-button')) return;
-      
-      const debugButton = document.createElement('button');
-      debugButton.id = 'config-refresh-button';
-      debugButton.innerText = 'Refresh Config';
-      debugButton.style.position = 'fixed';
-      debugButton.style.top = '10px';
-      debugButton.style.right = '10px';
-      debugButton.style.zIndex = '9999';
-      debugButton.style.padding = '5px 10px';
-      debugButton.style.backgroundColor = '#4F46E5';
-      debugButton.style.color = 'white';
-      debugButton.style.border = 'none';
-      debugButton.style.borderRadius = '4px';
-      debugButton.style.cursor = 'pointer';
-      debugButton.style.fontSize = '12px';
-      
-      debugButton.addEventListener('click', async () => {
-        debugButton.innerText = 'Refreshing...';
-        debugButton.disabled = true;
-        
-        try {
-          await configStore.fetchConfig();
-          debugButton.innerText = 'Refreshed!';
-          setTimeout(() => {
-            debugButton.innerText = 'Refresh Config';
-            debugButton.disabled = false;
-          }, 1500);
-        } catch (error) {
-          debugButton.innerText = 'Error!';
-          setTimeout(() => {
-            debugButton.innerText = 'Refresh Config';
-            debugButton.disabled = false;
-          }, 1500);
-        }
-      });
-      
-      document.body.appendChild(debugButton);
-    }, 1000);
-  });
-}
 </script>
