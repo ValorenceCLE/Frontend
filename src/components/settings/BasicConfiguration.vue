@@ -144,7 +144,7 @@
         </button>
         <button
           class="w-[90%] bg-textColor hover:bg-red-800 text-white font-bold px-2 py-2 rounded-md shadow"
-          @click="confirmAction('Restore factory defaults', factoryResetHandler)"
+          @click="factoryResetHandler"
           :disabled="isLoading"
         >
           Restore Default

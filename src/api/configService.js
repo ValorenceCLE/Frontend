@@ -60,7 +60,7 @@ export async function updateConfigSection(section, data) {
  */
 export async function revertToDefaults() {
   try {
-    const response = await apiClient.post('/config/revert');
+    const response = await apiClient.post('/config/default/revert');
     return response;
   } catch (error) {
     console.error('Error reverting configuration to defaults:', error);
