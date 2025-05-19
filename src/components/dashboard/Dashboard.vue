@@ -114,11 +114,10 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount, nextTick } from "vue";
+import { ref, computed, onMounted, onBeforeUnmount, nextTick, watch } from "vue";
 import Gauge from "@/components/dashboard/Gauge.vue";
 import RelayCard from "@/components/dashboard/RelayCard.vue";
 import { useConfig } from '@/composables/useConfig';
-import { getEnabledRelayStates } from "@/api/relayService";
 import { getAllNetworkStatuses } from "@/api/networkService";
 import { useSpeedTestStore } from "@/store/speedTest";
 import { useWebSocket } from '@/composables/useWebSocket';
@@ -180,24 +179,25 @@ const system_name = computed(() => {
 });
 
 /****************************************************
- * 3) Network Status & Relay State Polling         *
+ * 3) Network Status & Relay State WebSockets      *
  ****************************************************/
 const routerResults = ref({ online: false });
 const cameraResults = ref({ online: false });
 const networkLoading = ref(true);
-const polledRelayStates = ref({});
 
-// 3a) Poll Relay States
-async function pollRelayStates() {
-  try {
-    const states = await getEnabledRelayStates();
-    polledRelayStates.value = states;
-  } catch (error) {
-    console.error("Error polling relay states:", error);
+// NEW: WebSocket for relay states (replacing polling)
+const { data: relayStates, isConnected: relaySocketConnected } = useWebSocket('enabled_relay_states', {
+  formatter: (rawData) => {
+    return rawData || {};
   }
-}
+});
 
-// 3b) Fetch Network Statuses
+// Log WebSocket connection status for debugging
+watch(relaySocketConnected, (connected) => {
+  console.log('Relay states WebSocket connection status:', connected ? 'connected' : 'disconnected');
+});
+
+// Fetch Network Statuses
 async function fetchNetworkStatuses() {
   try {
     const networkResponse = await getAllNetworkStatuses();
@@ -217,11 +217,7 @@ async function fetchNetworkStatuses() {
 
 onMounted(() => {
   fetchNetworkStatuses();
-
-  // Poll relay states immediately and then every 2 seconds
-  pollRelayStates();
-  const pollInterval = setInterval(pollRelayStates, 2000);
-  onBeforeUnmount(() => clearInterval(pollInterval));
+  // No need for relay polling - WebSocket handles it!
 });
 
 /*****************************************************
@@ -234,18 +230,20 @@ const enabledRelays = computed(() => {
   const enabledRelayList = Object.values(configData.value.relays)
     .filter(relay => relay.enabled);
   
-  // Merge with polled states
+  // Merge with WebSocket states
   return enabledRelayList.map(relay => {
-    const polledState = polledRelayStates.value[relay.id];
-    const state = polledState !== undefined ? polledState : (relay.state === 'on' ? 1 : 0);
+    const state = relayStates.value && relayStates.value[relay.id] !== undefined ? 
+      relayStates.value[relay.id] : 
+      (relay.state === 'on' ? 1 : 0);
     return { ...relay, state };
   });
 });
 
-// 4b) Update Relay State on immediate UI feedback
+// Update Relay State for immediate UI feedback
 function updateRelayState({ id, state }) {
-  polledRelayStates.value = {
-    ...polledRelayStates.value,
+  // Create a new reactive object that includes our update
+  relayStates.value = {
+    ...(relayStates.value || {}),
     [id]: state,
   };
 }
@@ -253,7 +251,7 @@ function updateRelayState({ id, state }) {
 /**********************************************
  * 5) Websocket Integration                   *
  **********************************************/
-// Use our composable for WebSocket connections
+// Use our composable for WebSocket connections for the gauges
 const { data: voltsData } = useWebSocket('main', {
   formatter: (rawData) => {
     return typeof rawData === "number" 

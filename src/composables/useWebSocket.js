@@ -37,6 +37,12 @@ export function useWebSocket(endpoint, options = {}) {
         case 'router':
           subscribeFunction = websocketService.subscribeToRouterVolts;
           break;
+        case 'all_relay_states':
+          subscribeFunction = websocketService.subscribeToAllRelayStates;
+          break;
+        case 'enabled_relay_states':
+          subscribeFunction = websocketService.subscribeToEnabledRelayStates;
+          break;
         default:
           // For relay endpoints
           if (endpoint && endpoint.startsWith('relay_')) {
