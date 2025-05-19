@@ -148,35 +148,29 @@ const cameraResults = ref({ online: false });
 const networkLoading = ref(true);
 const networkPollInterval = ref(null);
 
-// Usage metrics - using websocket composable
-const { data: usageData } = useWebSocket('usage', {
-  formatter: (data) => data || { cpu: 0, memory: 0, disk: 0 }
-});
-
-// Access usage data
-const usage = computed(() => usageData.value || { cpu: 0, memory: 0, disk: 0 });
-
-// Camera volts - using websocket composable
-const { data: cameraVoltsData } = useWebSocket('camera', {
-  formatter: (rawData) => {
-    return typeof rawData === "number" 
-      ? rawData 
-      : (rawData?.voltage || 0);
+// UPDATED: Use a single WebSocket for all settings data
+const { data: settingsData } = useWebSocket('settings', {
+  formatter: (data) => {
+    return data || {
+      usage: { cpu: 0, memory: 0, disk: 0 },
+      voltages: { camera: 0, router: 0 }
+    };
   }
 });
 
-// Router volts - using websocket composable
-const { data: routerVoltsData } = useWebSocket('router', {
-  formatter: (rawData) => {
-    return typeof rawData === "number" 
-      ? rawData 
-      : (rawData?.voltage || 0);
-  }
+// Extract usage data from the consolidated stream
+const usage = computed(() => settingsData.value?.usage || { cpu: 0, memory: 0, disk: 0 });
+
+// Extract voltage data from the consolidated stream
+const camera_volts = computed(() => {
+  const voltage = settingsData.value?.voltages?.camera;
+  return voltage !== undefined ? parseFloat(voltage.toFixed(2)) : 0;
 });
 
-// Access volts data
-const camera_volts = computed(() => cameraVoltsData.value || 0);
-const router_volts = computed(() => routerVoltsData.value || 0);
+const router_volts = computed(() => {
+  const voltage = settingsData.value?.voltages?.router;
+  return voltage !== undefined ? parseFloat(voltage.toFixed(2)) : 0;
+});
 
 // Use computed property to get system name from config data
 const displayed_system_name = computed(() => {

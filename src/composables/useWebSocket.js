@@ -37,11 +37,11 @@ export function useWebSocket(endpoint, options = {}) {
         case 'router':
           subscribeFunction = websocketService.subscribeToRouterVolts;
           break;
-        case 'all_relay_states':
-          subscribeFunction = websocketService.subscribeToAllRelayStates;
+        case 'dashboard':
+          subscribeFunction = websocketService.subscribeToDashboard;
           break;
-        case 'enabled_relay_states':
-          subscribeFunction = websocketService.subscribeToEnabledRelayStates;
+        case 'settings':
+          subscribeFunction = websocketService.subscribeToSettings;
           break;
         default:
           // For relay endpoints

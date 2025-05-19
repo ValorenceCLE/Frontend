@@ -76,7 +76,7 @@ const handleWebSocketMessage = (rawData) => {
       if (!isNaN(value)) {
         seriesDataMap.value[field].push([timestamp, value]);
         // Keep only the latest 120 points (2 minutes at 1Hz)
-        const maxPoints = configUtils.get('charts.realTime.maxDataPoints', 120);
+        const maxPoints = configUtils.get('charts.realTime.maxDataPoints', 240);
         if (seriesDataMap.value[field].length > maxPoints) {
           seriesDataMap.value[field].shift();
         }

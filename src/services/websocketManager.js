@@ -322,11 +322,11 @@ export const websocketService = {
   subscribeToRelay(relayName, callback) {
     return wsManager.subscribe(`/sensor/ina260/${relayName}`, callback);
   },
-  subscribeToAllRelayStates(callback) {
-    return wsManager.subscribe('/io/relays/state/ws', callback);
+  subscribeToDashboard(callback) {
+    return wsManager.subscribe('/dashboard/ws', callback);
   },
-  subscribeToEnabledRelayStates(callback) {
-    return wsManager.subscribe('/io/relays/enabled/state/ws', callback);
+  subscribeToSettings(callback) {
+    return wsManager.subscribe('/settings/ws', callback);
   },
   
   closeAll() {

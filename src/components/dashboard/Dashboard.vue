@@ -179,25 +179,42 @@ const system_name = computed(() => {
 });
 
 /****************************************************
- * 3) Network Status & Relay State WebSockets      *
+ * 3) Dashboard WebSocket for Combined Data Stream  *
  ****************************************************/
-const routerResults = ref({ online: false });
-const cameraResults = ref({ online: false });
-const networkLoading = ref(true);
-
-// NEW: WebSocket for relay states (replacing polling)
-const { data: relayStates, isConnected: relaySocketConnected } = useWebSocket('enabled_relay_states', {
+const { data: dashboardData, isConnected: dashboardConnected } = useWebSocket('dashboard', {
   formatter: (rawData) => {
-    return rawData || {};
+    return rawData || {
+      relay_states: {},
+      sensors: {
+        main: {},
+        environmental: {}
+      }
+    };
   }
 });
 
 // Log WebSocket connection status for debugging
-watch(relaySocketConnected, (connected) => {
-  console.log('Relay states WebSocket connection status:', connected ? 'connected' : 'disconnected');
+watch(dashboardConnected, (connected) => {
+  console.log('Dashboard WebSocket connection status:', connected ? 'connected' : 'disconnected');
 });
 
-// Fetch Network Statuses
+// Extract relay states from the combined WebSocket data
+const relayStates = computed(() => dashboardData.value?.relay_states || {});
+
+// Extract sensor data from the combined WebSocket data
+const voltsData = computed(() => {
+  return dashboardData.value?.sensors?.main || {};
+});
+
+const environmentalData = computed(() => {
+  return dashboardData.value?.sensors?.environmental || {};
+});
+
+// Network status stays the same
+const routerResults = ref({ online: false });
+const cameraResults = ref({ online: false });
+const networkLoading = ref(true);
+
 async function fetchNetworkStatuses() {
   try {
     const networkResponse = await getAllNetworkStatuses();
@@ -217,7 +234,6 @@ async function fetchNetworkStatuses() {
 
 onMounted(() => {
   fetchNetworkStatuses();
-  // No need for relay polling - WebSocket handles it!
 });
 
 /*****************************************************
@@ -230,9 +246,9 @@ const enabledRelays = computed(() => {
   const enabledRelayList = Object.values(configData.value.relays)
     .filter(relay => relay.enabled);
   
-  // Merge with WebSocket states
+  // Merge with WebSocket states from the combined stream
   return enabledRelayList.map(relay => {
-    const state = relayStates.value && relayStates.value[relay.id] !== undefined ? 
+    const state = relayStates.value[relay.id] !== undefined ? 
       relayStates.value[relay.id] : 
       (relay.state === 'on' ? 1 : 0);
     return { ...relay, state };
@@ -241,36 +257,27 @@ const enabledRelays = computed(() => {
 
 // Update Relay State for immediate UI feedback
 function updateRelayState({ id, state }) {
-  // Create a new reactive object that includes our update
-  relayStates.value = {
-    ...(relayStates.value || {}),
-    [id]: state,
-  };
+  // Update the relay state within the dashboard data
+  if (dashboardData.value) {
+    dashboardData.value = {
+      ...dashboardData.value,
+      relay_states: {
+        ...(dashboardData.value.relay_states || {}),
+        [id]: state,
+      }
+    };
+  }
 }
 
-/**********************************************
- * 5) Websocket Integration                   *
- **********************************************/
-// Use our composable for WebSocket connections for the gauges
-const { data: voltsData } = useWebSocket('main', {
-  formatter: (rawData) => {
-    return typeof rawData === "number" 
-      ? parseFloat(rawData.toFixed(2)) 
-      : parseFloat(rawData.voltage?.toFixed(2) || 0);
-  }
+// Computed properties to use the consolidated WebSocket data
+const volts = computed(() => {
+  return voltsData.value?.voltage ? parseFloat(voltsData.value.voltage.toFixed(2)) : 0;
 });
 
-const { data: temperatureData } = useWebSocket('environmental', {
-  formatter: (rawData) => {
-    return typeof rawData === "number" 
-      ? parseFloat(rawData.toFixed(2)) 
-      : parseFloat(rawData.temperature?.toFixed(2) || 0);
-  }
+const temperature = computed(() => {
+  return environmentalData.value?.temperature ? 
+    parseFloat(environmentalData.value.temperature.toFixed(2)) : 0;
 });
-
-// Computed properties to use the websocket data
-const volts = computed(() => voltsData.value || 0);
-const temperature = computed(() => temperatureData.value || 0);
 
 /****************************************************
  * 6) Speed Test Store Integration                  *
