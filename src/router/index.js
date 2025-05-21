@@ -14,16 +14,6 @@ const RouteLoadingComponent = {
   `
 };
 
-// Create a loader wrapper with timeout
-const lazyLoad = (componentImport) => {
-  return {
-    component: componentImport,
-    loading: RouteLoadingComponent,
-    delay: 200,
-    timeout: 5000
-  };
-};
-
 const router = createRouter({
   history: createWebHistory(),
   routes: [
@@ -90,11 +80,6 @@ const router = createRouter({
           component: () => import("@/components/settings/DateTime.vue"),
           meta: { requiresAuth: true, role: "admin" },
         },
-        // {
-        //   path: "settings/emails",
-        //   component: () => import("@/components/settings/Emails.vue"),
-        //   meta: { requiresAuth: true, role: "admin" },
-        // },
         
         // Relay Routes
         {

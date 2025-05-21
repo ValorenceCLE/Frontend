@@ -6,7 +6,6 @@ import router from './router';
 import VChart from 'vue-echarts';
 import { createPinia } from 'pinia';
 import './utils/echarts';
-import { useSpeedTestStore } from "@/store/speedTest";
 import { setupRouteProgress } from './utils/routeProgress';
 // Set up route progress indicator
 setupRouteProgress(router);
@@ -18,5 +17,3 @@ app.use(router);
 app.use(pinia);
 app.component('v-chart', VChart);
 app.mount('#app');
-
-const speedTestStore = useSpeedTestStore();
