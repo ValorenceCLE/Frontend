@@ -297,28 +297,13 @@ const wsManager = new WebSocketManager();
 // Define subscription helpers for specific endpoints
 export const websocketService = {
   manager: wsManager,
-  
   // Helper methods for specific endpoints
-  subscribeToUsageMetrics(callback) {
-    return wsManager.subscribe('/device/usage', callback);
-  },
-  
   subscribeToMainVolts(callback) {
     return wsManager.subscribe('/sensor/ina260/main', callback);
   },
-  
-  subscribeToCameraVolts(callback) {
-    return wsManager.subscribe('/sensor/ina260/relay_1', callback);
-  },
-  
-  subscribeToRouterVolts(callback) {
-    return wsManager.subscribe('/sensor/ina260/relay_2', callback);
-  },
-  
   subscribeToEnvironmental(callback) {
     return wsManager.subscribe('/sensor/sht30/environmental', callback);
   },
-  
   subscribeToRelay(relayName, callback) {
     return wsManager.subscribe(`/sensor/ina260/${relayName}`, callback);
   },

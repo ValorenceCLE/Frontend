@@ -2,11 +2,18 @@ import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import path from 'path';
 import compression from 'vite-plugin-compression';
+import { visualizer } from 'rollup-plugin-visualizer'; // Add this import
 
 export default defineConfig({
   plugins: [
     vue(),
-    compression({ algorithm: 'brotliCompress' }), // Keep the working compression
+    compression({ algorithm: 'brotliCompress' }),
+    visualizer({
+      filename: 'dist/stats.html',
+      open: true, // This will automatically open the visualization after build
+      gzipSize: true,
+      brotliSize: true,
+    }),
   ],
   resolve: {
     alias: {
@@ -14,7 +21,7 @@ export default defineConfig({
     },
   },
   build: {
-    // Keep your working chunk configuration
+    // Keep your existing build configuration
     rollupOptions: {
       output: {
         manualChunks(id) {
@@ -30,7 +37,6 @@ export default defineConfig({
         },
       },
     },
-    // These optimizations should be compatible
     target: 'es2015',
     chunkSizeWarningLimit: 500, 
     sourcemap: false,

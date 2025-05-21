@@ -75,11 +75,6 @@ const handleWebSocketMessage = (rawData) => {
       
       if (!isNaN(value)) {
         seriesDataMap.value[field].push([timestamp, value]);
-        // Keep only the latest 120 points (2 minutes at 1Hz)
-        const maxPoints = configUtils.get('charts.realTime.maxDataPoints', 240);
-        if (seriesDataMap.value[field].length > maxPoints) {
-          seriesDataMap.value[field].shift();
-        }
       }
     }
   }
@@ -156,18 +151,12 @@ function getChartOption() {
     // Get color from config
     const color = configUtils.getChartColor(field);
     
-    // Determine symbols and smoothing based on data size
-    const showSymbol = data.length < configUtils.get('charts.realTime.symbolThreshold', 1000);
-    const isSmooth = data.length < configUtils.get('charts.realTime.smoothThreshold', 500);
-    
     return {
       name: field,
       type: "line",
       data: data,
-      smooth: isSmooth,
-      showSymbol: showSymbol,
-      symbolSize: showSymbol ? 
-        (data.length < 200 ? 5 : 3) : 0,
+      smooth: false,
+      showSymbol: false,
       sampling: data.length > 2000 ? 'lttb' : false,
       lineStyle: {
         width: data.length < 1000 ? 2 : 1.5,

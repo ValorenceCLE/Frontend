@@ -28,15 +28,6 @@ export function useWebSocket(endpoint, options = {}) {
         case 'environmental':
           subscribeFunction = websocketService.subscribeToEnvironmental;
           break;
-        case 'usage':
-          subscribeFunction = websocketService.subscribeToUsageMetrics;
-          break;
-        case 'camera':
-          subscribeFunction = websocketService.subscribeToCameraVolts;
-          break;
-        case 'router':
-          subscribeFunction = websocketService.subscribeToRouterVolts;
-          break;
         case 'dashboard':
           subscribeFunction = websocketService.subscribeToDashboard;
           break;
