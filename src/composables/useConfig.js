@@ -3,6 +3,32 @@ import { ref, computed, watch } from 'vue';
 import { useConfigStore } from '@/store/config';
 
 /**
+ * Format section name for display in UI messages
+ * @param {string} section - The raw section name from the config
+ * @returns {string} Formatted section name
+ */
+const formatSectionName = (section) => {
+  if (!section) return '';
+  
+  // Special case for date_time
+  if (section === 'date_time') {
+    return 'Date/Time';
+  }
+  
+  // Capitalize first letter
+  return section.charAt(0).toUpperCase() + section.slice(1);
+};
+
+/**
+ * Check if section requires reboot to apply changes
+ * @param {string} section - The config section name
+ * @returns {boolean} True if reboot is required
+ */
+const requiresReboot = (section) => {
+  return section === 'network' || section === 'date_time';
+};
+
+/**
  * Composable for consistent config interaction across components
  * @param {string} section - The config section to work with (optional)
  * @param {Object} options - Additional options
@@ -164,10 +190,16 @@ export function useConfig(section = null, options = {}) {
       const response = await configStore.updateConfigSection(targetSection, sectionData);
       lastUpdateCounter.value = configStore.updateCounter;
       
-      successMessage.value = `${targetSection} settings updated successfully`;
+      // Create appropriate success message based on section type
+      if (requiresReboot(targetSection)) {
+        successMessage.value = `${formatSectionName(targetSection)} settings saved. Changes will be applied after system reboot.`;
+      } else {
+        successMessage.value = `${formatSectionName(targetSection)} settings updated successfully`;
+      }
+      
       setTimeout(() => {
         successMessage.value = '';
-      }, 3000);
+      }, 5000); // Extended timeout for reboot messages
       
       isDirty.value = false;
       return response;
