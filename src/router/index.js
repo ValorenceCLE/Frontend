@@ -19,24 +19,36 @@ const router = createRouter({
   routes: [
     { 
       path: "/", 
-      component: () => import("@/views/LoginView.vue"),
+      component: () => import(
+        /* webpackChunkName: "auth" */ 
+        "@/views/LoginView.vue"
+      ),
       meta: { requiresAuth: false } 
     },
     { 
       path: "/login", 
-      component: () => import("@/views/LoginView.vue"),
+      component: () => import(
+        /* webpackChunkName: "auth" */ 
+        "@/views/LoginView.vue"
+      ),
       meta: { requiresAuth: false } 
     },
     
     // User Routes
     {
       path: "/user",
-      component: () => import("@/views/UserView.vue"),
+      component: () => import(
+        /* webpackChunkName: "user-layout" */ 
+        "@/views/UserView.vue"
+      ),
       meta: { requiresAuth: true, role: "user" },
       children: [
         {
           path: "",
-          component: () => import("@/components/dashboard/Dashboard.vue"),
+          component: () => import(
+            /* webpackChunkName: "dashboard" */ 
+            "@/components/dashboard/Dashboard.vue"
+          ),
           meta: { requiresAuth: true, role: "user" },
         },
         {
@@ -50,12 +62,18 @@ const router = createRouter({
     // Admin Routes
     {
       path: "/admin",
-      component: () => import("@/views/AdminView.vue"),
+      component: () => import(
+        /* webpackChunkName: "admin-layout" */ 
+        "@/views/AdminView.vue"
+      ),
       meta: { requiresAuth: true, role: "admin" },
       children: [
         {
           path: "",
-          component: () => import("@/components/dashboard/Dashboard.vue"),
+          component: () => import(
+            /* webpackChunkName: "dashboard" */ 
+            "@/components/dashboard/Dashboard.vue"
+          ),
           meta: { requiresAuth: true, role: "admin" },
         },
         {
@@ -64,44 +82,65 @@ const router = createRouter({
           meta: { requiresAuth: true, role: "admin" },
         },
         
-        // Settings Routes (grouped by feature)
+        // Settings Routes - Group related components
         {
           path: "settings/general",
-          component: () => import("@/components/settings/General.vue"),
+          component: () => import(
+            /* webpackChunkName: "settings" */ 
+            "@/components/settings/General.vue"
+          ),
           meta: { requiresAuth: true, role: "admin" },
         },
         {
           path: "settings/network",
-          component: () => import("@/components/settings/Network.vue"),
+          component: () => import(
+            /* webpackChunkName: "settings" */ 
+            "@/components/settings/Network.vue"
+          ),
           meta: { requiresAuth: true, role: "admin" },
         },
         {
           path: "settings/date-time",
-          component: () => import("@/components/settings/DateTime.vue"),
+          component: () => import(
+            /* webpackChunkName: "settings" */ 
+            "@/components/settings/DateTime.vue"
+          ),
           meta: { requiresAuth: true, role: "admin" },
         },
         
-        // Relay Routes
+        // Relay Routes - Separate chunks due to size
         {
           path: "relays/logic",
-          component: () => import("@/components/logic/RelayLogic.vue"),
+          component: () => import(
+            /* webpackChunkName: "relay-logic" */ 
+            "@/components/logic/RelayLogic.vue"
+          ),
           meta: { requiresAuth: true, role: "admin" },
         },
         {
           path: "relays/settings",
-          component: () => import("@/components/relays/RelaySetup.vue"),
+          component: () => import(
+            /* webpackChunkName: "relay-setup" */ 
+            "@/components/relays/RelaySetup.vue"
+          ),
           meta: { requiresAuth: true, role: "admin" },
         },
         
-        // Monitor Routes
+        // Monitor Routes - Separate chunks for charts
         {
           path: "monitor/historical",
-          component: () => import("@/components/monitor/Historical.vue"),
+          component: () => import(
+            /* webpackChunkName: "charts-historical" */ 
+            "@/components/monitor/Historical.vue"
+          ),
           meta: { requiresAuth: true, role: "admin" },
         },
         {
           path: "monitor/real-time",
-          component: () => import("@/components/monitor/RealTime.vue"),
+          component: () => import(
+            /* webpackChunkName: "charts-realtime" */ 
+            "@/components/monitor/RealTime.vue"
+          ),
           meta: { requiresAuth: true, role: "admin" },
         },
       ],

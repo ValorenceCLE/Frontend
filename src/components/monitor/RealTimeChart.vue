@@ -17,7 +17,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, nextTick, watch } from "vue";
-import * as echarts from "echarts";
+import * as echarts from "echarts/core";
 import { useWebSocket } from '@/composables/useWebSocket';
 import configUtils from '@/utils/configUtils';
 

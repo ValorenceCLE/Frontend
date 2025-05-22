@@ -49,7 +49,7 @@
 
 <script setup>
 import { ref, onMounted, onBeforeUnmount, nextTick, watch, computed } from "vue";
-import * as echarts from "echarts";
+import * as echarts from "echarts/core";
 import axios from '@/axios';
 
 // Define component props
