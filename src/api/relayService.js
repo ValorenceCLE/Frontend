@@ -41,7 +41,7 @@ export async function turnRelayOn(relayId) {
  * @returns {Promise<Object>} Response from the API.
  */
 export async function turnRelayOff(relayId) {
-  return await apiClient.post(`/io/${relayId}/state//off`);
+  return await apiClient.post(`/io/${relayId}/state/off`);
 }
 
 /**
