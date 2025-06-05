@@ -11,10 +11,7 @@
           <!-- Source Selector -->
           <div class="flex items-center">
             <label class="font-bold text-sm w-14">Source:</label>
-            <select
-              v-model="selectedSource"
-              class="border border-gray-500 rounded p-1 text-sm flex-grow"
-            >
+            <select v-model="selectedSource" class="border border-gray-500 rounded p-1 text-sm flex-grow">
               <option disabled value="">Select Source</option>
               <option v-for="source in staticSources" :key="source.key" :value="source.key">
                 {{ source.label }}
@@ -33,41 +30,29 @@
             <div ref="fieldsDropdownContainer" class="relative flex-grow">
               <button
                 class="inline-flex items-center border border-gray-500 rounded bg-white px-2 py-1 w-full justify-between"
-                @click="toggleFieldsDropdown"
-                :disabled="!selectedSource"
-              >
+                @click="toggleFieldsDropdown" :disabled="!selectedSource">
                 <span class="truncate" v-if="selectedFields.length === 0">Select Fields</span>
                 <span class="truncate" v-else>{{ fieldsButtonLabel }}</span>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="h-4 w-4 text-gray-600 flex-shrink-0 ml-1"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  stroke-width="2"
-                >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-600 flex-shrink-0 ml-1" fill="none"
+                  viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
 
               <!-- Fields dropdown positioned better -->
-              <div
-                v-if="fieldsDropdownOpen"
-                class="absolute mt-1 bg-white border border-gray-500 rounded shadow-md p-1 z-10 w-full"
-              >
+              <div v-if="fieldsDropdownOpen"
+                class="absolute mt-1 bg-white border border-gray-500 rounded shadow-md p-1 z-10 w-full">
+                <!-- Select All Button -->
                 <div
-                  v-for="field in availableFields"
-                  :key="field"
+                  class="flex items-center justify-between mb-1 py-1 px-2 hover:bg-gray-100 cursor-pointer border-b border-gray-200">
+                  <button @click="toggleAllFields" class="text-sm text-blue-600 hover:text-blue-800 w-full text-left">
+                    {{ areAllFieldsSelected ? 'Deselect All' : 'Select All' }}
+                  </button>
+                </div>
+                <div v-for="field in availableFields" :key="field"
                   class="flex items-center space-x-2 mb-1 py-1 px-2 hover:bg-gray-100 cursor-pointer"
-                  @click="toggleField(field)"
-                >
-                  <input
-                    type="checkbox"
-                    :value="field"
-                    v-model="selectedFields"
-                    class="w-4 h-4"
-                    @click.stop
-                  />
+                  @click="toggleField(field)">
+                  <input type="checkbox" :value="field" v-model="selectedFields" class="w-4 h-4" @click.stop />
                   <label>{{ field }}</label>
                 </div>
               </div>
@@ -80,21 +65,15 @@
           <!-- Start Date -->
           <div class="flex items-center">
             <label class="font-bold text-sm w-14">Start:</label>
-            <input
-              type="datetime-local"
-              v-model="startDate"
-              class="border border-gray-500 rounded p-1 text-sm flex-grow"
-            />
+            <input type="datetime-local" v-model="startDate"
+              class="border border-gray-500 rounded p-1 text-sm flex-grow" />
           </div>
 
           <!-- End Date -->
           <div class="flex items-center">
             <label class="font-bold text-sm w-14">End:</label>
-            <input
-              type="datetime-local"
-              v-model="endDate"
-              class="border border-gray-500 rounded p-1 text-sm flex-grow"
-            />
+            <input type="datetime-local" v-model="endDate"
+              class="border border-gray-500 rounded p-1 text-sm flex-grow" />
           </div>
         </div>
       </div>
@@ -102,31 +81,23 @@
       <!-- Action Button Row - centered with data points info -->
       <div class="flex flex-col items-center mt-3">
         <div class="flex space-x-3">
-          <button
-            @click="handleGraph"
-            :disabled="!canGraph"
+          <button @click="handleGraph" :disabled="!canGraph"
             class="bg-textColor hover:bg-blue-600 text-white py-1 px-4 rounded text-sm font-medium border border-gray-400 w-24"
-            :class="{'opacity-50': !canGraph || shouldFetch}"
-          >
+            :class="{ 'opacity-50': !canGraph || shouldFetch }">
             <span v-if="shouldFetch" class="mr-1">●</span>
             {{ shouldFetch ? 'Loading...' : 'Graph' }}
           </button>
-          <button
-            @click="handleReset"
-            class="bg-textColor hover:bg-red-700 text-white py-1 px-4 rounded text-sm font-medium border border-gray-400 w-24"
-          >
+          <button @click="handleReset"
+            class="bg-textColor hover:bg-red-700 text-white py-1 px-4 rounded text-sm font-medium border border-gray-400 w-24">
             Reset
           </button>
-          <button
-            @click="handleExport"
-            :disabled="!hasData"
+          <button @click="handleExport" :disabled="!hasData"
             class="bg-textColor hover:bg-yellow-600 text-white py-1 px-4 rounded text-sm font-medium border border-gray-400 w-24"
-            :class="{'opacity-50': !hasData}"
-          >
+            :class="{ 'opacity-50': !hasData }">
             Export
           </button>
         </div>
-        
+
         <!-- Status information -->
         <div v-if="dataPointCount > 0" class="text-xs text-gray-500 mt-2">
           {{ dataPointCount.toLocaleString() }} data points
@@ -136,20 +107,10 @@
 
     <!-- Chart Container -->
     <div class="w-full h-3/5 mt-4 bg-gray-100 rounded-md shadow-md border border-gray-500">
-      <HistoricalChart
-        ref="chartRef"
-        class="w-full h-full"
-        :source="selectedSource"
-        :field="selectedField"
-        :fields="selectedFields"
-        :startDate="startDate"
-        :endDate="endDate"
-        :shouldFetch="shouldFetch"
-        :shouldReset="shouldReset"
-        @fetched="handleFetched"
-        @resetComplete="handleResetComplete"
-        @dataPointCount="updateDataPointCount"
-      />
+      <HistoricalChart ref="chartRef" class="w-full h-full" :source="selectedSource" :field="selectedField"
+        :fields="selectedFields" :startDate="startDate" :endDate="endDate" :shouldFetch="shouldFetch"
+        :shouldReset="shouldReset" @fetched="handleFetched" @resetComplete="handleResetComplete"
+        @dataPointCount="updateDataPointCount" />
     </div>
   </div>
 </template>
@@ -259,15 +220,15 @@ function handleGraph() {
 function handleReset() {
   selectedSource.value = '';
   selectedFields.value = [];
-  
+
   // Set default date range (last 24 hours)
   const end = new Date();
   const start = new Date(end);
   start.setDate(start.getDate() - 1);
-  
+
   endDate.value = formatDateForInput(end);
   startDate.value = formatDateForInput(start);
-  
+
   fieldsDropdownOpen.value = false;
   shouldFetch.value = false;
   shouldReset.value = true;
@@ -319,15 +280,30 @@ function formatDateForInput(date) {
   return date.toISOString().slice(0, 16);
 }
 
+// Determine if all fields are selected
+const areAllFieldsSelected = computed(() => {
+  return availableFields.value.length > 0 &&
+    selectedFields.value.length === availableFields.value.length;
+});
+
+// Toggle all fields selection
+function toggleAllFields() {
+  if (areAllFieldsSelected.value) {
+    selectedFields.value = [];
+  } else {
+    selectedFields.value = [...availableFields.value];
+  }
+}
+
 // Set up event listeners and default date range
 onMounted(() => {
   document.addEventListener("click", onClickOutside);
-  
+
   // Set default date range (last 24 hours)
   const end = new Date();
   const start = new Date(end);
   start.setDate(start.getDate() - 1);
-  
+
   endDate.value = formatDateForInput(end);
   startDate.value = formatDateForInput(start);
 });
@@ -339,12 +315,22 @@ onBeforeUnmount(() => {
 
 <style scoped>
 @keyframes pulse {
-  0% { opacity: 0.6; }
-  50% { opacity: 1; }
-  100% { opacity: 0.6; }
+  0% {
+    opacity: 0.6;
+  }
+
+  50% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0.6;
+  }
 }
 
-button:focus, select:focus, input:focus {
+button:focus,
+select:focus,
+input:focus {
   outline: none;
 }
 

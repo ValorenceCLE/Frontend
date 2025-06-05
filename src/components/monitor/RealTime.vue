@@ -9,27 +9,16 @@
         <!-- Source Selector -->
         <div class="relative">
           <label class="font-bold mr-2">Source:</label>
-          <select
-            v-model="selectedSource"
-            class="border border-gray-500 rounded p-1 text-textColor text-Form"
-            :disabled="isRunning"
-          >
+          <select v-model="selectedSource" class="border border-gray-500 rounded p-1 text-textColor text-Form"
+            :disabled="isRunning">
             <option disabled value="">Select Source</option>
             <!-- Static Sources -->
-            <option
-              v-for="source in staticSources"
-              :key="source.key"
-              :value="source.key"
-            >
+            <option v-for="source in staticSources" :key="source.key" :value="source.key">
               {{ source.label }}
             </option>
             <!-- Dynamic Relay Sources under a divider -->
             <optgroup label="Relays">
-              <option
-                v-for="source in relaySources"
-                :key="source.key"
-                :value="source.key"
-              >
+              <option v-for="source in relaySources" :key="source.key" :value="source.key">
                 {{ source.label }}
               </option>
             </optgroup>
@@ -41,41 +30,29 @@
           <label class="font-bold mr-2">Fields:</label>
           <button
             class="inline-flex items-center border border-gray-500 rounded bg-white px-2 py-1 relative select-button"
-            @click="toggleFieldsDropdown"
-            :disabled="!selectedSource || isRunning"
-          >
+            @click="toggleFieldsDropdown" :disabled="!selectedSource || isRunning">
             <span class="mr-2" v-if="selectedFields.length === 0">Select Fields</span>
             <span class="mr-2" v-else>{{ fieldsButtonLabel }}</span>
 
             <!-- Down Arrow -->
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-4 w-4 text-gray-600"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              stroke-width="2"
-            >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-600" fill="none" viewBox="0 0 24 24"
+              stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
             </svg>
           </button>
 
           <!-- Dropdown list of checkboxes -->
-          <div
-            v-if="fieldsDropdownOpen"
-            class="absolute left-1/4 mt-1 w-3/4 bg-white border border-gray-500 rounded shadow-md p-1 z-10"
-          >
+          <div v-if="fieldsDropdownOpen"
+            class="absolute left-1/4 mt-1 w-3/4 bg-white border border-gray-500 rounded shadow-md p-1 z-10">
+            <!-- Select All Button -->
             <div
-              v-for="field in availableFields"
-              :key="field"
-              class="flex items-center space-x-2 mb-1"
-            >
-              <input
-                type="checkbox"
-                :value="field"
-                v-model="selectedFields"
-                class="w-4 h-4"
-              />
+              class="flex items-center justify-between mb-1 py-1 px-2 hover:bg-gray-100 cursor-pointer border-b border-gray-200">
+              <button @click="toggleAllFields" class="text-sm text-blue-600 hover:text-blue-800 w-full text-left">
+                {{ areAllFieldsSelected ? 'Deselect All' : 'Select All' }}
+              </button>
+            </div>
+            <div v-for="field in availableFields" :key="field" class="flex items-center space-x-2 mb-1">
+              <input type="checkbox" :value="field" v-model="selectedFields" class="w-4 h-4" />
               <label>{{ field }}</label>
             </div>
           </div>
@@ -84,39 +61,22 @@
         <!-- Run / Pause / Cancel Buttons -->
         <div class="flex items-center space-x-1">
           <!-- If NOT running, show Run button -->
-          <button
-            v-if="!isRunning"
-            class="bg-textColor text-white px-2 py-1 rounded hover:bg-blue-600 flex items-center"
-            @click="handleRun"
-            :disabled="!canRun"
-          >
+          <button v-if="!isRunning"
+            class="bg-textColor text-white px-2 py-1 rounded hover:bg-blue-600 flex items-center" @click="handleRun"
+            :disabled="!canRun">
             <img src="@/assets/icons/play.svg" alt="Play" class="w-6 h-6" />
           </button>
 
           <!-- If running, show Pause/Resume + Cancel buttons -->
           <template v-else>
-            <button
-              class="bg-textColor text-white px-2 py-1 rounded hover:bg-yellow-600 flex items-center"
-              @click="togglePause"
-            >
-              <img
-                v-if="isPaused"
-                src="@/assets/icons/play.svg"
-                alt="Resume"
-                class="w-6 h-6"
-              />
-              <img
-                v-else
-                src="@/assets/icons/pause.svg"
-                alt="Pause"
-                class="w-6 h-6"
-              />
+            <button class="bg-textColor text-white px-2 py-1 rounded hover:bg-yellow-600 flex items-center"
+              @click="togglePause">
+              <img v-if="isPaused" src="@/assets/icons/play.svg" alt="Resume" class="w-6 h-6" />
+              <img v-else src="@/assets/icons/pause.svg" alt="Pause" class="w-6 h-6" />
             </button>
 
-            <button
-              class="bg-textColor text-white px-2 py-1 rounded hover:bg-red-500 flex items-center"
-              @click="handleStop"
-            >
+            <button class="bg-textColor text-white px-2 py-1 rounded hover:bg-red-500 flex items-center"
+              @click="handleStop">
               <img src="@/assets/icons/x.svg" alt="Stop" class="w-6 h-6" />
             </button>
           </template>
@@ -126,12 +86,7 @@
 
     <!-- Chart Container -->
     <div class="w-full h-3/5 mt-3 bg-gray-100 rounded-md shadow-md border border-gray-500">
-      <RealTimeChart
-        :source="selectedSource"
-        :fields="selectedFields"
-        :isRunning="isRunning"
-        :isPaused="isPaused"
-      />
+      <RealTimeChart :source="selectedSource" :fields="selectedFields" :isRunning="isRunning" :isPaused="isPaused" />
     </div>
   </div>
 </template>
@@ -195,6 +150,21 @@ const fieldsButtonLabel = computed(() => {
   return `${selectedFields.value[0]}, ${selectedFields.value[1]}, +${count - 2} more`;
 });
 
+// Determine if all fields are selected
+const areAllFieldsSelected = computed(() => {
+  return availableFields.value.length > 0 &&
+    selectedFields.value.length === availableFields.value.length;
+});
+
+// Toggle all fields selection
+function toggleAllFields() {
+  if (areAllFieldsSelected.value) {
+    selectedFields.value = [];
+  } else {
+    selectedFields.value = [...availableFields.value];
+  }
+}
+
 // When the selected source changes (and if not running), reset selected fields.
 watch(
   () => selectedSource.value,
@@ -257,6 +227,7 @@ onBeforeUnmount(() => {
   min-width: 8rem;
   justify-content: space-between;
 }
+
 img {
   filter: brightness(0) invert(1);
 }
