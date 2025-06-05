@@ -16,14 +16,14 @@ export function usePolling(fetchFunction, options = {}) {
   const {
     immediate = true,
     enabled = true,
-    onSuccess = () => {},
-    onError = (error) => { console.error('Polling error:', error); },
+    onSuccess = () => { },
+    onError = (error) => { },
     dependencies = []
   } = options;
-  
+
   // Store interval in a ref so it can be changed
   const pollingInterval = ref(options.interval || 5000);
-  
+
   // Polling state
   const isPolling = ref(enabled);
   const data = ref(null);
@@ -31,14 +31,14 @@ export function usePolling(fetchFunction, options = {}) {
   const loading = ref(false);
   const lastFetchTime = ref(null);
   let timerId = null;
-  
+
   // Fetch data and handle response
   const fetchData = async () => {
     if (!isPolling.value) return;
-    
+
     loading.value = true;
     error.value = null;
-    
+
     try {
       const result = await fetchFunction();
       data.value = result;
@@ -51,29 +51,29 @@ export function usePolling(fetchFunction, options = {}) {
       loading.value = false;
     }
   };
-  
+
   // Start polling
   const startPolling = () => {
     if (isPolling.value) return;
-    
+
     isPolling.value = true;
-    
+
     // Fetch immediately when starting
     fetchData();
-    
+
     // Set up the polling interval
     scheduleNextPoll();
   };
-  
+
   // Schedule the next poll
   const scheduleNextPoll = () => {
     if (!isPolling.value) return;
-    
+
     // Clear any existing timer
     if (timerId) {
       clearTimeout(timerId);
     }
-    
+
     // Set up new timer
     timerId = setTimeout(() => {
       fetchData();
@@ -81,22 +81,22 @@ export function usePolling(fetchFunction, options = {}) {
       scheduleNextPoll();
     }, pollingInterval.value);
   };
-  
+
   // Stop polling
   const stopPolling = () => {
     isPolling.value = false;
-    
+
     if (timerId) {
       clearTimeout(timerId);
       timerId = null;
     }
   };
-  
+
   // Fetch once without affecting the polling state
   const fetchOnce = async () => {
     loading.value = true;
     error.value = null;
-    
+
     try {
       const result = await fetchFunction();
       data.value = result;
@@ -111,35 +111,34 @@ export function usePolling(fetchFunction, options = {}) {
       loading.value = false;
     }
   };
-  
+
   // Change polling interval
   const setPollingInterval = (newInterval) => {
     if (newInterval <= 0) {
-      console.warn('Invalid polling interval, must be > 0');
       return;
     }
-    
+
     // Update the interval
     pollingInterval.value = newInterval;
-    
+
     // If already polling, restart with new interval
     if (isPolling.value) {
       stopPolling();
       startPolling();
     }
   };
-  
+
   // Lifecycle hooks
   onMounted(() => {
     if (immediate && enabled) {
       startPolling();
     }
   });
-  
+
   onBeforeUnmount(() => {
     stopPolling();
   });
-  
+
   // Watch dependencies for changes
   if (dependencies.length > 0) {
     watch(dependencies, () => {
@@ -149,7 +148,7 @@ export function usePolling(fetchFunction, options = {}) {
       }
     });
   }
-  
+
   return {
     isPolling,
     data,

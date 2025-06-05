@@ -1,20 +1,14 @@
 <template>
   <div ref="chartContainer" class="w-full h-full relative">
     <!-- If no active data, show a placeholder -->
-    <div
-      v-if="!hasActiveData"
-      class="flex items-center justify-center w-full h-full text-gray-500"
-    >
+    <div v-if="!hasActiveData" class="flex items-center justify-center w-full h-full text-gray-500">
       <span class="text-sm italic">
         Select a source, fields, and date range, then click "Graph" to view historical data.
       </span>
     </div>
-    
+
     <!-- Loading indicator - centered in the chart area -->
-    <div
-      v-if="isLoading"
-      class="absolute inset-0 flex items-center justify-center z-10"
-    >
+    <div v-if="isLoading" class="absolute inset-0 flex items-center justify-center z-10">
       <div class="bg-white bg-opacity-80 p-3 rounded-md shadow-md">
         <div class="flex items-center space-x-2">
           <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-textColor"></div>
@@ -22,12 +16,9 @@
         </div>
       </div>
     </div>
-    
+
     <!-- Error message -->
-    <div
-      v-if="error"
-      class="absolute inset-0 flex items-center justify-center z-10"
-    >
+    <div v-if="error" class="absolute inset-0 flex items-center justify-center z-10">
       <div class="bg-red-100 p-3 rounded-md shadow-md text-red-700">
         <div class="flex items-center space-x-2">
           <span>{{ error }}</span>
@@ -36,10 +27,8 @@
     </div>
 
     <!-- Point count warning -->
-    <div
-      v-if="pointCountWarning"
-      class="absolute top-0 right-0 m-2 bg-yellow-100 p-2 rounded-md shadow-md text-yellow-700 text-sm z-10"
-    >
+    <div v-if="pointCountWarning"
+      class="absolute top-0 right-0 m-2 bg-yellow-100 p-2 rounded-md shadow-md text-yellow-700 text-sm z-10">
       <div class="flex items-center space-x-2">
         <span>{{ pointCountWarning }}</span>
       </div>
@@ -88,7 +77,7 @@ const totalDataPoints = ref(0);
 // Nicer title formatting
 const formattedSourceName = computed(() => {
   if (!props.source) return "";
-  
+
   if (props.source === "environmental") {
     return "Environmental";
   } else if (props.source === "main") {
@@ -97,8 +86,8 @@ const formattedSourceName = computed(() => {
     return "Camera";
   } else {
     // Capitalize first letter and replace underscores with spaces
-    return props.source.charAt(0).toUpperCase() + 
-           props.source.slice(1).replace(/_/g, ' ');
+    return props.source.charAt(0).toUpperCase() +
+      props.source.slice(1).replace(/_/g, ' ');
   }
 });
 
@@ -124,26 +113,26 @@ const colorMapping = {
 // with smarter logic to maintain detail while limiting point count
 function calculateInterval(startDate, endDate) {
   if (!startDate || !endDate) return '1m';
-  
+
   const start = new Date(startDate);
   const end = new Date(endDate);
   const diffHours = Math.abs(end - start) / 36e5; // Convert ms to hours
-  
+
   // Target max points - balance between detail and performance
   // This is for each field - total points will be this * number of fields
   const TARGET_POINTS_PER_FIELD = 2000;
-  
+
   // Calculate points we'd get with 10s intervals (finest granularity)
   const pointsWith10s = diffHours * 60 * 6; // 6 points per minute
-  
+
   if (pointsWith10s <= TARGET_POINTS_PER_FIELD) {
     // If we can use 10s intervals without exceeding target, use it
     return '10s';
   }
-  
+
   // Calculate the ideal interval to get close to TARGET_POINTS_PER_FIELD
   const idealIntervalSeconds = Math.ceil(pointsWith10s / TARGET_POINTS_PER_FIELD) * 10;
-  
+
   // Map to standard intervals
   if (idealIntervalSeconds <= 10) return '10s';
   if (idealIntervalSeconds <= 30) return '30s';
@@ -161,11 +150,11 @@ function calculateInterval(startDate, endDate) {
 // Calculate expected point count to warn users about potential performance issues
 function calculateExpectedPoints(startDate, endDate, interval) {
   if (!startDate || !endDate || !interval) return 0;
-  
+
   const start = new Date(startDate);
   const end = new Date(endDate);
   const diffMs = Math.abs(end - start);
-  
+
   // Convert interval string to milliseconds
   let intervalMs = 60000; // Default to 1 minute
   if (interval.endsWith('s')) {
@@ -175,10 +164,10 @@ function calculateExpectedPoints(startDate, endDate, interval) {
   } else if (interval.endsWith('h')) {
     intervalMs = parseInt(interval) * 60 * 60 * 1000;
   }
-  
+
   // Calculate points per field
   const pointsPerField = Math.ceil(diffMs / intervalMs);
-  
+
   // Multiply by number of fields
   return pointsPerField * props.fields.length;
 }
@@ -204,33 +193,33 @@ function resetChart() {
   hasActiveData.value = false;
   pointCountWarning.value = null;
   totalDataPoints.value = 0;
-  
+
   if (chartInstance) {
     chartInstance.dispose();
     chartInstance = null;
   }
-  
+
   emit('resetComplete');
 }
 
 // Export chart data
 function exportData() {
   if (!hasActiveData.value) return;
-  
+
   try {
     // Format data for CSV export
     let csvContent = "data:text/csv;charset=utf-8,Time";
     const allFields = Object.keys(data.value);
-    
+
     // Add field headers
     allFields.forEach(field => {
       csvContent += `,${field}`;
     });
     csvContent += "\n";
-    
+
     // Create a map of timestamps to values
     const timeMap = {};
-    
+
     // Collect all timestamps
     allFields.forEach(field => {
       (data.value[field] || []).forEach(item => {
@@ -240,22 +229,22 @@ function exportData() {
         timeMap[item.time][field] = item.value;
       });
     });
-    
+
     // Sort timestamps chronologically
     const sortedTimes = Object.keys(timeMap).sort();
-    
+
     // Add data rows
     sortedTimes.forEach(timestamp => {
       const date = new Date(timestamp);
       csvContent += `"${date.toLocaleString()}"`;
-      
+
       allFields.forEach(field => {
         csvContent += `,${timeMap[timestamp][field] || ""}`;
       });
-      
+
       csvContent += "\n";
     });
-    
+
     // Create and trigger download
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
@@ -264,7 +253,7 @@ function exportData() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    
+
     return true;
   } catch (e) {
     console.error("Error exporting data:", e);
@@ -278,18 +267,18 @@ defineExpose({ exportData });
 // Fetch data from the API for all selected fields
 async function fetchData() {
   if (isLoading.value) return;
-  
+
   isLoading.value = true;
   error.value = null;
   pointCountWarning.value = null;
   totalDataPoints.value = 0;
-  
+
   try {
     const results = {};
-    
+
     // Calculate appropriate interval or fetch it from the server
     let interval;
-    
+
     try {
       // Try to get the best interval from the server
       const autoIntervalResponse = await axios.get(`/timeseries/auto-interval`, {
@@ -299,11 +288,11 @@ async function fetchData() {
           max_points: 2500 // Target per field (balance between detail and performance)
         }
       });
-      
+
       // Use the recommended interval
       interval = autoIntervalResponse.data.recommended_interval;
       console.log(`Server recommended interval: ${interval} (est. ${autoIntervalResponse.data.estimated_points} points per field)`);
-      
+
       // Show warning if still a lot of points
       if (autoIntervalResponse.data.estimated_points * props.fields.length > 50000) {
         pointCountWarning.value = `High data volume (est. ${(autoIntervalResponse.data.estimated_points * props.fields.length).toLocaleString()} points). Chart may be slow.`;
@@ -313,19 +302,19 @@ async function fetchData() {
       console.warn("Failed to get auto interval from server, using local calculation", e);
       interval = calculateInterval(props.startDate, props.endDate);
     }
-    
+
     // Fetch data for each field
     for (const displayField of props.fields) {
       const apiField = fieldMapping[displayField];
       if (!apiField) continue;
-      
+
       let measurement = '';
       if (props.source === 'environmental') {
         measurement = 'environmental';
       } else {
         measurement = 'relay_power';
       }
-      
+
       const response = await axios.get(`/timeseries/query`, {
         params: {
           measurement: measurement,
@@ -337,20 +326,20 @@ async function fetchData() {
           interval: interval
         }
       });
-      
+
       results[displayField] = response.data.data || [];
       totalDataPoints.value += results[displayField].length;
     }
-    
+
     data.value = results;
     hasActiveData.value = true;
-    
+
     // Emit the data information to parent
     emit('dataPointCount', {
       pointCount: totalDataPoints.value,
       interval: interval
     });
-    
+
     initChart();
   } catch (e) {
     console.error("Error fetching historical data:", e);
@@ -364,18 +353,18 @@ async function fetchData() {
 // Initialize the chart with the fetched data
 function initChart() {
   if (!chartContainer.value) return;
-  
+
   nextTick(() => {
     if (chartInstance) {
       chartInstance.dispose();
     }
-    
+
     // Performance optimization: Use canvas renderer for better performance with large datasets
     chartInstance = echarts.init(chartContainer.value, null, {
       renderer: 'canvas',
       useDirtyRect: true  // Enable incremental rendering for performance
     });
-    
+
     chartInstance.setOption(getChartOption());
   });
 }
@@ -384,7 +373,7 @@ function initChart() {
 function getChartOption() {
   let globalMax = -Infinity,
     globalMin = Infinity;
-  
+
   // Create series for each field
   const series = Object.keys(data.value).map(field => {
     const fieldData = data.value[field] || [];
@@ -394,14 +383,14 @@ function getChartOption() {
       if (value < globalMin) globalMin = value;
       return [new Date(item.time), value];
     });
-    
+
     // Choose sampling strategy based on data size
     // LTTB (Largest-Triangle-Three-Buckets) preserves visual characteristics while downsampling
     const samplingStrategy = totalDataPoints.value > 5000 ? 'lttb' : false;
-    
+
     // For very large datasets, use a stepped line to better show discrete readings
     const isStepLine = formattedData.length > 1000;
-    
+
     return {
       name: field.charAt(0).toUpperCase() + field.slice(1),
       type: 'line',
@@ -429,16 +418,16 @@ function getChartOption() {
       }
     };
   });
-  
+
   // Handle empty data case
   if (globalMax === -Infinity) globalMax = 1;
   if (globalMin === Infinity) globalMin = 0;
-  
+
   // Add some padding to the y-axis
   const padding = (globalMax - globalMin) * 0.1;
   const yMax = Math.ceil(globalMax + padding);
   const yMin = Math.floor(globalMin - padding);
-  
+
   return {
     title: {
       text: `${formattedSourceName.value} Data`,
@@ -471,12 +460,12 @@ function getChartOption() {
           type: 'dashed'
         }
       },
-      formatter: function(params) {
+      formatter: function (params) {
         let tooltipText = '';
         if (params.length > 0) {
           const date = new Date(params[0].value[0]);
           tooltipText = `<div style="font-weight:bold;margin-bottom:3px">${date.toLocaleString()}</div>`;
-          
+
           params.forEach(param => {
             const value = parseFloat(param.value[1]).toFixed(2);
             const color = param.color;
@@ -549,13 +538,13 @@ function getChartOption() {
         show: false
       },
       axisLabel: {
-        formatter: function(value) {
+        formatter: function (value) {
           const date = new Date(value);
           // For intervals less than a day, show time only
           if (date.getHours() === 0 && date.getMinutes() === 0) {
             return date.toLocaleDateString();
           }
-          return date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+          return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         },
         showMaxLabel: true,
         showMinLabel: true
@@ -576,7 +565,7 @@ function getChartOption() {
         }
       },
       axisLabel: {
-        formatter: function(value) {
+        formatter: function (value) {
           // Format numbers for readability
           if (Math.abs(value) >= 1000) {
             return value.toLocaleString();

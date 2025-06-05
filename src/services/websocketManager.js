@@ -12,7 +12,7 @@ class WebSocketManager {
     this.subscribers = new Map();
     this.reconnectAttempts = new Map();
     this.connectionTimeouts = new Map();
-    
+
     // Connection parameters from config
     this.protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     this.baseUrl = this._buildBaseUrl();
@@ -20,7 +20,7 @@ class WebSocketManager {
     this.reconnectDelay = configUtils.get('websocket.reconnectDelay', 1000);
     this.connectionTimeout = configUtils.get('websocket.connectionTimeout', 10000);
   }
-  
+
   /**
    * Build the base URL for WebSocket connections
    * @private
@@ -32,7 +32,7 @@ class WebSocketManager {
     if (!port) {
       port = window.location.protocol === 'https:' ? '443' : '80';
     }
-    
+
     return `${this.protocol}//${hostname}:${port}/api`;
   }
 
@@ -53,7 +53,7 @@ class WebSocketManager {
   getAuthToken() {
     try {
       const tokenData = localStorage.getItem('token');
-      
+
       // First, check if it's a JSON object
       try {
         const parsedToken = JSON.parse(tokenData);
@@ -64,11 +64,10 @@ class WebSocketManager {
       } catch (e) {
         // Not JSON, assume it's a raw token string (old format)
       }
-      
+
       // Return the token as-is if it wasn't JSON or didn't have a value property
       return tokenData;
     } catch (err) {
-      console.error('Error getting auth token:', err);
       return null;
     }
   }
@@ -81,19 +80,19 @@ class WebSocketManager {
    */
   subscribe(endpoint, callback) {
     const url = this.getWsUrl(endpoint);
-    
+
     if (!this.subscribers.has(url)) {
       this.subscribers.set(url, []);
       this.reconnectAttempts.set(url, 0);
     }
-    
+
     const subscribers = this.subscribers.get(url);
     subscribers.push(callback);
-    
+
     if (!this.sockets.has(url)) {
       this.createSocket(url);
     }
-    
+
     return () => this.unsubscribe(url, callback);
   }
 
@@ -104,18 +103,16 @@ class WebSocketManager {
    */
   createSocket(url) {
     if (this.sockets.has(url)) return;
-    
+
     try {
       // Get token and ensure it's just the JWT string, not a JSON object
       const token = this.getAuthToken();
-      
+
       // Add token as a query parameter if available
       const socketUrl = token ? `${url}?token=${token}` : url;
-      
-      console.log('Connecting WebSocket to:', socketUrl.split('?')[0], 'with auth token');
-      
+
       const socket = new WebSocket(socketUrl);
-      
+
       // Set connection timeout
       const timeoutId = setTimeout(() => {
         if (socket.readyState !== WebSocket.OPEN) {
@@ -123,38 +120,35 @@ class WebSocketManager {
           this.handleConnectionFailure(url, new Error('Connection timeout'));
         }
       }, this.connectionTimeout);
-      
+
       this.connectionTimeouts.set(url, timeoutId);
-      
+
       socket.onopen = () => {
         clearTimeout(this.connectionTimeouts.get(url));
         this.connectionTimeouts.delete(url);
         this.reconnectAttempts.set(url, 0);
-        console.log(`WebSocket connected to ${url}`);
       };
-      
+
       socket.onmessage = (event) => {
         // Handle both JSON and text messages
         try {
           // Try to parse as JSON first
           const jsonData = JSON.parse(event.data);
-          
+
           // Forward JSON data to subscribers
           const subscribers = this.subscribers.get(url) || [];
           subscribers.forEach(callback => {
             try {
-              callback({ 
+              callback({
                 type: 'json',
-                data: jsonData 
+                data: jsonData
               });
             } catch (err) {
-              console.error(`Subscriber callback error for ${url}:`, err);
             }
           });
         } catch (jsonError) {
           // If not JSON, treat as a text message (like authentication errors)
-          console.warn(`Received non-JSON message: ${event.data.slice(0, 50)}...`);
-          
+
           // Forward text message to subscribers
           const subscribers = this.subscribers.get(url) || [];
           subscribers.forEach(callback => {
@@ -164,30 +158,28 @@ class WebSocketManager {
                 data: event.data
               });
             } catch (err) {
-              console.error(`Subscriber callback error for ${url}:`, err);
             }
           });
         }
       };
-      
+
       socket.onerror = (error) => {
-        console.error(`WebSocket error for ${url}:`, error);
       };
-      
+
       socket.onclose = (event) => {
         if (this.connectionTimeouts.has(url)) {
           clearTimeout(this.connectionTimeouts.get(url));
           this.connectionTimeouts.delete(url);
         }
-        
+
         this.sockets.delete(url);
-        
+
         const subscribers = this.subscribers.get(url) || [];
         if (subscribers.length > 0) {
           this.handleConnectionFailure(url, new Error(`WebSocket closed with code: ${event.code}`));
         }
       };
-      
+
       this.sockets.set(url, socket);
     } catch (error) {
       this.handleConnectionFailure(url, error);
@@ -201,18 +193,17 @@ class WebSocketManager {
    * @param {Error} error - Error that occurred
    */
   handleConnectionFailure(url, error) {
-    console.error(`WebSocket connection failure for ${url}:`, error);
-    
+
     const currentAttempts = this.reconnectAttempts.get(url) || 0;
-    
+
     if (currentAttempts < this.maxReconnectAttempts) {
       this.reconnectAttempts.set(url, currentAttempts + 1);
-      
+
       // Calculate delay with exponential backoff and jitter
       const baseDelay = this.reconnectDelay * Math.pow(1.5, currentAttempts);
       const jitter = Math.random() * 0.3 * baseDelay;
       const delay = Math.min(30000, baseDelay + jitter);
-      
+
       setTimeout(() => {
         if (this.subscribers.has(url) && this.subscribers.get(url).length > 0) {
           this.createSocket(url);
@@ -227,7 +218,6 @@ class WebSocketManager {
             data: `Connection failed after ${currentAttempts} attempts`
           });
         } catch (err) {
-          console.error(`Error notifying subscriber about connection failure:`, err);
         }
       });
     }
@@ -240,14 +230,14 @@ class WebSocketManager {
    */
   unsubscribe(url, callback) {
     if (!this.subscribers.has(url)) return;
-    
+
     const subscribers = this.subscribers.get(url);
     const index = subscribers.indexOf(callback);
-    
+
     if (index !== -1) {
       subscribers.splice(index, 1);
     }
-    
+
     if (subscribers.length === 0) {
       this.closeSocket(url);
       this.subscribers.delete(url);
@@ -264,7 +254,7 @@ class WebSocketManager {
       clearTimeout(this.connectionTimeouts.get(url));
       this.connectionTimeouts.delete(url);
     }
-    
+
     const socket = this.sockets.get(url);
     if (socket && socket.readyState === WebSocket.OPEN) {
       socket.close(1000, 'Client disconnecting normally');
@@ -280,11 +270,11 @@ class WebSocketManager {
       clearTimeout(timeoutId);
     });
     this.connectionTimeouts.clear();
-    
+
     for (const url of this.sockets.keys()) {
       this.closeSocket(url);
     }
-    
+
     this.sockets.clear();
     this.subscribers.clear();
     this.reconnectAttempts.clear();
@@ -313,7 +303,7 @@ export const websocketService = {
   subscribeToSettings(callback) {
     return wsManager.subscribe('/settings/ws', callback);
   },
-  
+
   closeAll() {
     wsManager.closeAll();
   }

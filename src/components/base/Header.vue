@@ -34,7 +34,6 @@ export default {
         // Redirect to login page
         this.$router.push("/");
       } catch (error) {
-        console.error("Logout error:", error);
         this.$router.push("/");
       }
     },

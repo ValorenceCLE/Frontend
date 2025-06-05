@@ -5,18 +5,12 @@
     </div>
 
     <div class="space-y-2 px-2 py-1 ">
-      <div
-        v-for="(action, index) in actions"
-        :key="index"
-        class="bg-gray-100 px-2  py-1 relative border border-gray-500 rounded space-x-4 space-y-1"
-      >
+      <div v-for="(action, index) in actions" :key="index"
+        class="bg-gray-100 px-2  py-1 relative border border-gray-500 rounded space-x-4 space-y-1">
         <div class="flex justify-between items-center mb-2">
           <label class="text-AddTask text-textColor">Action {{ index + 1 }}:</label>
-          <button
-            v-if="actions.length > 1"
-            @click="removeAction(index)"
-            class="bg-relayStatusred hover:bg-red-700 text-white p-1.5 rounded"
-            >
+          <button v-if="actions.length > 1" @click="removeAction(index)"
+            class="bg-relayStatusred hover:bg-red-700 text-white p-1.5 rounded">
             <img src="@/assets/icons/trash.svg" alt="Remove" class="w-4 h-4 invert" />
           </button>
         </div>
@@ -24,12 +18,8 @@
         <!-- Action Type Selector -->
         <div class="grid grid-cols-2 items-center gap-2">
           <label class="text-ModalLabel text-textColor text-left">Type:</label>
-          <select
-            v-model="displayActionType[index]"
-            @change="onActionTypeChange(index, $event.target.value)"
-            class="border border-gray-500 rounded px-1 py-0.5 w-full text-sm mb-1"
-            required
-          >
+          <select v-model="displayActionType[index]" @change="onActionTypeChange(index, $event.target.value)"
+            class="border border-gray-500 rounded px-1 py-0.5 w-full text-sm mb-1" required>
             <option disabled value="">Select an Action</option>
             <option value="reboot">Reboot</option>
             <option value="log">Log</option>
@@ -44,39 +34,28 @@
         <!-- If it's a relay action -->
         <div v-if="action.type === 'io'" class="grid grid-cols-2 items-center gap-2">
           <label class="text-ModalLabel text-textColor text-left">Set To:</label>
-          <select
-            v-model="action.state"
-            class="border border-gray-500 rounded px-1 py-0.5 w-full text-sm mb-1"
-            required
-          >
-            <option value="on">ON</option>
-            <option value="off">OFF</option>
-            <option value="pulse">PULSE</option>
+          <select v-model="action.state" class="border border-gray-500 rounded px-1 py-0.5 w-full text-sm mb-1"
+            required>
+            <option value="on">On</option>
+            <option value="off">Off</option>
+            <option value="pulse">Pulse</option>
           </select>
         </div>
 
         <!-- If it's an email action -->
         <div v-if="action.type === 'email'" class="grid grid-cols-1 items-center gap-2">
           <label class="text-ModalLabel text-textColor">Message:</label>
-          <textarea
-            v-model="action.message"
-            class="border border-gray-500 rounded px-1 py-0.5 w-full text-sm mb-1"
-            rows="2"
-            placeholder="Email message..."
-            required
-          ></textarea>
+          <textarea v-model="action.message" class="border border-gray-500 rounded px-1 py-0.5 w-full text-sm mb-1"
+            rows="2" placeholder="Email message..." required></textarea>
         </div>
       </div>
     </div>
 
     <!-- Add Action Button -->
     <div class="my-1 flex justify-center">
-      <button
-        v-if="actions.length < 3"
-        @click.prevent="addAction"
-        class="bg-grayDark hover:bg-gray-700 text-white px-2 py-1 rounded shadow flex items-center text-sm"
-      >
-        
+      <button v-if="actions.length < 3" @click.prevent="addAction"
+        class="bg-grayDark hover:bg-gray-700 text-white px-2 py-1 rounded shadow flex items-center text-sm">
+
         Add Action
       </button>
     </div>
@@ -154,6 +133,4 @@ export default {
 };
 </script>
 
-<style scoped>
-
-</style>
+<style scoped></style>

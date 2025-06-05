@@ -12,6 +12,10 @@ setupRouteProgress(router);
 const pinia = createPinia();
 const app = createApp(App);
 
+// Configure Vue to suppress warnings and logs in production
+app.config.warnHandler = () => null;
+app.config.errorHandler = () => null;
+
 // Now setup the rest of the app
 app.use(router);
 app.use(pinia);

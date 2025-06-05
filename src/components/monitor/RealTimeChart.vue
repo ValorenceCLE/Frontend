@@ -1,10 +1,8 @@
 <template>
   <div class="w-full h-full">
     <!-- If not running or no fields, show a placeholder -->
-    <div
-      v-if="!isRunning || !fields || fields.length === 0"
-      class="flex items-center justify-center w-full h-full text-gray-500"
-    >
+    <div v-if="!isRunning || !fields || fields.length === 0"
+      class="flex items-center justify-center w-full h-full text-gray-500">
       <span class="text-sm italic">
         Select a source and fields, then click "Run" to start the live chart.
       </span>
@@ -55,30 +53,29 @@ const wsEndpoint = computed(() => props.source || '');
 // WebSocket handler function (will be used to create connections)
 const handleWebSocketMessage = (rawData) => {
   if (!props.isRunning || props.isPaused) return;
-  
-  console.log('WebSocket data received:', rawData);
+
   const timestamp = new Date();
-  
+
   // For each selected field, add the new data point if available
   for (const field of props.fields) {
     const sensorKey = fieldMapping.value[field];
-    
+
     // Make sure the sensorKey exists and has a value in the data
     if (sensorKey && rawData[sensorKey] !== undefined) {
       // Initialize array if it doesn't exist
       if (!seriesDataMap.value[field]) {
         seriesDataMap.value[field] = [];
       }
-      
+
       // Parse the value as a number
       const value = parseFloat(rawData[sensorKey]);
-      
+
       if (!isNaN(value)) {
         seriesDataMap.value[field].push([timestamp, value]);
       }
     }
   }
-  
+
   // Update the chart
   if (chartInstance) {
     chartInstance.setOption(getChartOption());
@@ -89,25 +86,22 @@ const handleWebSocketMessage = (rawData) => {
 function connectWebSocket() {
   // Don't try to connect if we don't have a source
   if (!props.source) {
-    console.warn('Cannot connect WebSocket - no source provided');
     return;
   }
-  
+
   // Disconnect existing connection if any
   disconnectWebSocket();
-  
+
   // Create a new connection
-  console.log(`Connecting to WebSocket for source: ${props.source}`);
-  
   const { data, isConnected, connect, disconnect } = useWebSocket(props.source, {
     immediate: true, // Connect immediately
     formatter: (data) => data,
     errorHandler: (error) => console.error('WebSocket error:', error)
   });
-  
+
   // Store the disconnect function for later cleanup
   wsConnection.value = { disconnect };
-  
+
   // Watch for data changes
   watch(data, (newData) => {
     if (newData && props.isRunning && !props.isPaused) {
@@ -119,7 +113,6 @@ function connectWebSocket() {
 // Function to disconnect WebSocket
 function disconnectWebSocket() {
   if (wsConnection.value && wsConnection.value.disconnect) {
-    console.log('Disconnecting WebSocket');
     wsConnection.value.disconnect();
     wsConnection.value = null;
   }
@@ -127,7 +120,6 @@ function disconnectWebSocket() {
 
 // Initialize series data storage for each selected field.
 function initializeSeriesData() {
-  console.log('Initializing series data for fields:', props.fields);
   seriesDataMap.value = {};
   for (const field of props.fields) {
     seriesDataMap.value[field] = [];
@@ -138,19 +130,19 @@ function initializeSeriesData() {
 function getChartOption() {
   let globalMax = -Infinity,
     globalMin = Infinity;
-  
+
   const series = props.fields.map((field) => {
     const data = seriesDataMap.value[field] || [];
-    
+
     // Find min/max values for the y-axis
     data.forEach(([time, value]) => {
       if (value > globalMax) globalMax = value;
       if (value < globalMin) globalMin = value;
     });
-    
+
     // Get color from config
     const color = configUtils.getChartColor(field);
-    
+
     return {
       name: field,
       type: "line",
@@ -176,11 +168,11 @@ function getChartOption() {
       }
     };
   });
-  
+
   // Set default values if no data yet
   if (globalMax === -Infinity) globalMax = 1;
   if (globalMin === Infinity) globalMin = 0;
-  
+
   // Add some padding to the y-axis
   const padding = (globalMax - globalMin) * 0.1;
   const yMax = Math.ceil(globalMax + padding);
@@ -240,8 +232,7 @@ function initChart() {
   nextTick(() => {
     if (!chartContainer.value) return;
     disposeChart();
-    
-    console.log('Initializing chart');
+
     chartInstance = echarts.init(chartContainer.value);
     chartInstance.setOption(getChartOption());
   });
@@ -250,7 +241,6 @@ function initChart() {
 // Dispose of the chart instance.
 function disposeChart() {
   if (chartInstance) {
-    console.log('Disposing chart');
     chartInstance.dispose();
     chartInstance = null;
   }
@@ -260,19 +250,14 @@ function disposeChart() {
 watch(
   [() => props.isRunning, () => props.source, () => props.fields],
   ([running, source, fields], [oldRunning, oldSource]) => {
-    console.log('Watch triggered:', {running, source, fields});
-    
     if (running && source && fields.length > 0) {
-      console.log('Starting chart with source:', source);
-      
       // Initialize series data and chart
       initializeSeriesData();
       initChart();
-      
+
       // Connect WebSocket
       connectWebSocket();
     } else if (!running && oldRunning) {
-      console.log('Stopping chart');
       disconnectWebSocket();
       disposeChart();
     }
@@ -283,8 +268,6 @@ watch(
 // Watch for source changes when running
 watch(() => props.source, (newSource, oldSource) => {
   if (props.isRunning && newSource && newSource !== oldSource) {
-    console.log(`Source changed from ${oldSource} to ${newSource}, reconnecting`);
-    
     // Reset data and reconnect
     initializeSeriesData();
     connectWebSocket();

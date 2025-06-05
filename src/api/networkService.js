@@ -15,16 +15,16 @@ export async function getNetworkStatus(hosts, options = {}) {
     timeout: 1,
     port: 443
   });
-  
+
   // Merge with provided options
   const pingOptions = { ...defaultOptions, ...options };
-  
+
   // Format hosts as comma-separated string if it's an array
   const hostsParam = Array.isArray(hosts) ? hosts.join(',') : hosts;
-  
+
   // Build query parameters
   const queryParams = `?hosts=${hostsParam}&retries=${pingOptions.retries}&timeout=${pingOptions.timeout}&port=${pingOptions.port}`;
-  
+
   // Make API request
   return await apiClient.get(`/network/ping${queryParams}`);
 }
@@ -37,7 +37,7 @@ export async function getNetworkStatus(hosts, options = {}) {
 export async function getRouterStatus(options = {}) {
   const routerIp = configUtils.get('network.devices.router', '192.168.1.1');
   const response = await getNetworkStatus(routerIp, options);
-  
+
   return {
     host: response.results[0].host,
     online: response.results[0].online,
@@ -53,7 +53,7 @@ export async function getRouterStatus(options = {}) {
 export async function getCameraStatus(options = {}) {
   const cameraIp = configUtils.get('network.devices.camera', '192.168.1.3');
   const response = await getNetworkStatus(cameraIp, options);
-  
+
   return {
     host: response.results[0].host,
     online: response.results[0].online,
@@ -69,7 +69,7 @@ export async function getCameraStatus(options = {}) {
 export async function getAllNetworkStatuses(options = {}) {
   const routerIp = configUtils.get('network.devices.router', '192.168.1.1');
   const cameraIp = configUtils.get('network.devices.camera', '192.168.1.3');
-  
+
   return await getNetworkStatus([routerIp, cameraIp], options);
 }
 
@@ -82,15 +82,13 @@ export async function performSpeedTest(forceUpdate = false) {
   const response = await apiClient.get('/network/speedtest', {
     params: { force: forceUpdate }
   });
-  
+
   // Extract just the results part
   if (response.results) {
     return response.results;
   } else if (response.status) {
-    console.log("Speedtest status:", response.status);
     return null;
   } else if (response.error) {
-    console.error("Speedtest error:", response.error);
     return null;
   } else {
     return response; // If somehow the structure is different

@@ -76,13 +76,6 @@ const statusStyle = computed(() => {
   const normalizedColor = normalizeColor(color);
   const textColor = getContrastTextColor(normalizedColor);
 
-  console.log(`Relay ${props.relay.name}:`, {
-    state: currentState.value,
-    rawColor: color,
-    normalizedColor,
-    textColor
-  });
-
   return {
     backgroundColor: normalizedColor,
     color: textColor

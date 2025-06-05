@@ -3,16 +3,12 @@
   <div class="w-full max-w-4xl mx-auto">
     <!-- Dashboard Header -->
     <div
-      class="bg-gray-200 px-3 py-1.5 rounded-md shadow border border-gray-500 max-w-xl flex justify-center items-center mx-auto"
-    >
+      class="bg-gray-200 px-3 py-1.5 rounded-md shadow border border-gray-500 max-w-xl flex justify-center items-center mx-auto">
       <h1 class="text-Header text-textColor">{{ system_name }}</h1>
     </div>
 
     <!-- Gauge Section -->
-    <div
-      ref="scalingContainer"
-      class="w-full my-2 flex text-center space-x-2 overflow-auto break-words items-stretch"
-    >
+    <div ref="scalingContainer" class="w-full my-2 flex text-center space-x-2 overflow-auto break-words items-stretch">
       <!-- Left Column (Status Panel) -->
       <div class="flex-[2] bg-gray-200 rounded border border-gray-500">
         <h1 :style="leftTitleStyle" class="text-center">Status</h1>
@@ -65,28 +61,14 @@
 
       <!-- Middle Column: Main Power Gauge -->
       <div class="flex-[1.5] bg-gray-200 p-1 rounded h-44 border border-gray-500">
-        <Gauge
-          title="Main Power"
-          :min="0"
-          :max="24"
-          unit="v"
-          :value="volts"
-          :scale="sharedScale"
-          class="w-full h-full"
-        />
+        <Gauge title="Main Power" :min="0" :max="24" unit="v" :value="volts" :scale="sharedScale"
+          class="w-full h-full" />
       </div>
 
       <!-- Right Column: Temperature Gauge -->
       <div class="flex-[1.5] bg-gray-200 p-1 rounded h-44 border border-gray-500">
-        <Gauge
-          title="Temperature"
-          :min="-32" 
-          :max="120"
-          unit="°F"
-          :value="temperature"
-          :scale="sharedScale"
-          class="w-full h-full"
-        />
+        <Gauge title="Temperature" :min="-32" :max="120" unit="°F" :value="temperature" :scale="sharedScale"
+          class="w-full h-full" />
       </div>
     </div>
 
@@ -98,12 +80,7 @@
 
     <!-- Relay Cards Section -->
     <div v-else class="w-full mt-2 space-y-1.5">
-      <RelayCard
-        v-for="relay in enabledRelays"
-        :key="relay.id"
-        :relay="relay"
-        @update-state="updateRelayState"
-      />
+      <RelayCard v-for="relay in enabledRelays" :key="relay.id" :relay="relay" @update-state="updateRelayState" />
     </div>
 
     <!-- Error messages -->
@@ -123,10 +100,10 @@ import { useSpeedTestStore } from "@/store/speedTest";
 import { useWebSocket } from '@/composables/useWebSocket';
 
 // Use the config composable for accessing configuration
-const { 
-  configData, 
-  isLoading, 
-  error 
+const {
+  configData,
+  isLoading,
+  error
 } = useConfig(null, { autoFetch: true });
 
 /*********************
@@ -193,11 +170,6 @@ const { data: dashboardData, isConnected: dashboardConnected } = useWebSocket('d
   }
 });
 
-// Log WebSocket connection status for debugging
-watch(dashboardConnected, (connected) => {
-  console.log('Dashboard WebSocket connection status:', connected ? 'connected' : 'disconnected');
-});
-
 // Extract relay states from the combined WebSocket data
 const relayStates = computed(() => dashboardData.value?.relay_states || {});
 
@@ -241,15 +213,15 @@ onMounted(() => {
  *****************************************************/
 const enabledRelays = computed(() => {
   if (!configData.value?.relays) return [];
-  
+
   // Get only enabled relays
   const enabledRelayList = Object.values(configData.value.relays)
     .filter(relay => relay.enabled);
-  
+
   // Merge with WebSocket states from the combined stream
   return enabledRelayList.map(relay => {
-    const state = relayStates.value[relay.id] !== undefined ? 
-      relayStates.value[relay.id] : 
+    const state = relayStates.value[relay.id] !== undefined ?
+      relayStates.value[relay.id] :
       (relay.state === 'on' ? 1 : 0);
     return { ...relay, state };
   });
@@ -275,7 +247,7 @@ const volts = computed(() => {
 });
 
 const temperature = computed(() => {
-  return environmentalData.value?.temperature ? 
+  return environmentalData.value?.temperature ?
     parseFloat(environmentalData.value.temperature.toFixed(2)) : 0;
 });
 

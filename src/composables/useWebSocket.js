@@ -8,19 +8,19 @@ export function useWebSocket(endpoint, options = {}) {
     formatter = (data) => data,
     errorHandler = console.error,
   } = options;
-  
+
   const data = ref(null);
   const error = ref(null);
   const isConnected = ref(false);
   let unsubscribe = null;
-  
+
   const connect = () => {
     if (unsubscribe || !endpoint) return;
-    
+
     try {
       // Determine which websocket endpoint to use
       let subscribeFunction;
-      
+
       switch (endpoint) {
         case 'main':
           subscribeFunction = websocketService.subscribeToMainVolts;
@@ -37,17 +37,17 @@ export function useWebSocket(endpoint, options = {}) {
         default:
           // For relay endpoints
           if (endpoint && endpoint.startsWith('relay_')) {
-            subscribeFunction = (callback) => 
+            subscribeFunction = (callback) =>
               websocketService.subscribeToRelay(endpoint, callback);
           } else if (endpoint) {
             // Try to use the endpoint directly if it's not empty
-            subscribeFunction = (callback) => 
+            subscribeFunction = (callback) =>
               websocketService.subscribeToRelay(endpoint, callback);
           } else {
             throw new Error(`Unknown websocket endpoint: ${endpoint}`);
           }
       }
-      
+
       if (subscribeFunction) {
         unsubscribe = subscribeFunction((message) => {
           try {
@@ -58,9 +58,8 @@ export function useWebSocket(endpoint, options = {}) {
                 data.value = formatter(message.data);
                 isConnected.value = true;
                 error.value = null;
-              } 
+              }
               else if (message.type === 'text') {
-                console.log(`WebSocket text message: ${message.data}`);
                 if (message.data.includes('Authentication failed')) {
                   error.value = new Error(message.data);
                 }
@@ -69,7 +68,7 @@ export function useWebSocket(endpoint, options = {}) {
                 error.value = new Error(message.data);
                 errorHandler(`WebSocket error: ${message.data}`);
               }
-            } 
+            }
             else if (message && message.data) {
               // Original format with raw event object
               const rawData = JSON.parse(message.data);
@@ -88,7 +87,7 @@ export function useWebSocket(endpoint, options = {}) {
       errorHandler(`Error connecting to websocket: ${err.message}`);
     }
   };
-  
+
   const disconnect = () => {
     if (unsubscribe) {
       unsubscribe();
@@ -96,17 +95,17 @@ export function useWebSocket(endpoint, options = {}) {
       isConnected.value = false;
     }
   };
-  
+
   // Connect immediately if immediate is true and endpoint exists
   if (immediate && endpoint) {
     connect();
   }
-  
+
   // Automatically disconnect when component unmounts
   onBeforeUnmount(() => {
     disconnect();
   });
-  
+
   return {
     data,
     error,

@@ -14,24 +14,16 @@
           <label class="text-ModalLabel text-textColor ml-2">
             Source:
           </label>
-          <select
-            v-model="trigger.source"
-            @change="updateFieldOptions"
-            class="border border-gray-400 rounded px-1 py-0.5 text-sm mr-2"
-            style="width: 60%; text-align: left;"
-            required
-          >
+          <select v-model="trigger.source" @change="updateFieldOptions"
+            class="border border-gray-400 rounded px-1 py-0.5 text-sm mr-2" style="width: 60%; text-align: left;"
+            required>
             <option disabled value="">Select Source</option>
             <optgroup label="General">
               <option value="environmental">Environmental</option>
               <option value="main">Main Power</option>
             </optgroup>
             <optgroup label="Relay Power">
-              <option
-                v-for="relay in enabledRelays"
-                :key="relay.id"
-                :value="relay.id"
-              >
+              <option v-for="relay in enabledRelays" :key="relay.id" :value="relay.id">
                 {{ relay.name }}
               </option>
             </optgroup>
@@ -43,13 +35,8 @@
           <label class="text-ModalLabel text-textColor ml-2">
             Operator:
           </label>
-          <select
-            v-model="trigger.operator"
-            class="border border-gray-400 rounded px-1 py-0.5 text-sm mr-2"
-            style="width: 60%; text-align: left;"
-            :disabled="!trigger.source"
-            required
-          >
+          <select v-model="trigger.operator" class="border border-gray-400 rounded px-1 py-0.5 text-sm mr-2"
+            style="width: 60%; text-align: left;" :disabled="!trigger.source" required>
             <option disabled value="">Select Operator</option>
             <option value=">">Greater (&gt;)</option>
             <option value="<">Less (&lt;)</option>
@@ -66,20 +53,11 @@
           <label class="text-ModalLabel text-textColor ml-2">
             Field:
           </label>
-          <select
-            v-model="trigger.field"
-            class="border border-gray-400 rounded px-1 py-0.5 text-sm mr-2"
-            style="width: 60%; text-align: left;"
-            :disabled="!trigger.source"
-            required
-          >
+          <select v-model="trigger.field" class="border border-gray-400 rounded px-1 py-0.5 text-sm mr-2"
+            style="width: 60%; text-align: left;" :disabled="!trigger.source" required>
             <option disabled value="">Select Field</option>
-            <option
-              v-for="field in availableFields"
-              :key="field"
-              :value="field"
-            >
-                {{ field.toUpperCase() }}
+            <option v-for="field in availableFields" :key="field" :value="field">
+              {{ formatFieldLabel(field) }}
             </option>
           </select>
         </div>
@@ -89,15 +67,9 @@
           <label class="text-ModalLabel text-textColor ml-2">
             Value:
           </label>
-          <input
-            v-model.number="trigger.value"
-            type="number"
-            class="border border-gray-400 rounded px-1 py-0.5 text-sm mr-2"
-            style="width: 60%; text-align: left;"
-            placeholder="0"
-            :disabled="!trigger.field"
-            required
-          />
+          <input v-model.number="trigger.value" type="number"
+            class="border border-gray-400 rounded px-1 py-0.5 text-sm mr-2" style="width: 60%; text-align: left;"
+            placeholder="0" :disabled="!trigger.field" required />
         </div>
       </div>
     </div>
@@ -147,7 +119,7 @@ export default {
         (relay) => relay.id === this.trigger.source
       );
       const isMainPower = this.trigger.source === "main";
-      
+
       if (isRelay || isMainPower) {
         this.availableFields = ["volts", "watts", "amps"];
       } else {
@@ -158,6 +130,13 @@ export default {
       if (!this.availableFields.includes(this.trigger.field)) {
         this.trigger.field = "";
       }
+    },
+    formatFieldLabel(field) {
+      if (!field) return '';
+      // Replace underscores/dashes with spaces, capitalize each word
+      return field.replace(/[-_]/g, ' ')
+        .replace(/\b\w/g, c => c.toUpperCase())
+        .replace(/\B\w/g, c => c.toLowerCase());
     },
   },
 };

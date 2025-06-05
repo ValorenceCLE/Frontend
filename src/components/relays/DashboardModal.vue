@@ -51,17 +51,29 @@
 
         <!-- STATUS COLOR -->
         <div>
-          <div class="grid grid-cols-2 items-start">
-            <div class="flex items-center justify-start pt-3">
+          <div class="grid grid-cols-2 items-center">
+            <div class="flex items-center justify-start">
               <label class="text-ModalLabel text-textColor">Status Color:</label>
             </div>
-            <div class="space-y-3">
+            <div class="space-y-1.5">
               <div v-if="selectedButton">
                 <div class="flex items-center space-x-2">
                   <input type="color" v-model="currentSettings.status_color"
-                    class="w-10 h-10 border border-gray-300 rounded cursor-pointer" />
+                    class="w-8 h-8 border border-gray-300 rounded cursor-pointer" />
                   <input type="text" v-model="currentSettings.status_color"
                     class="border border-gray-300 rounded p-1 text-xs font-mono w-24" placeholder="#FF0000" />
+                  <div class="flex flex-col">
+                    <select :value="presetColorValue" @change="onPresetColorChange($event)"
+                      class="border border-gray-300 rounded p-1 text-xs bg-white hover:border-blue-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                      id="status_color" name="colors">
+                      <option value="" disabled>Default Colors</option>
+                      <option value="#2a980c">Green</option>
+                      <option value="#FFDF00">Yellow</option>
+                      <option value="#eb191a">Red</option>
+                      <option value="#d1d5db">Gray</option>
+                      <option value="#0a44a3">Blue</option>
+                    </select>
+                  </div>
                 </div>
               </div>
               <div v-else class="flex items-center space-x-2 p-2 border border-gray-300 rounded bg-gray-50">
@@ -92,24 +104,14 @@
     <div class="bg-gray-100 border border-gray-500 rounded mt-3">
       <div class="border-b border-gray-500 px-3 py-1.5 flex justify-between items-center">
         <label class="text-ModalInfo text-textColor">Preview</label>
-        <div class="inline-flex rounded overflow-hidden border border-blue-500">
-          <button @click="preview.enabled = true" :class="getPillButtonClass(preview.enabled, true)">
-            Enabled
-          </button>
-          <button @click="preview.enabled = false" :class="getPillButtonClass(preview.enabled, false)">
-            Disabled
-          </button>
-        </div>
       </div>
 
-      <transition name="fade">
-        <div v-if="preview.enabled" class="px-3 py-2">
-          <PreviewCard :relayName="relayName || 'Relay'" :relayStatus="activeButtonConfig.status_text || 'Idle'"
-            :relayColor="activeButtonConfig.status_color || '#d1d5db'" :relayButtons="computedPreviewButtons"
-            :pulseText="localDashboard.pulse_button.status_text || 'Pulsing...'"
-            @update-status="handlePreviewStateChange" />
-        </div>
-      </transition>
+      <div class="px-3 py-2">
+        <PreviewCard :relayName="relayName || 'Relay'" :relayStatus="activeButtonConfig.status_text || 'Idle'"
+          :relayColor="activeButtonConfig.status_color || '#d1d5db'" :relayButtons="computedPreviewButtons"
+          :pulseText="localDashboard.pulse_button.status_text || 'Pulsing...'"
+          @update-status="handlePreviewStateChange" />
+      </div>
     </div>
 
   </div>
@@ -133,8 +135,7 @@ export default {
     return {
       localDashboard: createDefaultDashboard(),
       selectedButton: "on_button",
-      localState: "off",
-      preview: { enabled: false },
+      localState: "off"
     };
   },
   computed: {
@@ -159,6 +160,10 @@ export default {
       if (this.localState === "on") return this.localDashboard.on_button;
       if (this.localState === "off") return this.localDashboard.off_button;
       return this.localDashboard.pulse_button;
+    },
+    presetColorValue() {
+      const presets = ["#2a980c", "#FFDF00", "#eb191a", "#d1d5db", "#0a44a3"];
+      return presets.includes(this.currentSettings.status_color) ? this.currentSettings.status_color : '';
     },
   },
   watch: {
@@ -198,7 +203,7 @@ export default {
     }
   },
   mounted() {
-    console.log('DashboardModal mounted, ColorPicker available:', !!this.ColorPicker);
+    // console.log('DashboardModal mounted, ColorPicker available:', !!this.ColorPicker);
   },
   methods: {
     updateHueFromCurrentColor() {
@@ -249,6 +254,14 @@ export default {
 
     getDashboardData() {
       return JSON.parse(JSON.stringify(this.localDashboard));
+    },
+
+    onPresetColorChange(event) {
+      const val = event.target.value;
+      if (val) {
+        this.currentSettings.status_color = val;
+        this.emitChanges();
+      }
     },
   },
 };
