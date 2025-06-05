@@ -5,7 +5,7 @@
       <h3 class="text-ModalPreviewLabel text-textColor ml-1">
         {{ relayName }}
       </h3>
-      <span :class="statusClass" class="px-2 py-0.5 rounded mr-1">
+      <span :style="statusStyle" class="px-2 py-0.5 rounded mr-1">
         {{ relayStatus }}
       </span>
     </div>
@@ -14,29 +14,20 @@
     <div class="flex-[1.9] p-1.5 border-l border-gray-400 rounded-r-md shadow-md mx-1">
       <div class="flex h-full space-x-2 items-center justify-center">
         <!-- ON button -->
-        <button
-          v-if="relayButtons.on"
-          @click="emitStatus('On')"
-          class="flex-1 bg-gray-200 border border-gray-500 hover:bg-gray-300 px-2 py-1 rounded text-center shadow-md"
-        >
+        <button v-if="relayButtons.on" @click="emitStatus('On')"
+          class="flex-1 bg-gray-200 border border-gray-500 hover:bg-gray-300 px-2 py-1 rounded text-center shadow-md">
           {{ relayButtons.on }}
         </button>
 
         <!-- OFF button -->
-        <button
-          v-if="relayButtons.off"
-          @click="emitStatus('Off')"
-          class="flex-1 bg-gray-200 border border-gray-500 hover:bg-gray-300 px-2 py-1 rounded text-center shadow-md"
-        >
+        <button v-if="relayButtons.off" @click="emitStatus('Off')"
+          class="flex-1 bg-gray-200 border border-gray-500 hover:bg-gray-300 px-2 py-1 rounded text-center shadow-md">
           {{ relayButtons.off }}
         </button>
 
         <!-- PULSE button -->
-        <button
-          v-if="relayButtons.pulse"
-          @click="emitStatus(pulseText)"
-          class="flex-1 bg-gray-200 border border-gray-500 hover:bg-gray-300 px-2 py-1 rounded text-center shadow-md"
-        >
+        <button v-if="relayButtons.pulse" @click="emitStatus(pulseText)"
+          class="flex-1 bg-gray-200 border border-gray-500 hover:bg-gray-300 px-2 py-1 rounded text-center shadow-md">
           {{ relayButtons.pulse }}
         </button>
       </div>
@@ -45,6 +36,8 @@
 </template>
 
 <script>
+import { getContrastTextColor, ensureValidHex } from '@/utils/colorUtils';
+
 export default {
   name: "PreviewCard",
   props: {
@@ -58,7 +51,7 @@ export default {
     },
     relayColor: {
       type: String,
-      default: "grey",
+      default: '#d1d5db',
     },
     relayButtons: {
       type: Object,
@@ -70,26 +63,19 @@ export default {
     },
   },
   computed: {
-    // Lowercase color -> mapped to CSS classes
-    statusClass() {
-      switch (this.relayColor.toLowerCase()) {
-        case "red":
-          return "bg-relayRed text-white";
-        case "green":
-          return "bg-relayGreen text-white";
-        case "yellow":
-          return "bg-relayYellow text-black"; // or text-white, your choice
-        case "blue":
-          return "bg-relayBlue text-white";
-        case "grey":
-        default:
-          return "bg-gray-300 text-white";
-      }
+    // Dynamic style object for the status badge
+    statusStyle() {
+      const validColor = ensureValidHex(this.relayColor);
+      const textColor = getContrastTextColor(validColor);
+
+      return {
+        backgroundColor: validColor,
+        color: textColor
+      };
     },
   },
   methods: {
     emitStatus(newStatus) {
-      // e.g. "On", "Off", or the pulse text
       this.$emit("update-status", newStatus);
     },
   },
@@ -97,5 +83,5 @@ export default {
 </script>
 
 <style scoped>
-/* Adjust or rename classes as needed for your color utilities, e.g. .bg-relayRed, etc. */
+/* Custom styles can be added here if needed */
 </style>

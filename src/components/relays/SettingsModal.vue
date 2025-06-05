@@ -2,7 +2,7 @@
 <template>
   <!-- OUTER container to match DashboardModal -->
   <div class="px-4 py-2 mx-auto" style="max-width: 40rem;">
-    
+
     <!-- ============ PHYSICAL SETTINGS CARD ============ -->
     <div class="bg-gray-100 border border-gray-500 rounded">
       <div class="border-b border-gray-500 px-3 py-1.5 flex justify-between items-center">
@@ -17,14 +17,14 @@
               <label class="text-ModalLabel text-textColor">Enabled:</label>
             </div>
             <div>
-              <select
-                v-model="localRelay.enabled"
-                class="w-full border border-gray-500 rounded py-0.5 text-xs bg-white"
-                @change="emitChanges"
-              >
-                <option :value="true">True</option>
-                <option :value="false">False</option>
-              </select>
+              <div class="inline-flex rounded overflow-hidden border border-blue-500">
+                <button @click="setEnabled(true)" :class="getPillButtonClass(localRelay.enabled, true)">
+                  Enabled
+                </button>
+                <button @click="setEnabled(false)" :class="getPillButtonClass(localRelay.enabled, false)">
+                  Disabled
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -36,12 +36,8 @@
               <label class="text-ModalLabel text-textColor">Relay Name:</label>
             </div>
             <div>
-              <input
-                type="text"
-                v-model="localRelay.name"
-                class="w-full border border-gray-500 rounded p-0.5 text-xs bg-white pl-1"
-                @input="emitChanges"
-              />
+              <input type="text" v-model="localRelay.name"
+                class="w-full border border-gray-500 rounded p-0.5 text-xs bg-white pl-1" @input="emitChanges" />
             </div>
           </div>
         </div>
@@ -53,12 +49,8 @@
               <label class="text-ModalLabel text-textColor">Pulse Time (Seconds):</label>
             </div>
             <div>
-              <input
-                type="number"
-                v-model="localRelay.pulse_time"
-                class="w-full border border-gray-500 rounded py-0.5 pl-1 text-xs bg-white"
-                @input="emitChanges"
-              />
+              <input type="number" v-model="localRelay.pulse_time"
+                class="w-full border border-gray-500 rounded py-0.5 pl-1 text-xs bg-white" @input="emitChanges" />
             </div>
           </div>
         </div>
@@ -69,19 +61,13 @@
     <div class="bg-gray-100 border border-gray-500 rounded mt-3">
       <div class="border-b border-gray-500 px-3 py-1.5 flex justify-between items-center">
         <label class="text-ModalInfo text-textColor">Schedule</label>
-        
+
         <!-- Toggle for Enabled/Disabled (unchanged) -->
         <div class="inline-flex rounded overflow-hidden border border-blue-500">
-          <button
-            @click="setScheduleEnabled(true)"
-            :class="getPillButtonClass(localRelay.schedule.enabled, true)"
-          >
+          <button @click="setScheduleEnabled(true)" :class="getPillButtonClass(localRelay.schedule.enabled, true)">
             Enabled
           </button>
-          <button
-            @click="setScheduleEnabled(false)"
-            :class="getPillButtonClass(localRelay.schedule.enabled, false)"
-          >
+          <button @click="setScheduleEnabled(false)" :class="getPillButtonClass(localRelay.schedule.enabled, false)">
             Disabled
           </button>
         </div>
@@ -96,14 +82,8 @@
                 <label class="text-ModalLabel text-textColor">Turn On:</label>
               </div>
               <div>
-                <input
-                  type="time"
-                  placeholder="HH:mm"
-                  format="HH:mm"
-                  v-model="localRelay.schedule.time_on"
-                  class="w-full border border-gray-500 rounded p-0.5 px-1 text-xs bg-white"
-                  @change="emitChanges"
-                />
+                <input type="time" placeholder="HH:mm" format="HH:mm" v-model="localRelay.schedule.time_on"
+                  class="w-full border border-gray-500 rounded p-0.5 px-1 text-xs bg-white" @change="emitChanges" />
               </div>
             </div>
           </div>
@@ -115,14 +95,8 @@
                 <label class="text-ModalLabel text-textColor">Turn Off:</label>
               </div>
               <div>
-                <input
-                  type="time"
-                  placeholder="HH:mm"
-                  format="HH:mm"
-                  v-model="localRelay.schedule.time_off"
-                  class="w-full border border-gray-500 rounded p-0.5 px-1 text-xs bg-white"
-                  @change="emitChanges"
-                />
+                <input type="time" placeholder="HH:mm" format="HH:mm" v-model="localRelay.schedule.time_off"
+                  class="w-full border border-gray-500 rounded p-0.5 px-1 text-xs bg-white" @change="emitChanges" />
               </div>
             </div>
           </div>
@@ -135,13 +109,8 @@
               </div>
               <!-- We'll display the days in a single row, using the same style approach -->
               <div class="inline-flex rounded overflow-hidden justify-center">
-                <button
-                  v-for="(day, idx) in daysList"
-                  :key="day"
-                  type="button"
-                  @click="toggleDay(day)"
-                  :class="getDayButtonClass(day, idx)"
-                >
+                <button v-for="(day, idx) in daysList" :key="day" type="button" @click="toggleDay(day)"
+                  :class="getDayButtonClass(day, idx)">
                   {{ day }}
                 </button>
               </div>
@@ -200,7 +169,7 @@ export default {
     // New method to properly initialize the localRelay
     initializeLocalRelay() {
       const relay = this.relay;
-      
+
       // Create a deep copy of the relay to avoid reference issues
       this.localRelay = JSON.parse(JSON.stringify({
         ...relay,
@@ -212,7 +181,7 @@ export default {
           days_mask: relay.schedule?.days_mask ?? 0
         },
       }));
-      
+
       // Initialize any missing properties
       if (!this.localRelay.pulse_time) {
         this.localRelay.pulse_time = 5; // Default pulse time
@@ -276,18 +245,24 @@ export default {
       this.emitChanges();
     },
 
+    /* ========== ENABLED / DISABLED TOGGLE ========== */
+    setEnabled(value) {
+      this.localRelay.enabled = value;
+      this.emitChanges();
+    },
+
     /* ========== EMIT CHANGES TO PARENT ========== */
     emitChanges() {
       // Ensure time fields have consistent names
       const updatedRelay = { ...this.localRelay };
-      
+
       // Make sure schedule times are properly formatted
       if (updatedRelay.schedule) {
         // Create both field versions for backward compatibility
         updatedRelay.schedule.on_time = updatedRelay.schedule.time_on;
         updatedRelay.schedule.off_time = updatedRelay.schedule.time_off;
       }
-      
+
       this.$emit("fields-updated", updatedRelay);
     },
   },
@@ -299,6 +274,7 @@ export default {
 label {
   transform: translateY(0px);
 }
+
 input,
 select {
   font-size: 0.8rem;
@@ -306,12 +282,14 @@ select {
   font-weight: 500;
   color: #333;
 }
+
 option {
   font-size: 0.8rem;
   line-height: 0.8rem;
   font-weight: 500;
   color: #333;
 }
+
 input:focus,
 select:focus {
   outline: none;
@@ -324,6 +302,7 @@ select:focus {
 .fade-leave-active {
   transition: opacity 0.2s;
 }
+
 .fade-enter,
 .fade-leave-to {
   opacity: 0;

@@ -4,8 +4,7 @@
     <div class="w-full mx-auto relative" style="width: 60rem">
       <!-- Header -->
       <div
-        class="bg-gray-200 px-2 py-2 rounded-md shadow border border-gray-500 max-w-xl flex justify-center items-center mx-auto relative"
-      >
+        class="bg-gray-200 px-2 py-2 rounded-md shadow border border-gray-500 max-w-xl flex justify-center items-center mx-auto relative">
         <div class="flex flex-col items-center justify-center w-full h-14">
           <!-- Main title dynamically passed from the config's general.system_name -->
           <div class="flex items-center">
@@ -23,8 +22,7 @@
         <div class="flex-[1] flex flex-col gap-3">
           <!-- Controller Section -->
           <div
-            class="bg-gray-200 rounded-lg border border-gray-500 shadow-md flex flex-col items-center justify-start flex-1"
-          >
+            class="bg-gray-200 rounded-lg border border-gray-500 shadow-md flex flex-col items-center justify-start flex-1">
             <h1 class="text-center border-b border-gray-900 w-full text-FormSubmit text-textColor">
               Controller
             </h1>
@@ -46,8 +44,7 @@
 
           <!-- Router Section -->
           <div
-            class="bg-gray-200 rounded-lg border border-gray-500 shadow-md flex flex-col items-center justify-start flex-1"
-          >
+            class="bg-gray-200 rounded-lg border border-gray-500 shadow-md flex flex-col items-center justify-start flex-1">
             <h1 class="text-center border-b border-gray-900 w-full text-FormSubmit text-textColor">
               Router
             </h1>
@@ -65,16 +62,8 @@
               <div class="flex justify-between">
                 Logs:
                 <span>
-                  <button
-                    type="button"
-                    class="flex items-center justify-center"
-                    @click="handleDownloadRouterLogs"
-                  >
-                    <img
-                      src="@/assets/icons/download.svg"
-                      alt="Download Icon"
-                      class="w-5 h-5"
-                    />
+                  <button type="button" class="flex items-center justify-center" @click="handleDownloadRouterLogs">
+                    <img src="@/assets/icons/download.svg" alt="Download Icon" class="w-5 h-5" />
                   </button>
                 </span>
               </div>
@@ -83,8 +72,7 @@
 
           <!-- Camera Section -->
           <div
-            class="bg-gray-200 rounded border border-gray-500 shadow flex flex-col items-center justify-start flex-1"
-          >
+            class="bg-gray-200 rounded border border-gray-500 shadow flex flex-col items-center justify-start flex-1">
             <h1 class="text-center border-b border-gray-900 w-full text-FormSubmit text-textColor">
               Camera
             </h1>
@@ -102,16 +90,8 @@
               <div class="flex justify-between">
                 Logs:
                 <span>
-                  <button
-                    type="button"
-                    class="flex items-center justify-center"
-                    @click="handleDownloadCameraLogs"
-                  >
-                    <img
-                      src="@/assets/icons/download.svg"
-                      alt="Download Icon"
-                      class="w-5 h-5"
-                    />
+                  <button type="button" class="flex items-center justify-center" @click="handleDownloadCameraLogs">
+                    <img src="@/assets/icons/download.svg" alt="Download Icon" class="w-5 h-5" />
                   </button>
                 </span>
               </div>
@@ -179,12 +159,16 @@ const displayed_system_name = computed(() => {
 
 const formattedDateTime = computed(() => {
   const date = currentTime.value;
+  // Format: M/D/YYYY h:mm AM/PM
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
   const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  const hours = String(date.getHours()).padStart(2, "0");
+  let hours = date.getHours();
   const minutes = String(date.getMinutes()).padStart(2, "0");
-  return `${year}-${month}-${day} ${hours}:${minutes}`;
+  const ampm = hours >= 12 ? "PM" : "AM";
+  hours = hours % 12;
+  hours = hours ? hours : 12; // the hour '0' should be '12'
+  return `${month}/${day}/${year}    ${hours}:${minutes} ${ampm}`;
 });
 
 // Fetch network statuses
@@ -192,14 +176,14 @@ async function fetchNetworkStatuses() {
   try {
     const networkResponse = await getAllNetworkStatuses();
     const networkResults = networkResponse.results;
-    
+
     if (networkResults && networkResults.length >= 2) {
       routerResults.value = networkResults[0];
       cameraResults.value = networkResults[1];
     } else if (networkResults && networkResults.length === 1) {
       routerResults.value = networkResults[0];
     }
-    
+
     networkLoading.value = false;
   } catch (error) {
     console.error("Error fetching network statuses:", error);
@@ -246,7 +230,7 @@ onMounted(() => {
   timer.value = setInterval(() => {
     currentTime.value = new Date();
   }, 1000);
-  
+
   // Fetch network status immediately and then poll every 30 seconds
   fetchNetworkStatuses();
   networkPollInterval.value = setInterval(() => {

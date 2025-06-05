@@ -2,7 +2,8 @@
 <template>
   <div class="flex items-center justify-center w-full h-full">
     <div class="w-full mx-auto max-w-3xl">
-      <div class="w-full mx-auto py-2 bg-gray-200 border border-gray-500 rounded text-center flex flex-col items-center" style="max-width: 32rem">
+      <div class="w-full mx-auto py-2 bg-gray-200 border border-gray-500 rounded text-center flex flex-col items-center"
+        style="max-width: 32rem">
         <h1 class="text-ModalHeader text-textColor">Relay Configuration</h1>
         <p class="text-gray-600">Manage your relay configurations here.</p>
       </div>
@@ -12,7 +13,8 @@
         <span class="ml-2 text-gray-600">Loading relays...</span>
       </div>
 
-      <div v-else-if="relays && Object.keys(relays).length > 0" class="bg-gray-200 rounded my-3 border-gray-500 border relative">
+      <div v-else-if="relays && Object.keys(relays).length > 0"
+        class="bg-gray-200 rounded my-3 border-gray-500 border relative">
         <table class="text-left w-full border-collapse rounded-md overflow-hidden">
           <thead>
             <tr class="bg-gray-200 border-b border-gray-500">
@@ -23,26 +25,18 @@
             </tr>
           </thead>
           <tbody>
-            <tr
-              v-for="(relay, key) in relays"
-              :key="key"
-              class="hover:bg-gray-100 border-t border-gray-300"
-            >
+            <tr v-for="(relay, key) in relays" :key="key" class="hover:bg-gray-100 border-t border-gray-300">
               <td class="text-center py-1.5 px-3 text-textColor text-Body">
                 {{ (relay.id || key).replace('relay_', '') }}
               </td>
               <td class="py-1.5 px-3 text-textColor text-center text-Body">{{ relay.name }}</td>
               <td class="text-center py-1.5 px-3">
-                <div
-                  class="w-4 h-4 rounded-full mx-auto"
-                  :class="{'bg-green-500': relay.enabled, 'bg-red-500': !relay.enabled}"
-                ></div>
+                <div class="w-4 h-4 rounded-full mx-auto"
+                  :class="{ 'bg-green-500': relay.enabled, 'bg-red-500': !relay.enabled }"></div>
               </td>
               <td class="text-center py-1.5 px-3 text-Body">
-                <button
-                  class="bg-primaryMed hover:bg-primaryLight text-white py-1 px-3 rounded"
-                  @click="openEditModal(key)"
-                >
+                <button class="bg-primaryMed hover:bg-primaryLight text-white py-1 px-3 rounded"
+                  @click="openEditModal(key)">
                   Edit
                 </button>
               </td>
@@ -56,43 +50,35 @@
       <div v-if="successMessage" class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 my-3">
         {{ successMessage }}
       </div>
-      
+
       <div v-if="error" class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 my-3">
         {{ error }}
       </div>
     </div>
 
     <!-- Edit Modal -->
-    <EditModal
-      v-model="showEditModal"
-      :relay="currentRelay"
-      :relayKey="currentRelayKey"
-      @update-relay="handleRelayUpdate"
-      @updated="handleUpdated"
-    />
+    <EditModal v-model="showEditModal" :relay="currentRelay" :relayKey="currentRelayKey"
+      @update-relay="handleRelayUpdate" @updated="handleUpdated" />
 
     <!-- Toast Notification -->
-    <ToastNotification
-      v-if="showToast"
-      :visible="showToast"
-      :message="toastMessage"
-    />
+    <ToastNotification v-if="showToast" :visible="showToast" :message="toastMessage" />
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed } from "vue";
 import { useConfig } from '@/composables/useConfig';
 import EditModal from "@/components/relays/EditModal.vue";
 import ToastNotification from "@/components/etc/ToastNotification.vue";
+import { createDefaultDashboard } from '@/utils/colorUtils';
 
 // Use the config composable for the full configuration
-const { 
-  configData, 
-  isLoading, 
-  error, 
+const {
+  configData,
+  isLoading,
+  error,
   successMessage,
-  updateConfig 
+  updateConfig
 } = useConfig(null, { autoFetch: true });
 
 // Computed property to get relays from the config data
@@ -113,14 +99,11 @@ const openEditModal = (relayKey) => {
   // Make a deep copy to avoid reference issues
   currentRelay.value = JSON.parse(JSON.stringify(relays.value[relayKey]));
 
-  // Ensure dashboard object is present with defaults if missing.
+  // Ensure dashboard object is present with hex color defaults
   if (!currentRelay.value.dashboard) {
-    currentRelay.value.dashboard = {
-      on_button: { show: false, status_text: "", status_color: "green", button_label: "" },
-      off_button: { show: false, status_text: "", status_color: "red", button_label: "" },
-      pulse_button: { show: false, status_text: "", status_color: "yellow", button_label: "" },
-    };
+    currentRelay.value.dashboard = createDefaultDashboard();
   }
+
   showEditModal.value = true;
 };
 
@@ -129,13 +112,13 @@ const handleRelayUpdate = async ({ relayKey, updatedRelay }) => {
   try {
     // Create a copy of the current configuration
     const updatedConfig = { ...configData.value };
-    
+
     // Update the specific relay
     updatedConfig.relays[relayKey] = updatedRelay;
-    
+
     // Update the full configuration
     await updateConfig(updatedConfig);
-    
+
     // Show success toast
     toastMessage.value = "Changes Applied.";
     showToast.value = true;

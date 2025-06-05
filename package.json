@@ -18,6 +18,7 @@
   "description": "",
   "dependencies": {
     "@heroicons/vue": "^2.2.0",
+    "@radial-color-picker/vue-color-picker": "^6.0.0",
     "@vitejs/plugin-vue": "^5.0.3",
     "axios": "^1.7.9",
     "echarts": "^5.6.0",

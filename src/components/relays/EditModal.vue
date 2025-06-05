@@ -1,97 +1,81 @@
 <!-- src/components/relays/EditModal.vue -->
 <template>
   <transition name="fade">
-    <div
-      v-if="modelValue"
-      class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50"
-      @click.self="$emit('update:modelValue', false)"
-    >
-      <div
-        class="bg-white rounded shadow-md w-full max-w-2xl relative border border-gray-500"
-        @click.stop
-      >
-        <!-- HEADER -->
-        <div class="border-b border-gray-500 relative py-1.5 px-3">
-          <!-- Close Icon -->
-          <img
-            :src="xIcon"
-            alt="Close"
-            class="w-6 h-6 cursor-pointer hover:scale-105 transition-transform absolute top-1 right-1"
-            @click="$emit('update:modelValue', false)"
-          />
-
-          <!-- Page Title -->
-          <h2 class="text-center text-ModalHeader italic text-textColor">
-            {{ currentPageTitle }}
-          </h2>
-          <p class="text-ModalInfo text-textColor italic transition-transform absolute top-2 left-3">
-            {{ relay.name || 'Relay' }}
-          </p>
-
-          <!-- Subheader -->
-          <p class="text-center text-ModalSubheader text-textColor italic pt-1">
-            {{ currentPageSubheader }}
-          </p>
+    <div v-if="modelValue" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50"
+      @click.self="$emit('update:modelValue', false)">
+      <div class="w-full max-w-2xl mx-auto">
+        <!-- Browser-style Tab Navigation -->
+        <div class="flex w-full max-w-2xl mx-auto border-b border-gray-500 bg-transparent rounded-t space-x-1">
+          <button @click="switchPage('settings')" :class="[
+            'px-3 py-0.5 font-semibold border border-b-0 focus:outline-none',
+            'rounded-t',
+            currentPage === 'settings'
+              ? 'bg-white text-blue-600 border-gray-500 z-10'
+              : 'bg-white text-gray-500 border-gray-500 hover:text-blue-600 z-0'
+          ]" style="margin-bottom: -1px;">
+            Settings
+          </button>
+          <button @click="switchPage('dashboard')" :class="[
+            'px-3 py-0.5 font-semibold border border-b-0 focus:outline-none',
+            'rounded-t',
+            currentPage === 'dashboard'
+              ? 'bg-white text-blue-600 border-gray-500 z-10'
+              : 'bg-gray-100 text-gray-500 border-gray-300 hover:text-blue-600 z-0'
+          ]" style="margin-bottom: -1px;">
+            Dashboard
+          </button>
         </div>
+        <!-- Modal -->
+        <div class="bg-white rounded-b rounded-tr shadow-md border border-gray-500 border-t-0">
+          <!-- HEADER -->
+          <div class="border-b border-gray-500 px-3 py-1.5">
+            <!-- Top Row: ID/Name | Close -->
+            <div class="flex justify-between items-start w-full">
+              <!-- Left: Relay ID and Name -->
+              <div class="flex flex-col items-start min-w-0">
+                <span class="text-center text-MiniModalHeader text-textColor truncate">{{ formattedRelayId }}</span>
+                <span class="text-center text-MiniModalSubheader text-textColor italic truncate">{{ relay.name ||
+                  'Relay'
+                  }}</span>
+              </div>
+              <div>
+                <h2 class="text-center text-ModalHeader italic text-textColor">
+                  {{ currentPageTitle }}
+                </h2>
+                <p class="text-center text-ModalSubheader text-textColor italic pt-1">
+                  {{ currentPageSubheader }}
+                </p>
+              </div>
+              <!-- Right: Close Icon -->
+              <div class="flex items-start">
+                <img :src="xIcon" alt="Close" class="w-6 h-6 cursor-pointer hover:scale-105 transition-transform"
+                  @click="$emit('update:modelValue', false)" />
+              </div>
 
-        <!-- MAIN CONTENT -->
-        <div>
-          <!-- Settings Page -->
-          <SettingsModal
-            v-if="currentPage === 'settings'"
-            :relay="relay"
-            :relayKey="relayKey"
-            @fields-updated="handleRelayFields"
-          />
-          <!-- Dashboard Page -->
-          <DashboardModal
-            v-else-if="currentPage === 'dashboard'"
-            :dashboard="relay.dashboard"
-            :relayName="relay.name"
-            :relayState="relay.state" 
-            @dashboard-updated="handleDashboardFields"
-          />
-        </div>
-
-        <!-- FOOTER -->
-        <div class="border-t border-gray-500">
-          <div class="flex items-center justify-center -space-x-1">
-            <img
-              :src="chevronLeft"
-              alt="Previous Page"
-              class="w-5 h-5 cursor-pointer hover:scale-110 transition-transform"
-              @click="prevPage"
-            />
-            <div class="flex items-center space-x-0.5">
-              <span
-                class="text-2xl cursor-pointer transition-colors leading-none"
-                :class="currentPage === 'settings' ? 'text-textColor' : 'text-gray-400 hover:text-gray-600'"
-                @click="switchPage('settings')"
-              >
-                •
-              </span>
-              <span
-                class="text-2xl cursor-pointer transition-colors leading-none"
-                :class="currentPage === 'dashboard' ? 'text-textColor' : 'text-gray-400 hover:text-gray-600'"
-                @click="switchPage('dashboard')"
-              >
-                •
-              </span>
             </div>
-            <img
-              :src="chevronRight"
-              alt="Next Page"
-              class="w-5 h-5 cursor-pointer hover:scale-110 transition-transform "
-              @click="nextPage"
-            />
+            <!-- Centered Page Title and Subheader -->
+
           </div>
-          <div class="flex justify-center space-x-1 text-ModalButton p-1">
-            <button
-              class="bg-primaryMed hover:bg-primaryLight text-white rounded-md px-2 py-0.5 w-auto flex items-center justify-center"
-              @click="saveChanges"
-            >
-              <span style="transform: translateY(-1px)">Save & Exit</span>
-            </button>
+
+          <!-- MAIN CONTENT -->
+          <div>
+            <!-- Settings Page -->
+            <SettingsModal v-if="currentPage === 'settings'" :relay="relay" :relayKey="relayKey"
+              @fields-updated="handleRelayFields" />
+            <!-- Dashboard Page -->
+            <DashboardModal v-else-if="currentPage === 'dashboard'" ref="dashboardRef" :dashboard="relay.dashboard"
+              :relayName="relay.name" :relayState="relay.state" @dashboard-updated="handleDashboardFields" />
+          </div>
+
+          <!-- FOOTER -->
+          <div class="border-t border-gray-500">
+            <div class="flex justify-center space-x-1 text-ModalButton p-1">
+              <button
+                class="bg-primaryMed hover:bg-primaryLight text-white rounded-md px-3 py-1.5 w-auto flex items-center justify-center"
+                @click="saveChanges">
+                <span style="transform: translateY(-1px)">Save & Exit</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -132,6 +116,9 @@ const currentPage = ref("settings"); // "settings" or "dashboard"
 // This local object (editedRelay) is used to hold all changes from the child
 const editedRelay = ref({ ...props.relay });
 
+// Add a ref for DashboardModal
+const dashboardRef = ref(null);
+
 // Computed properties for titles
 const currentPageTitle = computed(() => {
   return currentPage.value === "settings" ? "Relay Setup" : "Dashboard Setup";
@@ -141,6 +128,19 @@ const currentPageSubheader = computed(() => {
   return currentPage.value === "settings"
     ? "Modify the behavior of the relay in the system"
     : "Modify the appearance of the relay on the dashboard";
+});
+
+// Add a computed property for formatted relay id
+const formattedRelayId = computed(() => {
+  // Example: relay_1 -> Relay 1
+  if (!props.relay?.id) return '';
+  const match = props.relay.id.match(/^([a-zA-Z]+)_(\d+)$/);
+  if (match) {
+    // Capitalize first letter and add space before number
+    return match[1].charAt(0).toUpperCase() + match[1].slice(1) + ' ' + match[2];
+  }
+  // Fallback: just capitalize first letter
+  return props.relay.id.charAt(0).toUpperCase() + props.relay.id.slice(1);
 });
 
 // Watch for changes in relay prop
@@ -199,7 +199,10 @@ const handleDashboardFields = (updatedObj) => {
 
 // Save changes and close modal
 const saveChanges = () => {
-  // This is when you finalize everything, sending the updated relay back up
+  // If dashboardRef is set, get the latest dashboard data
+  if (dashboardRef.value && dashboardRef.value.getDashboardData) {
+    editedRelay.value.dashboard = dashboardRef.value.getDashboardData();
+  }
   const updatedRelay = { ...editedRelay.value };
   emit("update-relay", { relayKey: props.relayKey, updatedRelay });
   emit("updated");
@@ -212,6 +215,7 @@ const saveChanges = () => {
 .fade-leave-active {
   transition: opacity 0.3s ease;
 }
+
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;

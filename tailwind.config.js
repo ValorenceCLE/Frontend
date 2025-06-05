@@ -83,6 +83,8 @@ module.exports = {
         Settings: ['1.5rem', { lineHeight: '1.75rem', fontWeight: '600' }],
         ModalHeader: ['2rem', { lineHeight: '2.1rem', fontWeight: '700' }],
         ModalSubheader: ['0.8rem', { lineHeight: '0.9rem', fontWeight: '400' }],
+        MiniModalHeader: ['1rem', { lineHeight: '1.1rem', fontWeight: '700' }],
+        MiniModalSubheader: ['0.8rem', { lineHeight: '0.9rem', fontWeight: '400' }],
         ModalInfo: ['1.15rem', { lineHeight: '1.25rem', fontWeight: '700' }],
         ModalButton: ['1.15rem', { lineHeight: '1.5rem', fontWeight: '500' }],
         ModalLabel: ['1rem', { lineHeight: '1rem', fontWeight: '500' }],

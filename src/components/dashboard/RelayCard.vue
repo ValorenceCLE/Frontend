@@ -4,7 +4,7 @@
     <!-- Left section: Name & Status -->
     <div class="flex-[1] flex items-center justify-between px-3 py-1.5">
       <h3 class="text-Subheader text-textColor">{{ relay.name }}</h3>
-      <span :style="statusStyle" class="text-white font-semibold w-fit px-3 py-1 rounded-md">
+      <span :style="statusStyle" class="font-semibold w-fit px-3 py-1 rounded-md">
         {{ display_status }}
       </span>
     </div>
@@ -12,25 +12,16 @@
     <!-- Right section: Buttons -->
     <div class="flex-[2] p-2 border-l border-gray-400 rounded-r-md shadow-md">
       <div class="flex h-full space-x-2 items-center justify-center">
-        <button
-          v-if="buttons.on"
-          @click="turn_on"
-          class="flex-1 bg-gray-200 text-Body text-textColor border border-gray-500 hover:bg-gray-300 px-3 py-1.5 rounded-md text-center shadow"
-        >
+        <button v-if="buttons.on" @click="turn_on"
+          class="flex-1 bg-gray-200 text-Body text-textColor border border-gray-500 hover:bg-gray-300 px-3 py-1.5 rounded-md text-center shadow">
           {{ buttons.on }}
         </button>
-        <button
-          v-if="buttons.off"
-          @click="turn_off"
-          class="flex-1 bg-gray-200 text-Body text-textColor border border-gray-500 hover:bg-gray-300 px-3 py-1.5 rounded-md text-center shadow"
-        >
+        <button v-if="buttons.off" @click="turn_off"
+          class="flex-1 bg-gray-200 text-Body text-textColor border border-gray-500 hover:bg-gray-300 px-3 py-1.5 rounded-md text-center shadow">
           {{ buttons.off }}
         </button>
-        <button
-          v-if="buttons.pulse"
-          @click="pulse_relay"
-          class="flex-1 bg-gray-200 text-Body text-textColor border border-gray-500 hover:bg-gray-300 px-3 py-1.5 rounded-md text-center shadow"
-        >
+        <button v-if="buttons.pulse" @click="pulse_relay"
+          class="flex-1 bg-gray-200 text-Body text-textColor border border-gray-500 hover:bg-gray-300 px-3 py-1.5 rounded-md text-center shadow">
           {{ buttons.pulse }}
         </button>
       </div>
@@ -42,6 +33,7 @@
 import { ref, computed } from "vue";
 import { turnRelayOn, turnRelayOff, pulseRelay } from "@/api/relayService";
 import configUtils from '@/utils/configUtils';
+import { getContrastTextColor, normalizeColor, DEFAULT_COLORS } from '@/utils/colorUtils';
 
 const props = defineProps({
   relay: {
@@ -50,7 +42,6 @@ const props = defineProps({
   },
 });
 
-// We emit an event when the relay state changes so the parent can update its local data.
 const emit = defineEmits(["update-state"]);
 
 // Local flag to track if the relay is pulsing (temporary UI feedback)
@@ -64,34 +55,37 @@ const display_status = computed(() => {
   if (isPulsing.value) {
     return props.relay.dashboard?.pulse_button?.status_text || "Pulsing...";
   }
-  return currentState.value === 1 ? 
-    (props.relay.dashboard?.on_button?.status_text || "On") : 
+  return currentState.value === 1 ?
+    (props.relay.dashboard?.on_button?.status_text || "On") :
     (props.relay.dashboard?.off_button?.status_text || "Off");
 });
 
-// Style for the status badge (background color)
+// Style for the status badge (background color and text color)
 const statusStyle = computed(() => {
-  let color = "gray";
-  
+  let color;
+
   if (isPulsing.value) {
-    color = props.relay.dashboard?.pulse_button?.status_color || "yellow";
+    color = props.relay.dashboard?.pulse_button?.status_color || DEFAULT_COLORS.pulse;
   } else if (currentState.value === 1) {
-    color = props.relay.dashboard?.on_button?.status_color || "green";
+    color = props.relay.dashboard?.on_button?.status_color || DEFAULT_COLORS.on;
   } else {
-    color = props.relay.dashboard?.off_button?.status_color || "red";
+    color = props.relay.dashboard?.off_button?.status_color || DEFAULT_COLORS.off;
   }
-  
-  // Use color mapping if available
-  const colorMap = {
-    'red': configUtils.get('ui.colors.red', '#eb191a'),
-    'green': configUtils.get('ui.colors.green', '#2a980c'),
-    'yellow': configUtils.get('ui.colors.yellow', '#FFDF00'),
-    'blue': configUtils.get('ui.colors.blue', '#0a44a3'),
-    'gray': configUtils.get('ui.colors.gray', '#d1d5db')
-  };
-  
-  return { 
-    backgroundColor: colorMap[color.toLowerCase()] || color.toLowerCase() 
+
+  // Convert legacy color names to hex if needed
+  const normalizedColor = normalizeColor(color);
+  const textColor = getContrastTextColor(normalizedColor);
+
+  console.log(`Relay ${props.relay.name}:`, {
+    state: currentState.value,
+    rawColor: color,
+    normalizedColor,
+    textColor
+  });
+
+  return {
+    backgroundColor: normalizedColor,
+    color: textColor
   };
 });
 
@@ -99,9 +93,9 @@ const statusStyle = computed(() => {
 const buttons = computed(() => {
   if (props.relay.dashboard) {
     return {
-      on: props.relay.dashboard.on_button.show ? props.relay.dashboard.on_button.button_label || "On" : null,
-      off: props.relay.dashboard.off_button.show ? props.relay.dashboard.off_button.button_label || "Off" : null,
-      pulse: props.relay.dashboard.pulse_button.show ? props.relay.dashboard.pulse_button.button_label || "Pulse" : null,
+      on: props.relay.dashboard.on_button?.show ? props.relay.dashboard.on_button.button_label || "On" : null,
+      off: props.relay.dashboard.off_button?.show ? props.relay.dashboard.off_button.button_label || "Off" : null,
+      pulse: props.relay.dashboard.pulse_button?.show ? props.relay.dashboard.pulse_button.button_label || "Pulse" : null,
     };
   }
   return { on: "On", off: "Off", pulse: "Pulse" };
@@ -113,7 +107,6 @@ const buttons = computed(() => {
 const turn_on = async () => {
   try {
     const result = await turnRelayOn(props.relay.id);
-    // Emit the new state so the parent can update immediately
     emit("update-state", { id: props.relay.id, state: result.state });
   } catch (error) {
     console.error("Error turning relay on:", error);
@@ -134,13 +127,13 @@ const turn_off = async () => {
 const pulse_relay = async () => {
   try {
     isPulsing.value = true;
-    
+
     // Get pulse duration from config if not specified in relay
     const defaultDuration = configUtils.get('relay.defaultPulseTime', 5);
     const duration = props.relay.pulse_time || defaultDuration;
-    
+
     const result = await pulseRelay(props.relay.id);
-    
+
     // If the API returned a "state" property, use it:
     if (result.state !== undefined) {
       emit("update-state", { id: props.relay.id, state: result.state });
